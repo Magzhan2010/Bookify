@@ -79,7 +79,7 @@ const Register = (	) => {
               type="submit"
               className="w-full bg-gradient-to-r from-[#1a56db] to-[#60a5fa] text-white font-bold py-3 rounded-xl mt-4 hover:opacity-90 transition-opacity shadow-lg shadow-[#1a56db]/20"
             >
-              Регестрация
+              Регистрация
             </button>
       	</div>
 
