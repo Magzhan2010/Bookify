@@ -141,6 +141,8 @@ const Admin = () => {
           >
             📊 Отчеты
           </button>
+          <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-sm" 
+            onClick={() => router.push('/library')}>Главная страница</button>
           <button 
             className="bg-[#162236] hover:bg-red-500/20 hover:text-red-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-sm" 
             onClick={handleGetOut}

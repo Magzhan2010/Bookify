@@ -30,8 +30,15 @@ const Register = (	) => {
         onSubmit={handleSubmit} 
         className="w-full max-w-md bg-[#0d1a2e] border border-[#162236] rounded-2xl p-8 shadow-2xl"
       >
-      	<div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-white mb-2">
+      	<div className="mb-8 text-center flex flex-col items-center justify-center">
+          <img 
+            src="/lb_logo.png" 
+            alt="dls-library logo" 
+            className="relative opacity-80 hover:scale-110 transition-all duration-300"
+            width={70} 
+            height={70}
+          />
+          <h1 className="text-xl md:text-3xl font-bold text-white mb-2">
             Зарегистрироваться
           </h1>
           <p className="text-[#4a6080] text-sm">
