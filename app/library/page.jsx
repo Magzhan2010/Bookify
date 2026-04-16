@@ -181,7 +181,48 @@ const Library = () => {
               
               
               {!hasMore && books.length > 0 && (
-                <p className="text-center text-[#4a6080] py-10 text-sm">Вы достигли конца списка 📚</p>
+                <div>
+                  <div className="flex items-center justify-center gap-4 py-12">
+                    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#4a6080]/30"></div>
+                    <p className="text-[#4a6080] text-sm font-medium tracking-widest uppercase">
+                      Вы достигли конца списка 📚
+                    </p>
+                    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#4a6080]/30"></div>
+                  </div>
+
+                  <footer className="relative z-10 border-t border-[#162236] bg-[#0b111b]/20 py-8 backdrop-blur-sm">
+                    <div className="container mx-auto px-4 flex flex-col items-center gap-6">
+                      
+                      <div className="group relative">
+                        <div className="absolute -inset-2 rounded-full bg-[#4a6080]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+                        <img 
+                          src="/lb_logo.png" 
+                          alt="dls-library logo" 
+                          className="relative opacity-80 hover:scale-110 transition-all duration-300"
+                          width={55} 
+                          height={55}
+                        />
+                      </div>
+
+                      <div className="text-center space-y-2">
+                        <p className="text-[#4a6080] text-sm tracking-tight">
+                          © 2026 <span className="text-[#6b85a8] font-semibold">Bookify</span>. 
+                          <span className="opacity-70 ml-1">Divergents Leadership School.</span>
+                        </p>
+                        
+                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#25334a] font-bold">
+                          Designed & Developed by 
+                          <span className="ml-2 text-[#4a6080] hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
+                            Magzhan
+                          </span>
+                        </p>
+                      </div>
+                      
+                    </div>
+                  </footer>
+                </div>
+
+                
               )}
             </>
           ) : (

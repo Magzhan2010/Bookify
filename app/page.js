@@ -279,15 +279,34 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      <footer className="py-10 text-center border-t border-[#162236] relative z-10">
-        <div className="flex flex-col items-center gap-3">
-          <p className="text-[#4a6080] text-sm">
-            © 2026 Bookify. Divergents Leadership School.
-          </p>
-          <img src="/lb_logo.png" alt="dls-library logo" width={50} height={50}/>
-          <p className="text-xs text-[#25334a] font-medium tracking-wide">
-            Designed & Developed with 💻 by <span className="text-[#4a6080] hover:text-white transition cursor-pointer">Magzhan</span>
-          </p>
+      <footer className="relative z-10 border-t border-[#162236] bg-[#0b111b]/20 py-8 backdrop-blur-sm">
+        <div className="container mx-auto px-4 flex flex-col items-center gap-6">
+                      
+          <div className="group relative">
+            <div className="absolute -inset-2 rounded-full bg-[#4a6080]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity"></div>
+              <img 
+                src="/lb_logo.png" 
+                alt="dls-library logo" 
+                className="relative opacity-80 hover:scale-110 transition-all duration-300"
+                width={55} 
+                height={55}
+              />
+            </div>
+
+            <div className="text-center space-y-2">
+              <p className="text-[#4a6080] text-sm tracking-tight">
+                © 2026 <span className="text-[#6b85a8] font-semibold">Bookify</span>. 
+                <span className="opacity-70 ml-1">Divergents Leadership School.</span>
+              </p>
+                        
+              <p className="text-[12px] uppercase tracking-[0.2em] text-[#25334a] font-bold">
+                Designed & Developed by 
+                <span className="ml-2 text-[#4a6080] hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
+                  Magzhan
+                </span>
+                </p>
+          </div>
+                      
         </div>
       </footer>
 
