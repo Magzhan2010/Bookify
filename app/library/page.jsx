@@ -171,17 +171,15 @@ const Library = () => {
             <SkeletonGrid />
           ) : filtered.length > 0 ? (
             <>
-              {/* КОМПОНЕНТ КНИГ */}
               <Books books={filtered} myFinishedId={myFinishedId} myReadingId={myReadingId} />
               
-              {/* ВОТ ОН - НЕВИДИМЫЙ РАДАР В САМОМ НИЗУ! */}
               <div ref={observerRef} className="h-10 w-full flex justify-center items-center mt-10">
                 {page > 1 && hasMore && (
                   <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
                 )}
               </div>
               
-              {/* СООБЩЕНИЕ КОНЦА СПИСКА */}
+              
               {!hasMore && books.length > 0 && (
                 <p className="text-center text-[#4a6080] py-10 text-sm">Вы достигли конца списка 📚</p>
               )}

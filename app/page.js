@@ -29,10 +29,9 @@ export default function LandingPage() {
       {/* 1. NAV */}
       <nav className="fixed top-0 w-full z-50 bg-[#020817]/80 backdrop-blur-xl border-b border-[#162236]">
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          {/* ДОБАВЛЕНО ЛОГО */}
           <Link href="/" className="flex items-center gap-2">
             <div className="relative overflow-hidden rounded-lg bg-blue-500/10 p-0.5">
-              <Image src="/lb_logo.png" width={36} height={36} alt="Bookify" className="object-contain" />
+              <Image src="/lb_logo.png" width={50} height={50} alt="Bookify" className="object-contain" />
             </div>
             <h1 className="font-black text-xl tracking-tight">
               Book<span className="text-[#1a56db]">ify</span>
@@ -120,7 +119,6 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* 4. РЕШЕНИЕ (Как это работает) */}
       <section className="py-20 px-6 relative z-10">
         <div className="max-w-[1000px] mx-auto text-center mb-16">
           <motion.h2 
@@ -173,7 +171,6 @@ export default function LandingPage() {
         </motion.div>
       </section>
 
-      {/* 5. НОВАЯ СЕКЦИЯ: Почему не просто Google Диск */}
       <section className="py-24 px-6 relative z-10">
         <div className="max-w-[1000px] mx-auto">
           <motion.div
@@ -287,6 +284,7 @@ export default function LandingPage() {
           <p className="text-[#4a6080] text-sm">
             © 2026 Bookify. Divergents Leadership School.
           </p>
+          <img src="/lb_logo.png" alt="dls-library logo" width={50} height={50}/>
           <p className="text-xs text-[#25334a] font-medium tracking-wide">
             Designed & Developed with 💻 by <span className="text-[#4a6080] hover:text-white transition cursor-pointer">Magzhan</span>
           </p>
