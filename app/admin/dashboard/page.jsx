@@ -130,9 +130,13 @@ const TeacherDashboard = () => {
               Teacher <span className="text-sky-500">Console</span>
             </h1>
           </div>
-          <button onClick={handleLogout} className="bg-[#111c2e] hover:bg-rose-500/10 hover:text-rose-400 text-[#5c7294] transition-all py-2.5 px-6 rounded-xl border border-white/5 text-sm font-semibold">
-            Выйти
-          </button>
+          <div className="flex gap-8">
+            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-sm" 
+              onClick={() => router.push('/library')}>Главная страница</button>
+            <button onClick={handleLogout} className="bg-[#111c2e] hover:bg-rose-500/10 hover:text-rose-400 text-[#5c7294] transition-all py-2.5 px-6 rounded-xl border border-white/5 text-sm font-semibold">
+              Выйти
+            </button>
+          </div>
         </div>
       </div>
 

@@ -1,7 +1,7 @@
 'use client'
 import Image from "next/image"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
+import { usePathname, useRouter } from "next/navigation"
 import { useEffect, useState } from "react"
 
 const Navbar = () => {
@@ -11,7 +11,12 @@ const Navbar = () => {
   const [loading, setLoading] = useState(false)
   const [is_open, setIsOpen] = useState(false)
   const router = useRouter()
+  const pathname = usePathname()
 
+  useEffect(() => {
+    // Как только путь изменился, выключаем анимацию загрузки
+    setLoading(false)
+  }, [pathname])
   useEffect(() => {
     const token = localStorage.getItem('token');
     if (token) {
@@ -53,7 +58,19 @@ const Navbar = () => {
     const timeoutId = setTimeout(searchFetch, 300)
     return () => clearTimeout(timeoutId)
   }, [query])
-
+  const handleDashboard =  () => {
+    const token = localStorage.getItem('token')
+    if (!token) return router.push('/')
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (payload.role !== 'admin') {
+      router.push('/')
+    }
+    router.push('/admin/dashboard')
+  }
+  const handleProfile = () => {
+    setLoading(true)
+    router.push('/profile')
+  }
 
   return (
     <header className='sticky top-0 z-[100] w-full bg-[#080c14]/80 backdrop-blur-md border-b border-white/5 py-3 px-6 md:px-12 flex justify-between items-center'>
@@ -71,6 +88,10 @@ const Navbar = () => {
         
         <div className="relative hidden md:block">
           <div className="relative group">
+            {user?.role === 'admin' && (
+              <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
+              onClick={() => handleDashboard()}>Dashboard</button>
+            )}
             <input 
               type="text" 
               placeholder="Найти сокровище..." 
@@ -107,10 +128,16 @@ const Navbar = () => {
         
         <div className="flex items-center gap-4 border-l border-white/10 pl-6">
           <div 
-            className='w-10 h-10 rounded-full bg-gradient-to-br from-[#1a56db] to-[#60a5fa] flex items-center justify-center font-bold text-white shadow-lg shadow-blue-500/20 hover:scale-105 active:scale-95 transition-all cursor-pointer border border-white/10' 
-            onClick={() => router.push('/profile')}
+            className={`w-10 h-10 rounded-full bg-gradient-to-br from-[#1a56db] to-[#60a5fa] 
+              flex items-center justify-center font-bold text-white shadow-lg transition-all cursor-pointer
+              ${loading ? 'opacity-70 pointer-events-none' : 'hover:scale-105'}`} 
+            onClick={() => handleProfile()}
           >
-            {firstWord}
+            {loading ? (
+              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+            ) : (
+              firstWord
+            )}
           </div>
           <button 
             onClick={() => router.push('/donate')}
