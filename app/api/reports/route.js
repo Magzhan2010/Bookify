@@ -22,8 +22,8 @@ export async function POST(req){
 		if (!quote1 || !quote2 || !confusing ||		!life_example || !apply_today || !rating) {
   		return NextResponse.json({ error: "Все поля обязательны" }, { status: 400 })
 		}
-		if (quote1.length < 50 || quote2.length < 50 || confusing.length < 50 || life_example.length < 50 || apply_today.length < 50) {
-			return NextResponse.json({ error: "Минимум 50 слов" }, { status: 400 })
+		if (quote1.length < 20 || quote2.length < 20 || confusing.length < 20 || life_example.length < 20 || apply_today.length < 20) {
+			return NextResponse.json({ error: "Минимум 20 слов" }, { status: 400 })
 		}
 
 		

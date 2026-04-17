@@ -240,7 +240,6 @@ const Book = () => {
                 </a>
               )}
               
-              {/* ИЗМЕНЕНА КНОПКА ИЗБРАННОГО */}
               <button 
                 onClick={handleFavorities}
                 disabled={favLoading}
@@ -257,7 +256,6 @@ const Book = () => {
                   ✅ Сдать отчет
                 </button>
               ) : (
-                /* ИЗМЕНЕНА КНОПКА ЧТЕНИЯ */
                 <button
                   onClick={handleBorrow}
                   disabled={borrowLoading}
