@@ -28,6 +28,8 @@ const Profile = () => {
     end_date: today, 
     raiting: 5 
   });
+  const [readingGoal, setReadingGoal] = useState(12);
+  const [isEditingGoal, setIsEditingGoal] = useState(false);
   const [hoveredStar, setHoveredStar] = useState(0)
 
   const router = useRouter()
@@ -82,6 +84,9 @@ const Profile = () => {
       if (res.ok) {
         setIsAddingLog(false)
         setFormBook({ title: '', start_date: '', end_date: '', raiting: 5 })
+        toast.success("Запись успешно добавлена в трекер!", {
+        style: { background: '#0d1a2e', color: '#fff', border: '1px solid #1a56db' }
+        })
         await fetchData() 
       }
     } catch(err) {
@@ -107,7 +112,17 @@ const Profile = () => {
       })
     } catch (err) { console.error(err) }
   }
+  const handleGoalChange = (e) => {
+    const value = parseInt(e.target.value) || 0;
+    setReadingGoal(value);
+  };
 
+  const toggleGoalEdit = () => {
+    setIsEditingGoal(!isEditingGoal);
+    if (isEditingGoal) {
+      toast.success(`Цель обновлена: ${readingGoal} книг`);
+    }
+  };
   return (
     <div className="min-h-screen bg-[#080c14] text-white pb-20">
       {user && (
@@ -194,11 +209,13 @@ const Profile = () => {
             )}
 
             {/* SHELF TAB */}
+            
             {activeTab === 'shelf' && (
+              
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
                 {finishedBooks.length === 0 ? (
                   <div className="col-span-full py-20 text-center text-[#4a6080] border border-dashed border-white/5 rounded-3xl">
-                    На полке пока пусто.
+                    <EmptyState message="Вы еще не сдали ни одного отчета" actionLabel="Начать чтение" />
                   </div>
                 ) : (
                   finishedBooks.map(book => (
@@ -239,7 +256,6 @@ const Profile = () => {
               </div>
             )}
 
-            {/* REPORTS TAB */}
             {activeTab === 'reports' && (
               <div className="space-y-6">
                 {report.length === 0 ? (
@@ -280,134 +296,186 @@ const Profile = () => {
               </div>
             )}
 
-            {/* TRACKER TAB */}
             {activeTab === 'tracker' && (
-  <div className="space-y-6 animate-in fade-in duration-500">
-    {/* Header Section */}
-    <div className="flex flex-col gap-4">
-      <div>
-        <h2 className="text-xl md:text-2xl font-bold">Трекер чтения</h2>
-        <p className="text-[#4a6080] text-xs md:text-sm">Ваша личная история прочитанных книг</p>
-      </div>
-      <button 
-        onClick={() => setIsAddingLog(!isAddingLog)}
-        className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm"
-      >
-        {isAddingLog ? "Отмена" : <><Plus size={18} /> Добавить запись</>}
-      </button>
-    </div>
+              <div className="space-y-6 animate-in fade-in duration-500">
+                <div className="relative overflow-hidden bg-gradient-to-br from-[#1a56db]/20 to-transparent border border-blue-500/20 rounded-[32px] p-6 md:p-8">
+                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
+                    <div className="space-y-2">
+                      <div className="flex items-center gap-2 text-blue-400 font-bold uppercase text-[10px] tracking-[0.2em]">
+                        <Trophy size={14} /> Личная цель на 2026
+                      </div>
+                      
+                      <div className="flex items-center gap-3">
+                        {isEditingGoal ? (
+                          <input
+                            type="number"
+                            autoFocus
+                            value={readingGoal}
+                            onChange={handleGoalChange}
+                            onBlur={toggleGoalEdit}
+                            onKeyDown={(e) => e.key === 'Enter' && toggleGoalEdit()}
+                            className="bg-[#080c14] border border-blue-500 text-2xl font-black w-24 px-2 py-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
+                          />
+                        ) : (
+                          <h2 
+                            onClick={toggleGoalEdit}
+                            className="text-2xl md:text-3xl font-black cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-2 group/text"
+                          >
+                            Прочитать {readingGoal} книг
+                            <Plus size={16} className="text-[#4a6080] opacity-0 group-hover/text:opacity-100 transition-opacity" />
+                          </h2>
+                        )}
+                      </div>
 
-    {isAddingLog ? (
-      <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-5 md:p-10  max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
-        <div className="space-y-5">
-          <div className="space-y-2">
-            <label className="text-[13px] uppercase tracking-widest text-sky-500 font-bold ml-1">Название книги</label>
-            <input 
-              name="title"
-              value={formBook.title}
-              onChange={handleInputChange}
-              className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none transition-colors text-md"
-              placeholder="Напр: Мастер и Маргарита"
-            />
-          </div>
+                      <p className="text-[#4a6080] text-sm">
+                        Вы прочитали уже {finishedBooks.length}, осталось {Math.max(0, readingGoal - finishedBooks.length)}
+                      </p>
+                    </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <label className="text-[13px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата начала</label>
-              <input 
-                type="date"
-                name="start_date"
-                value={formBook.start_date}
-                onChange={handleInputChange}
-                className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
-              />
-            </div>
-            <div className="space-y-2">
-              <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата завершения</label>
-              <input 
-                type="date"
-                name="end_date"
-                value={formBook.end_date}
-                onChange={handleInputChange}
-                className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
-              />
-            </div>
-          </div>
-
-          <div className="space-y-3">
-            <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Ваша оценка</label>
-            <div className="flex gap-3 justify-center sm:justify-start">
-              {[1, 2, 3, 4, 5].map((star) => (
-                <button
-                  key={star}
-                  onMouseEnter={() => setHoveredStar(star)}
-                  onMouseLeave={() => setHoveredStar(0)}
-                  onClick={() => setFormBook(prev => ({ ...prev, raiting: star }))}
-                  className="transition-transform active:scale-75 shadow-sm"
-                >
-                  <Star 
-                    size={32} 
-                    className={`${
-                      star <= (hoveredStar || formBook.raiting) 
-                        ? "text-amber-400 fill-amber-400" 
-                        : "text-white/5"
-                    } transition-colors`}
-                  />
-                </button>
-              ))}
-            </div>
-          </div>
-
-          <button 
-            onClick={handleSubmit}
-            disabled={isSubmitting}
-            className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 text-sm ${
-              isSubmitting 
-                ? "bg-blue-900/50 text-white/50 cursor-not-allowed" 
-                : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/10"
-            }`}
-          >
-            {isSubmitting ? (
-              <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-            ) : "Сохранить"}
-          </button>
-        </div>
-      </div>
-    ) : (
-      /* Logs List: Stacked on mobile, 2 columns on tablet+ */
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-        {trackerLogs.length === 0 ? (
-          <div className="col-span-full">
-            <EmptyState message="История трекера пуста" actionLabel="Начать запись" />
-          </div>
-        ) : (
-          trackerLogs.map((log, idx) => (
-            <div key={idx} className="group p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[20px] active:bg-[#0d1a2e]/60 transition-all">
-              <div className="flex justify-between items-start mb-3">
-                <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400">
-                  <BookOpen size={23} />
+                    {/* Прогресс-бар тоже нужно обновить под новый стейт */}
+                    <div className="flex flex-col items-end gap-2">
+                      <div className="text-2xl font-black text-white">
+                        {Math.round((finishedBooks.length / (readingGoal || 1)) * 100)}%
+                      </div>
+                      <div className="w-full md:w-64 h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
+                        <div 
+                          className="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-1000 ease-out" 
+                          style={{ width: `${Math.min(100, (finishedBooks.length / (readingGoal || 1)) * 100)}%` }}
+                        />
+                      </div>
+                    </div>
+                  </div>
+                  
+                  {/* Декоративный элемент фона */}
+                  <div className="absolute -right-10 -bottom-10 text-blue-500/5 rotate-12">
+                    <BookOpenText size={200} />
+                  </div>
                 </div>
-                <div className="flex items-center gap-1 bg-[#080c14] px-2 py-1 rounded-full border border-white/5">
-                  <Star size={18} className="text-amber-400 fill-amber-400" />
-                  <span className="text-[10px] font-bold text-amber-400">{log.raiting}/5</span>
+                {/* Header Section */}
+                <div className="flex flex-col gap-4">
+                  <div>
+                    <h2 className="text-xl md:text-2xl font-bold">Трекер чтения</h2>
+                    <p className="text-[#4a6080] text-xs md:text-sm">Ваша личная история прочитанных книг</p>
+                  </div>
+                  <button 
+                    onClick={() => setIsAddingLog(!isAddingLog)}
+                    className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm"
+                  >
+                    {isAddingLog ? "Отмена" : <><Plus size={18} /> Добавить запись</>}
+                  </button>
                 </div>
+
+                {isAddingLog ? (
+                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-5 md:p-10  max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
+                    <div className="space-y-5">
+                      <div className="space-y-2">
+                        <label className="text-[13px] uppercase tracking-widest text-sky-500 font-bold ml-1">Название книги</label>
+                        <input 
+                        name="title"
+                        value={formBook.title}
+                        onChange={handleInputChange}
+                        className="w-full bg-[#080c14] border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition-all text-white placeholder:text-white/10 shadow-inner"
+                        placeholder="Введите полное название книги..."
+                      />
+                      </div>
+
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <label className="text-[13px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата начала</label>
+                          <input 
+                            type="date"
+                            name="start_date"
+                            value={formBook.start_date}
+                            onChange={handleInputChange}
+                            className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата завершения</label>
+                          <input 
+                            type="date"
+                            name="end_date"
+                            value={formBook.end_date}
+                            onChange={handleInputChange}
+                            className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-3">
+                        <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Ваша оценка</label>
+                        <div className="flex gap-3 justify-center sm:justify-start">
+                          {[1, 2, 3, 4, 5].map((star) => (
+                            <button
+                              key={star}
+                              onMouseEnter={() => setHoveredStar(star)}
+                              onMouseLeave={() => setHoveredStar(0)}
+                              onClick={() => setFormBook(prev => ({ ...prev, raiting: star }))}
+                              className="transition-transform active:scale-75 shadow-sm"
+                            >
+                              <Star 
+                                size={32} 
+                                className={`${
+                                  star <= (hoveredStar || formBook.raiting) 
+                                    ? "text-amber-400 fill-amber-400" 
+                                    : "text-white/5"
+                                } transition-colors`}
+                              />
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <button 
+                        onClick={handleSubmit}
+                        disabled={isSubmitting}
+                        className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 text-sm ${
+                          isSubmitting 
+                            ? "bg-blue-900/50 text-white/50 cursor-not-allowed" 
+                            : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/10"
+                        }`}
+                      >
+                        {isSubmitting ? (
+                          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
+                        ) : "Сохранить"}
+                      </button>
+                    </div>
+                  </div>
+                ) : (
+                  /* Logs List: Stacked on mobile, 2 columns on tablet+ */
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
+                    {trackerLogs.length === 0 ? (
+                      <div className="col-span-full">
+                        <EmptyState message="История трекера пуста" actionLabel="Начать запись" />
+                      </div>
+                    ) : (
+                      trackerLogs.map((log, idx) => (
+                        <div key={idx} className="group p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[20px] active:bg-[#0d1a2e]/60 transition-all">
+                          <div className="flex justify-between items-start mb-3">
+                            <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400">
+                              <BookOpen size={23} />
+                            </div>
+                            <div className="flex items-center gap-1 bg-[#080c14] px-2 py-1 rounded-full border border-white/5">
+                              <Star size={18} className="text-amber-400 fill-amber-400" />
+                              <span className="text-[10px] font-bold text-amber-400">{log.raiting}/5</span>
+                            </div>
+                          </div>
+                          <h3 className="text-base font-bold mb-2 line-clamp-1">{log.title}</h3>
+                          <div className="flex items-center gap-3 text-[11px] text-[#4a6080] font-medium">
+                            <div className="flex items-center gap-1">
+                              <Clock size={18} />
+                              <span>{new Date(log.start_date).toLocaleDateString()}</span>
+                            </div>
+                            <span className="opacity-30">—</span>
+                            <span>{new Date(log.end_date).toLocaleDateString()}</span>
+                          </div>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                )}
               </div>
-              <h3 className="text-base font-bold mb-2 line-clamp-1">{log.title}</h3>
-              <div className="flex items-center gap-3 text-[11px] text-[#4a6080] font-medium">
-                <div className="flex items-center gap-1">
-                  <Clock size={18} />
-                  <span>{new Date(log.start_date).toLocaleDateString()}</span>
-                </div>
-                <span className="opacity-30">—</span>
-                <span>{new Date(log.end_date).toLocaleDateString()}</span>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
-    )}
-  </div>
-)}
+            )}
           </div>
         </div>
       )}
