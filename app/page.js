@@ -72,7 +72,7 @@ export default function LandingPage() {
           </motion.h1>
 
           <motion.p variants={fadeInUp} className="text-[#94a3b8] text-lg md:text-xl mb-12 max-w-2xl mx-auto leading-relaxed">
-            90% информации забывается через неделю. Bookify превращает пассивное чтение книг в осознанный навык через систему отчетов и обратной связи от кураторов.
+            90% информации забывается через неделю. Bookify превращает пассивное чтение книг в осознанный навык через систему отчетов и обратной связи от ИИ.
           </motion.p>
 
           <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-4 justify-center">
