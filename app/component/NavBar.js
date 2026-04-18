@@ -94,16 +94,16 @@ const Navbar = () => {
       </div>
 
       <div className='flex items-center gap-6'>
-        
+        {user?.role === 'admin' && (
+          <div className="mb-3">
+            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
+            onClick={() => handleDashboard()}>Dashboard</button>
+            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" onClick={() => handleAdmin()}>Admin</button>
+          </div>
+        )}
         <div className="relative hidden md:block">
+          
           <div className="relative group">
-            {user?.role === 'admin' && (
-              <div>
-                <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
-                onClick={() => handleDashboard()}>Dashboard</button>
-                <button onClick={() => handleAdmin()}>Admin</button>
-              </div>
-            )}
             <input 
               type="text" 
               placeholder="Найти сокровище..." 

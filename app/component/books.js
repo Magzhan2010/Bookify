@@ -24,7 +24,7 @@ const Books = ({ books,myFinishedId = [], myReadingId =[] }) => {
      return (
         <motion.div 
             key={books.map(b => b.id).join(',')} 
-            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-15"
+            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-15"
             variants={containerVariants}
             initial="hidden"
             animate="show"
