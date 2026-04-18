@@ -69,7 +69,7 @@ const Book = () => {
     };
     fetchBooks();
   }, [id]);
-
+  
   const handleBorrow = async () => {
     setBorrowLoading(true);
     setBorrowError('');
@@ -209,9 +209,14 @@ const Book = () => {
         </button>
       )}
 
-      {book && (
-        <div className="flex flex-col lg:flex-row gap-20 ">
-          <div className="relative w-[350px] h-[510px] flex-shrink-0 mx-auto lg:mx-0">
+      {!book ? (
+      <div className="flex justify-center items-center h-screen">
+        <Spinner />
+      </div>
+      ) : (
+        <div className="flex flex-col items-center lg:flex-row gap-20 ">
+          <div className="relative w-full max-w-[280px] aspect-[2/3] flex-shrink-0 mx-auto lg:mx-0">
+
             <Image
               src={book.cover_url}
               fill
@@ -220,16 +225,14 @@ const Book = () => {
               priority
             />
           </div>
-
           <div className="flex-1 font-montserrat">
-            <h1 className="text-4xl font-bold leading-tight text-white">{book.title}</h1>
+
+            <h1 className="text-2xl md:text-4xl font-bold leading-tight text-white">{book.title}</h1>
             <p className="text-blue-500/80 text-xl font-semibold mt-2 mb-8">{book.author}</p>
-            
             <p className="text-md md:text-lg leading-relaxed text-[#cbd5e1] mb-12 max-w-4xl">
               {book.description}
             </p>
-
-            <div className="flex flex-wrap gap-8 mb-12">
+            <div className="flex flex-col sm:flex-row flex-wrap gap-8 mb-12">
               {book.file && (
                 <a 
                   href={book.file} 
@@ -239,7 +242,6 @@ const Book = () => {
                   Скачать PDF
                 </a>
               )}
-              
               <button 
                 onClick={handleFavorities}
                 disabled={favLoading}
@@ -247,7 +249,6 @@ const Book = () => {
               >
                 {favLoading ? <Spinner /> : "❤️"} В избранное
               </button>
-
               {myBorrowId ? (
                 <button
                   onClick={() => router.push(`/report/${myBorrowId}`)}
@@ -259,13 +260,12 @@ const Book = () => {
                 <button
                   onClick={handleBorrow}
                   disabled={borrowLoading}
-                  className="px-10 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-[#1a56db] to-[#60a5fa] text-white hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
+                  className="w-full sm:w-auto px-10 py-3 rounded-xl font-bold transition-all bg-gradient-to-r from-[#1a56db] to-[#60a5fa] text-white hover:scale-105 active:scale-95 shadow-lg shadow-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 flex items-center gap-2"
                 >
                   {borrowLoading ? <><Spinner /> Обработка...</> : "📖 Начать чтение"}
                 </button>
               )}
             </div>
-
             <div className="grid grid-cols-2 md:grid-cols-3 gap-y-8 text-sm border-t border-[#162236] pt-10">
               <div>
                 <p className="text-[#4a6080] mb-1">Категория</p>
@@ -285,10 +285,8 @@ const Book = () => {
           </div>
         </div>
       )}
-      
       <div className="mt-16 border-t border-[#162236] pt-10">
         <h3 className="text-2xl font-bold text-white mb-8">Комментарии</h3>
-
         <div className="mb-10 bg-[#0d1a2e] p-6 rounded-2xl border border-[#162236]">
           <textarea 
             placeholder="Напишите честный отзыв о книге..." 

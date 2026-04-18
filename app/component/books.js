@@ -24,7 +24,7 @@ const Books = ({ books,myFinishedId = [], myReadingId =[] }) => {
      return (
         <motion.div 
             key={books.map(b => b.id).join(',')} 
-            className="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-15"
+            className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-6 mt-15"
             variants={containerVariants}
             initial="hidden"
             animate="show"
@@ -43,35 +43,35 @@ const Books = ({ books,myFinishedId = [], myReadingId =[] }) => {
                     <motion.div 
                         key={book.id} 
                         variants={cardVariants}
-                        whileHover={{ y: -6, transition: { duration: 0.2 } }}
+                        whileHover={{ y: -6, transition: { duration: 0.2 },scale: 0.95 }}
                         className="bg-[#0d1a2e] rounded-2xl overflow-hidden cursor-pointer border border-[#162236] hover:border-[#1a56db] hover:shadow-lg hover:shadow-blue-500/5 relative" 
                         onClick={() => router.push(`/books/${book.id}`)}
                     >
-                        <div className="absolute bottom-3 right-4 z-10">
+                        <div className="absolute top-2 left-2 z-10">
                             {isFinished && (
-                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-emerald-500/90 text-white shadow-lg backdrop-blur-sm">
+                                <span className="px-2.5 py-1 rounded-lg text-[8px] md:text-[10px] font-black uppercase tracking-wider bg-emerald-500/90 text-white shadow-lg backdrop-blur-sm">
                                     Прочитано
                                 </span>
                             )}
                             {isReading && !isFinished && (
-                                <span className="px-2.5 py-1 rounded-lg text-[10px] font-black uppercase tracking-wider bg-amber-500/90 text-white shadow-lg backdrop-blur-sm">
+                                <span className="px-2.5 py-1 rounded-lg text-[8px] md:text-[10px] font-black uppercase tracking-wider bg-amber-500/90 text-white shadow-lg backdrop-blur-sm">
                                     Читаю
                                 </span>
                             )}
                         </div>
 
-                        <div className="w-full h-95 overflow-hidden">
+                        <div className="w-full h-64 md:h-80 lg:h-95 overflow-hidden">
                             <img 
                                 src={book.cover_url} 
                                 alt={book.title}
                                 className="w-full h-full object-cover object-center hover:scale-105 transition-transform duration-500"
                             />
                         </div>
-                        <div className="flex flex-col gap-1 p-4">
-                            <h1 className="text-xl font-semibold truncate text-white">{book.title}</h1>
-                            <h3 className="text-sm text-[#4a6080]">{book.author}</h3>
+                        <div className="flex flex-col gap-1 p-3 md:p-4">
+                            <h1 className="text-base truncate md:text-xl font-semibold truncate text-white">{book.title}</h1>
+                            <h3 className="text-xs md:text-sm text-[#4a6080] truncate">{book.author}</h3>
                             <div className="flex items-center justify-between mt-2">
-                                <p className="text-sm text-[#1a56db] font-medium">{book.genre}</p>
+                                <p className="text-sm text-[#1a56db] font-medium truncate">{book.genre}</p>
                                 <p className="text-xs text-[#4a6080]">{book.year}</p>
                             </div>
                         </div>
