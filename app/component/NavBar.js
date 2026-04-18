@@ -67,6 +67,15 @@ const Navbar = () => {
     }
     router.push('/admin/dashboard')
   }
+  const handleAdmin =  () => {
+    const token = localStorage.getItem('token')
+    if (!token) return router.push('/')
+    const payload = JSON.parse(atob(token.split('.')[1]))
+    if (payload.role !== 'admin') {
+      router.push('/')
+    }
+    router.push('/admin')
+  }
   const handleProfile = () => {
     setLoading(true)
     router.push('/profile')
@@ -89,8 +98,11 @@ const Navbar = () => {
         <div className="relative hidden md:block">
           <div className="relative group">
             {user?.role === 'admin' && (
-              <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
-              onClick={() => handleDashboard()}>Dashboard</button>
+              <div>
+                <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
+                onClick={() => handleDashboard()}>Dashboard</button>
+                <button onClick={() => handleAdmin()}>Admin</button>
+              </div>
             )}
             <input 
               type="text" 
