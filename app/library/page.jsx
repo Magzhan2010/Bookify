@@ -176,14 +176,14 @@ const Library = () => {
         </div>
 
         <div className="relative">
-          {loading ? (
+          {books.length === 0 && loading ? (
             <SkeletonGrid />
-          ) : filtered.length > 0 ? (
+          ) : (
             <>
               <Books books={filtered} myFinishedId={myFinishedId} myReadingId={myReadingId} />
               
-              <div ref={observerRef} className="h-10 w-full flex justify-center items-center mt-10">
-                {page > 1 && hasMore && (
+               <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
+                {hasMore && (
                   <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin"></div>
                 )}
               </div>
@@ -234,10 +234,6 @@ const Library = () => {
                 
               )}
             </>
-          ) : (
-            <div className="text-center py-20 bg-[#0d1a2e]/20 rounded-3xl border border-dashed border-white/10">
-              <p className="text-[#4a6080]">В этой категории пока нет книг...</p>
-            </div>
           )}
         </div>
       </div>
