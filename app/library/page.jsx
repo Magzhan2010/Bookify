@@ -11,7 +11,7 @@ const Library = () => {
   const [books, setBooks] = useState([])
   const [activeGenre, setActiveGenre] = useState('Все')
   const [loading, setLoading] = useState(true)
-  
+  const [totalBooks, setTotalBooks] = useState(0)
   // Данные профиля
   const [myFinishedId, setMyFinishedId] = useState([])
   const [myReadingId, setMyReadingId] = useState([])
@@ -42,7 +42,7 @@ const Library = () => {
       const data = await res.json()
       
       // Если пришло меньше 2 книг (потому что limit=2), значит база кончилась!
-      if (data.length < 2) {
+      if (data.length < 12) {
         setHasMore(false)
       }
 
@@ -58,8 +58,17 @@ const Library = () => {
       setLoading(false)
     }
   }
-
-  // Загрузка профиля (один раз при старте)
+  useEffect(() => {
+    const fetchTotalBooks = async() => {
+      const res = await fetch('/api/books?countOnly=true', {
+        method: "GET",
+        headers: { "Content-Type": "application/json" }
+      })
+      const data = await res.json()
+      setTotalBooks(Number(data.total))
+    }
+    fetchTotalBooks()
+  },[])
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token')
@@ -130,7 +139,7 @@ const Library = () => {
 
         <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
           {[
-            { label: "Всего книг", value: books.length || 0, color: "from-white to-white/60" },
+            { label: "Всего книг", value: totalBooks || 0, color: "from-white to-white/60" },
             { label: "Прочитал", value: myShelf, color: "from-green-400 to-emerald-600" },
           ].map((stat, i) => (
             <div key={i} className="relative group overflow-hidden bg-[#0d1a2e]/40 border border-white/5 p-6 rounded-3xl backdrop-blur-sm">

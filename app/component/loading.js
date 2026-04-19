@@ -7,7 +7,6 @@ export default function ProfileLoading() {
       {/* Скелетон Имени */}
       <div className="h-8 w-48 bg-white/5 rounded-lg animate-pulse mb-4" />
       
-      {/* Скелетон Инфо-блоков */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 w-full max-w-2xl mt-8">
         {[1, 2, 3, 4].map((i) => (
           <div key={i} className="h-24 bg-white/5 border border-white/5 rounded-2xl animate-pulse" />

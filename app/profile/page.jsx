@@ -135,15 +135,15 @@ const Profile = () => {
           </button>
 
           {/* User Header */}
-          <div className="pb-8 flex flex-col md:flex-row items-center gap-8 border-b border-white/5">
+          <div className="pb-8 flex flex-row md:flex-row items-center gap-8 border-b border-white/5">
             <div className="relative group">
               <div className="absolute -inset-1 bg-gradient-to-r from-[#1a56db] to-[#60a5fa] rounded-full blur opacity-25 group-hover:opacity-50 transition"></div>
-              <div className='relative w-24 h-24 rounded-full bg-[#0d1a2e] border-2 border-[#1a56db] flex items-center justify-center font-bold text-4xl shadow-2xl'>
+              <div className='relative w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#0d1a2e] border-2 border-[#1a56db] flex items-center justify-center font-bold text-4xl shadow-2xl'>
                 {firstWord}
               </div>
             </div>
             <div className="text-center md:text-left space-y-2">
-              <h1 className="text-3xl md:text-5xl mb-4 font-black tracking-tight">{user.name}</h1>
+              <h1 className="text-xl md:text-5xl mb-4 font-black tracking-tight">{user.name}</h1>
               <span className="px-4 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] uppercase font-bold tracking-widest rounded-full">
                 {user.role}
               </span>
@@ -151,7 +151,7 @@ const Profile = () => {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
+          <div className="grid grid-cols-2 sm:flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
             {[
               { id: 'shelf', label: 'Полка', icon: Trophy, count: finishedBooks?.length },
               { id: 'reading', label: 'Читаю', icon: BookOpenText, count: activeBooks?.length },
@@ -162,7 +162,7 @@ const Profile = () => {
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-6 py-3 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
+                className={`flex items-center gap-2 px-2 py-2 sm:px-6 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
                   activeTab === tab.id 
                     ? "bg-[#1a56db] text-white shadow-lg shadow-blue-500/20" 
                     : "text-[#4a6080] hover:text-white hover:bg-white/5"
@@ -171,7 +171,7 @@ const Profile = () => {
                 <tab.icon size={18} />
                 <span className="hidden sm:inline">{tab.label}</span>
                 {tab.count > 0 && (
-                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] ${activeTab === tab.id ? 'bg-white/20' : 'bg-[#162236]'}`}>
+                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-sm ${activeTab === tab.id ? 'bg-white/20' : 'bg-[#162236]'}`}>
                     {tab.count}
                   </span>
                 )}
@@ -187,8 +187,8 @@ const Profile = () => {
                   <EmptyState message="Сейчас вы ничего не читаете" actionLabel="Выбрать книгу" />
                 ) : (
                   activeBooks.map(book => (
-                    <div key={book.borrow_id} className="group flex flex-col sm:flex-row items-center gap-6 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]">
-                      <img src={book.cover_url} className="w-20 h-28 object-cover rounded-xl" alt="" />
+                    <div key={book.borrow_id} className="group flex flex-row sm:flex-col items-center gap-6 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]">
+                      <img src={book.cover_url} className="w-14 h-20 md:w-20 md:h-28 object-cover rounded-xl" alt="" />
                       <div className="flex-1 text-center sm:text-left">
                         <h3 className="text-xl font-bold mb-1">{book.title}</h3>
                         <p className="text-[#4a6080] mb-3">{book.author}</p>
@@ -319,7 +319,7 @@ const Profile = () => {
                         ) : (
                           <h2 
                             onClick={toggleGoalEdit}
-                            className="text-2xl md:text-3xl font-black cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-2 group/text"
+                            className="text-lg md:text-3xl font-black cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-2 group/text"
                           >
                             Прочитать {readingGoal} книг
                             <Plus size={16} className="text-[#4a6080] opacity-0 group-hover/text:opacity-100 transition-opacity" />
@@ -366,7 +366,7 @@ const Profile = () => {
                 </div>
 
                 {isAddingLog ? (
-                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-5 md:p-10  max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
+                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-4 md:p-10  max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
                     <div className="space-y-5">
                       <div className="space-y-2">
                         <label className="text-[13px] uppercase tracking-widest text-sky-500 font-bold ml-1">Название книги</label>
@@ -414,11 +414,10 @@ const Profile = () => {
                               className="transition-transform active:scale-75 shadow-sm"
                             >
                               <Star 
-                                size={32} 
                                 className={`${
                                   star <= (hoveredStar || formBook.raiting) 
-                                    ? "text-amber-400 fill-amber-400" 
-                                    : "text-white/5"
+                                    ? "text-amber-400 fill-amber-400 w-24 md:w-32" 
+                                    : "text-white/5 w-24 md:w-32" 
                                 } transition-colors`}
                               />
                             </button>

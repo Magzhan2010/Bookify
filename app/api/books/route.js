@@ -4,13 +4,23 @@ import pool from '../../../lib/db'
 
 export async function GET(req) {
 	const { searchParams } = new URL(req.url)
+	const countOnly = searchParams.get('countOnly') === 'true'
 	const page = parseInt(searchParams.get('page')) || 1
 
-	const limit = 12
-	const offset = (page - 1) * limit
+	
+	if (countOnly) {
+		const result = await pool.query("SELECT COUNT(*) AS total FROM books")
+		const sortBooks = await pool.query('SELECT * FROM books;')
 
-	const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2;', [limit,offset])
-	return NextResponse.json(result.rows)
+		return NextResponse.json({total: result.rows[0].total,sortBooks: result.rows[0]})
+	} else {
+		const limit = 12
+		const offset = (page - 1) * limit
+		const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2;', [limit,offset])
+		return NextResponse.json(result.rows)
+	}
+
+
 };
 
 
