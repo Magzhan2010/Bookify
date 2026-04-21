@@ -5,15 +5,21 @@ import pool from '../../../lib/db'
 export async function GET(req) {
     const { searchParams } = new URL(req.url)
     
-    // 1. Сначала проверяем запрошены ли просто все жанры
+    // 1. Запрос всех жанров для кнопок
     const allGenres = searchParams.get('allGenres') === 'true'
     if (allGenres) {
         const result = await pool.query('SELECT DISTINCT genre FROM books ORDER BY genre ASC')
-        // Возвращаем массив строк ['Бизнес', 'Психология', ...]
         return NextResponse.json(result.rows.map(row => row.genre))
     }
 
-    // Дальше идет твой обычный код...
+    // 2. НОВОЕ: Запрос ВСЕХ книг без лимита (для Админки)
+    const allBooks = searchParams.get('allBooks') === 'true'
+    if (allBooks) {
+        const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC')
+        return NextResponse.json(result.rows)
+    }
+
+    // Дальше идет обычный код для библиотеки с пагинацией...
     const countOnly = searchParams.get('countOnly') === 'true'
     const page = parseInt(searchParams.get('page')) || 1
     const limit = 12

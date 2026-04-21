@@ -299,10 +299,10 @@ export default function LandingPage() {
                 <span className="opacity-70 ml-1">Divergents Leadership School.</span>
               </p>
                         
-              <p className="text-[12px] uppercase tracking-[0.2em] text-[#25334a] font-bold">
+              <p className="text-[14px] text-[#25334a] font-bold">
                 Designed & Developed by 
-                <span className="ml-2 text-[#4a6080] hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
-                  Magzhan
+                <span className="ml-2 text-white hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
+                  Magzhan,Ersultan(added books)
                 </span>
                 </p>
           </div>
