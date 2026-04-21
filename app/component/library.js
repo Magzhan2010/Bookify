@@ -192,7 +192,7 @@ const Library = () => {
             <span className="text-sm text-[#4a6080]">{totalBooks} книг найдено</span>
           </div>
 
-          <div className="flex items-center gap-3 overflow-x-auto pb-4">
+          <div className="flex flex-wrap items-center gap-3 pb-4">
             {allGenres.map(genre => (
               <button
                 key={genre}
