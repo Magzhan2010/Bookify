@@ -187,7 +187,7 @@ const Profile = () => {
                   <EmptyState message="Сейчас вы ничего не читаете" actionLabel="Выбрать книгу" />
                 ) : (
                   activeBooks.map(book => (
-                    <div key={book.borrow_id} className="group flex flex-row sm:flex-col items-center gap-6 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]">
+                    <div key={book.borrow_id} className="group flex items-center gap-6 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]">
                       <img src={book.cover_url} className="w-14 h-20 md:w-20 md:h-28 object-cover rounded-xl" alt="" />
                       <div className="flex-1 text-center sm:text-left">
                         <h3 className="text-xl font-bold mb-1">{book.title}</h3>
