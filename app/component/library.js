@@ -147,7 +147,7 @@ const Library = () => {
   }, [page])
 
   return (
-    <main className="min-h-screen bg-[#080c14] text-white pb-20">
+    <main className="min-h-screen  text-white pb-20">
       <Navbar />
 
       <div className="max-w-[1200px] mx-auto px-6 md:px-10">

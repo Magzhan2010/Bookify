@@ -99,7 +99,7 @@ const Navbar = () => {
   }
 
   return (
-    <header className='sticky top-0 z-[100] w-full bg-[#080c14]/80 backdrop-blur-md border-b border-white/5 py-3 px-6 md:px-12  flex justify-between items-center'>
+    <header className='sticky top-0 z-[100] w-full bg-[#080c14]/80 backdrop-blur-md border-b border-white/5 py-3 px-4 sm:px-6 md:px-12 flex justify-between items-center'>
       
       <div className='flex gap-3 items-center cursor-pointer group' onClick={() => router.push('/')}>
         <div className="relative overflow-hidden rounded-xl bg-blue-500/10 p-1 group-hover:bg-blue-500/20 transition-colors ">
@@ -189,7 +189,7 @@ const Navbar = () => {
       </div>
 
       {is_open && (
-        <div  className="fixed top-[72px] left-0 w-full h-[calc(100vh-72px)] bg-[#080c14] z-[110] p-6 flex flex-col gap-8">
+        <div  className="fixed top-[72px] left-0 w-full h-[calc(100vh-72px)] bg-[#080c14] z-[110] p-4 sm:p-6 flex flex-col gap-8">
           <div className="relative">
             <input 
                 type="text" 
@@ -252,7 +252,7 @@ const Navbar = () => {
                 ❤️ <span>Донат</span>
               </button>
               <button 
-                className="bg-blue-700 hover:bg-sky-500/20 hover:text-sky-400 text-white transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mb-2 text-center w-ful"
+                className="bg-blue-700 hover:bg-sky-500/20 hover:text-sky-400 text-white transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mb-2 text-center w-full"
                 onClick={handleGetOut}
               >
                 Выйти

@@ -302,9 +302,9 @@ export default function LandingPage() {
               <p className="text-[14px] text-[#25334a] font-bold">
                 Designed & Developed by 
                 <span className="ml-2 text-white hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
-                  Magzhan,Ersultan(added books)
+                  Magzhan,Yersultan(added books)
                 </span>
-                </p>
+              </p>
           </div>
                       
         </div>

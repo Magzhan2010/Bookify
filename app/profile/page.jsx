@@ -1,5 +1,6 @@
 'use client'
 import { useEffect, useState } from "react"
+import { motion } from "framer-motion"
 import { BookOpen, Heart, FileText, Trash2, ArrowLeft, Trophy, BookOpenText, CheckCircle, Clock, Plus, Star } from "lucide-react" 
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
@@ -124,7 +125,12 @@ const Profile = () => {
     }
   };
   return (
-    <div className="min-h-screen bg-[#080c14] text-white pb-20">
+    <motion.div
+      className="min-h-screen bg-[#080c14] text-white pb-20"
+      initial={{ opacity: 0, y: 8 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.35 }}
+    >
       {user && (
         <div className="max-w-[1100px] mx-auto px-6">
           <button 
@@ -151,7 +157,7 @@ const Profile = () => {
           </div>
 
           {/* Tabs Navigation */}
-          <div className="grid grid-cols-2 sm:flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
+          <div className="grid grid-cols-5 justify-center items-center sm:flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
             {[
               { id: 'shelf', label: 'Полка', icon: Trophy, count: finishedBooks?.length },
               { id: 'reading', label: 'Читаю', icon: BookOpenText, count: activeBooks?.length },
@@ -182,15 +188,33 @@ const Profile = () => {
           <div className="mt-12">
             {/* READING TAB */}
             {activeTab === 'reading' && (
-              <div className="space-y-4">
+              <motion.div
+                key="reading"
+                className="space-y-4"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+              >
                 {activeBooks.length === 0 ? (
                   <EmptyState message="Сейчас вы ничего не читаете" actionLabel="Выбрать книгу" />
                 ) : (
                   activeBooks.map(book => (
-                    <div key={book.borrow_id} className="group flex items-center gap-6 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]">
-                      <img src={book.cover_url} className="w-14 h-20 md:w-20 md:h-28 object-cover rounded-xl" alt="" />
+                    <motion.div
+                      key={book.borrow_id}
+                      className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ duration: 0.25 }}
+                    >
+                      <img
+                        src={book.cover_url}
+                        className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0"
+                        alt=""
+                      />
                       <div className="flex-1 text-center sm:text-left">
-                        <h3 className="text-xl font-bold mb-1">{book.title}</h3>
+                        <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
                         <p className="text-[#4a6080] mb-3">{book.author}</p>
                         <div className="text-orange-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full w-fit mx-auto sm:mx-0">
                           Срок: 14 дней
@@ -202,10 +226,10 @@ const Profile = () => {
                       >
                         Сдать отчет
                       </button>
-                    </div>
+                    </motion.div>
                   ))
                 )}
-              </div>
+              </motion.div>
             )}
 
             {/* SHELF TAB */}
@@ -242,7 +266,7 @@ const Profile = () => {
                     <div key={book.id} className="group relative">
                       <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
                         <img src={book.cover_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent opacity-0 group-hover:opacity-100 transition-opacity flex items-end p-4">
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 md:from-black/80 via-transparent to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-end p-4">
                            <button onClick={() => handleRemoveFav(book.id)} className="w-full py-2 bg-red-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2">
                              <Trash2 size={14} /> Убрать
                            </button>
@@ -257,15 +281,28 @@ const Profile = () => {
             )}
 
             {activeTab === 'reports' && (
-              <div className="space-y-6">
+              <motion.div
+                key="reports"
+                className="space-y-6"
+                initial={{ opacity: 0, y: 10 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.35 }}
+              >
                 {report.length === 0 ? (
                   <EmptyState message="Вы еще не сдали ни одного отчета" actionLabel="Начать чтение" />
                 ) : (
                   report.map(rep => (
-                    <div key={rep.id} className="bg-[#0d1a2e]/40 border border-white/5 rounded-[24px] p-6 space-y-6">
+                    <motion.div
+                      key={rep.id}
+                      className="bg-[#0d1a2e]/40 border border-white/5 rounded-[24px] p-4 sm:p-6 space-y-4 sm:space-y-6"
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      whileHover={{ y: -2 }}
+                      transition={{ duration: 0.25 }}
+                    >
                       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                         <div>
-                          <h3 className="text-xl font-bold text-white">«{rep.book_title}»</h3>
+                          <h3 className="text-lg sm:text-xl font-bold text-white">«{rep.book_title}»</h3>
                           <p className="text-sm text-[#4a6080] mt-1">{new Date(rep.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center gap-4">
@@ -290,10 +327,10 @@ const Profile = () => {
                           </div>
                         </div>
                       )}
-                    </div>
+                    </motion.div>
                   ))
                 )}
-              </div>
+              </motion.div>
             )}
 
             {activeTab === 'tracker' && (
@@ -322,7 +359,7 @@ const Profile = () => {
                             className="text-lg md:text-3xl font-black cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-2 group/text"
                           >
                             Прочитать {readingGoal} книг
-                            <Plus size={16} className="text-[#4a6080] opacity-0 group-hover/text:opacity-100 transition-opacity" />
+                            <Plus size={16} className="text-[#4a6080] opacity-100 md:opacity-0 md:group-hover/text:opacity-100 transition-opacity" />
                           </h2>
                         )}
                       </div>
@@ -478,7 +515,7 @@ const Profile = () => {
           </div>
         </div>
       )}
-    </div>
+    </motion.div>
   )
 }
 

@@ -1,5 +1,6 @@
 'use client'
 
+import { motion } from "framer-motion"
 import { useParams, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
@@ -85,9 +86,15 @@ const Reports = () => {
 	
 	
 	return(
-		<div className="max-w-[800px] mx-auto px-6 py-12 min-h-screen bg-[#080c14] text-white">
+		<div className="max-w-[800px] mx-auto px-4 sm:px-6 py-10 sm:py-12 min-h-screen bg-[#080c14] text-white">
 			
 			<div className="text-center mb-12 relative">
+        <button 
+            onClick={() => window.history.back()} 
+            className="text-[#4a6070] hover:text-white transition-colors flex items-center gap-2"
+          >
+            ← Назад
+          </button>
 				<div className="absolute inset-0 bg-[#1a56db] blur-[120px] opacity-10 -z-10"></div>
 				<p className="text-[#4a6080] text-sm uppercase tracking-[0.3em] font-mono mb-4">Divergents Academic</p>
 				<h1 className="text-3xl md:text-4xl font-extrabold mb-4 bg-gradient-to-r from-white to-[#60a5fa] bg-clip-text text-transparent leading-tight">
@@ -123,99 +130,140 @@ const Reports = () => {
         )}
 
 
-		<div className="flex flex-col gap-10 mt-12">
+		<motion.div
+			className="flex flex-col gap-10 mt-12"
+			initial={{ opacity: 0, y: 10 }}
+			animate={{ opacity: 1, y: 0 }}
+			transition={{ duration: 0.35 }}
+		>
     
-    <div className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300">
+    <motion.div
+			initial={{ opacity: 0, y: 18 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, amount: 0.25 }}
+			transition={{ duration: 0.35 }}
+			className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
+		>
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
         
         <label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">1</span>
             Две важные цитаты из главы
         </label>
-        <p className="text-[#4a6080] text-sm mb-4 ml-11">Найдите 2 ключевые мысли автора и объясните своими словами, почему они важны.</p>
+        <p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Найдите 2 ключевые мысли автора и объясните своими словами, почему они важны.</p>
         
         <textarea 
             onChange={e => setQuote1(e.target.value)} 
             value={quote1} 
             placeholder="Например: 'Дисциплина — это решение делать то, чего очень не хочется делать...' Мой смысл: ..."
-            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-44 placeholder-[#1c2a40]"
+            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
         />
-    </div>
+    </motion.div>
 
     {/* Шаг 2 */}
-    <div className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300">
+    <motion.div
+			initial={{ opacity: 0, y: 18 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, amount: 0.25 }}
+			transition={{ duration: 0.35 }}
+			className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
+		>
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
         
         <label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">2</span>
             Что было непонятно или удивило?
         </label>
-        <p className="text-[#4a6080] text-sm mb-4 ml-11">Опишите концепции, которые заставили вас задуматься или вызвали вопросы.</p>
+        <p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Опишите концепции, которые заставили вас задуматься или вызвали вопросы.</p>
         
         <textarea 
             onChange={e => setQuote2(e.target.value)} 
             value={quote2} 
             placeholder="Меня удивил тот факт, что наш мозг тратит 20% всей энергии..."
-            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-44 placeholder-[#1c2a40]"
+            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
         />
-    </div>
+    </motion.div>
 
     {/* Шаг 3 */}
-    <div className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300">
+    <motion.div
+			initial={{ opacity: 0, y: 18 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, amount: 0.25 }}
+			transition={{ duration: 0.35 }}
+			className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
+		>
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
         
         <label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">3</span>
             Как это проявляется в твоей жизни?
         </label>
-        <p className="text-[#4a6080] text-sm mb-4 ml-11">Свяжите прочитанное с личным опытом или ситуациями в вашей школе/жизни.</p>
+        <p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Свяжите прочитанное с личным опытом или ситуациями в вашей школе/жизни.</p>
         
         <textarea 
             onChange={e => setLifeExample(e.target.value)} 
             value={lifeExample} 
             placeholder="В моей жизни это проявляется тогда, когда я пытаюсь проснуться в 6 утра..."
-            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-44 placeholder-[#1c2a40]"
+            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
         />
-    </div>
+    </motion.div>
 
     {/* Шаг 4 */}
-    <div className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300">
+    <motion.div
+			initial={{ opacity: 0, y: 18 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, amount: 0.25 }}
+			transition={{ duration: 0.35 }}
+			className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
+		>
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
         
         <label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">4</span>
             Что попробуешь применить уже сегодня?
         </label>
-        <p className="text-[#4a6080] text-sm mb-4 ml-11">Напишите конкретный, измеримый план действий на ближайшие дни.</p>
+        <p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Напишите конкретный, измеримый план действий на ближайшие дни.</p>
         
         <textarea 
             onChange={e => setApplyToday(e.target.value)} 
             value={applyToday} 
             placeholder="Я удалю соцсети на 3 часа в день, чтобы сфокусироваться на коде..."
-            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-44 placeholder-[#1c2a40]"
+            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
         />
-    </div>
+    </motion.div>
 
     {/* Шаг 5 */}
-    <div className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300">
+    <motion.div
+			initial={{ opacity: 0, y: 18 }}
+			whileInView={{ opacity: 1, y: 0 }}
+			viewport={{ once: true, amount: 0.25 }}
+			transition={{ duration: 0.35 }}
+			className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
+		>
         <div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
         
         <label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
             <span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">5</span>
             Какие новые факты узнал?
         </label>
-        <p className="text-[#4a6080] text-sm mb-4 ml-11">Выпишите новую информацию, цифры или факты, о которых вы раньше не знали.</p>
+        <p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Выпишите новую информацию, цифры или факты, о которых вы раньше не знали.</p>
         
         <textarea 
             onChange={e => setConfusing(e.target.value)} 
             value={confusing} 
             placeholder="Я узнал, что Дэвид Гоггинс весил почти 130 кг перед тем, как..."
-            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-44 placeholder-[#1c2a40]"
+            className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
         />
-    </div>
-</div>
+    </motion.div>
+</motion.div>
 
-<div className="mt-12 bg-[#0d1a2e]/50 border border-[#162236] p-8 rounded-3xl flex flex-col items-center">
+<motion.div
+	className="mt-10 bg-[#0d1a2e]/50 border border-[#162236] p-6 sm:p-8 rounded-3xl flex flex-col items-center"
+	initial={{ opacity: 0, y: 10 }}
+	whileInView={{ opacity: 1, y: 0 }}
+	viewport={{ once: true, amount: 0.3 }}
+	transition={{ duration: 0.35 }}
+>
     <p className="text-xs text-[#4a6080] uppercase tracking-widest mb-4">Субъективная оценка книги</p>
     <div className="flex gap-4">
         {[1, 2, 3, 4, 5].map(star => (
@@ -228,7 +276,7 @@ const Reports = () => {
             </button>
         ))}
     </div>
-</div>
+</motion.div>
 
 			<button 
 					onClick={() => handleSubmit()} 
@@ -243,14 +291,24 @@ const Reports = () => {
 					) : 'Сдать отчёт в систему'}
 			</button>
 			{result && result.error && (
-				<div className="text-red-400 text-center mt-4 bg-red-500/10 border border-red-500/30 rounded-xl py-3 px-4">
+				<motion.div
+					initial={{ opacity: 0, y: 10 }}
+					animate={{ opacity: 1, y: 0 }}
+					transition={{ duration: 0.25 }}
+					className="text-red-400 text-center mt-4 bg-red-500/10 border border-red-500/30 rounded-xl py-3 px-4"
+				>
 					{result.error}
-				</div>
+				</motion.div>
 			)}
 			{result && result.success && (
-				<div className="text-green-400 text-center mt-4 bg-green-500/10 border border-green-500/30 rounded-xl py-3 px-4">
+				<motion.div
+					initial={{ opacity: 0, y: 10, scale: 0.98 }}
+					animate={{ opacity: 1, y: 0, scale: 1 }}
+					transition={{ duration: 0.35 }}
+					className="text-green-400 text-center mt-4 bg-green-500/10 border border-green-500/30 rounded-xl py-3 px-4"
+				>
 					{result.success}
-				</div>
+				</motion.div>
 			)}
 		</div>
 	)
