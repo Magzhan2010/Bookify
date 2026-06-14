@@ -14,6 +14,6 @@ export async function POST(req) {
 	if (email.includes("@teacher.school.com")) {
 		role = 'teacher'
 	}
-	await pool.query("INSERT INTO users(name,email,password,role) VALUES($1,$2,$3,$4)", [name, email,hashPass,role])
+	await pool.query("INSERT INTO users(name,email,password,role) VALUES($1,$2,$3,$4)", [name, email, hashPass, role])
 	return NextResponse.json({ success: true })
-} 
+}

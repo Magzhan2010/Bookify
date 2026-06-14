@@ -72,8 +72,9 @@ const Navbar = () => {
     const token = localStorage.getItem('token')
     if (!token) return router.push('/')
     const payload = JSON.parse(atob(token.split('.')[1]))
-    if (payload.role !== 'admin') {
+    if (payload.role !== 'admin' && payload.role !== 'teacher') {
       router.push('/')
+      return
     }
     setIsOpen(false)
     router.push('/admin/dashboard')
@@ -111,11 +112,13 @@ const Navbar = () => {
       </div>
 
       <div className='hidden md:flex items-center gap-6'>
-        {user?.role === 'admin' && (
+        {(user?.role === 'admin' || user?.role === 'teacher') && (
           <div className="mb-3">
             <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" 
             onClick={() => handleDashboard()}>Dashboard</button>
-            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" onClick={() => handleAdmin()}>Admin</button>
+            {user?.role === 'admin' && (
+              <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mr-5" onClick={() => handleAdmin()}>Admin</button>
+            )}
           </div>
         )}
         <div className="relative hidden md:block">
@@ -238,11 +241,13 @@ const Navbar = () => {
 
                 {user?.name && <span className="text-white font-semibold text-xl">{user.name}</span>}
               </div>
-                {user?.role === 'admin' && (
+                {(user?.role === 'admin' || user?.role === 'teacher') && (
                   <div className="mb-3">
                     <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md mb-2 text-center w-full" 
                     onClick={() => handleDashboard()}>Dashboard</button>
-                    <button className="w-full bg-[#162236] text-center mb-2 hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md" onClick={() => handleAdmin()}>Admin</button>
+                    {user?.role === 'admin' && (
+                      <button className="w-full bg-[#162236] text-center mb-2 hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-md" onClick={() => handleAdmin()}>Admin</button>
+                    )}
                   </div>
                 )}
               <button 

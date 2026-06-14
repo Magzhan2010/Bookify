@@ -3,64 +3,78 @@ import jwt from 'jsonwebtoken'
 import pool from '../../../lib/db'
 
 export async function GET(req) {
-    const { searchParams } = new URL(req.url)
-    
-    // 1. Запрос всех жанров для кнопок
-    const allGenres = searchParams.get('allGenres') === 'true'
-    if (allGenres) {
-        const result = await pool.query('SELECT DISTINCT genre FROM books ORDER BY genre ASC')
-        return NextResponse.json(result.rows.map(row => row.genre))
-    }
+	const { searchParams } = new URL(req.url)
 
-    // 2. НОВОЕ: Запрос ВСЕХ книг без лимита (для Админки)
-    const allBooks = searchParams.get('allBooks') === 'true'
-    if (allBooks) {
-        const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC')
-        return NextResponse.json(result.rows)
-    }
+	// 1. Запрос всех жанров для кнопок
+	const allGenres = searchParams.get('allGenres') === 'true'
+	if (allGenres) {
+		const result = await pool.query('SELECT DISTINCT genre FROM books ORDER BY genre ASC')
+		return NextResponse.json(result.rows.map(row => row.genre))
+	}
 
-    // Дальше идет обычный код для библиотеки с пагинацией...
-    const countOnly = searchParams.get('countOnly') === 'true'
-    const page = parseInt(searchParams.get('page')) || 1
-    const limit = 12
-    const offset = (page - 1) * limit
-    const genre = searchParams.get('genre')
-    const isFiltered = genre && genre !== 'Все'
+	// 2. Запрос ВСЕХ книг без лимита (для Админки)
+	const allBooks = searchParams.get('allBooks') === 'true'
+	if (allBooks) {
+		const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC')
+		return NextResponse.json(result.rows)
+	}
 
-    if (countOnly) {
-        if(isFiltered) {
-            const result = await pool.query('SELECT COUNT(*) AS total FROM books WHERE genre = $1',[genre])
-            return NextResponse.json({ total: result.rows[0].total })
-        } else {
-            const result = await pool.query('SELECT COUNT(*) AS total FROM books')
-            return NextResponse.json({ total: result.rows[0].total })
-        }
-    } else {
-        if (isFiltered) {
-            const result = await pool.query("SELECT * FROM books WHERE genre = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3",[genre,limit,offset])
-            return NextResponse.json(result.rows)
-        } else {
-            const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2;',[limit,offset])
-            return NextResponse.json(result.rows)
-        }
-    }
+	// Дальше идет обычный код для библиотеки с пагинацией...
+	const countOnly = searchParams.get('countOnly') === 'true'
+	const page = parseInt(searchParams.get('page')) || 1
+	const limit = 12
+	const offset = (page - 1) * limit
+	const genre = searchParams.get('genre')
+	const isFiltered = genre && genre !== 'Все'
+
+	if (countOnly) {
+		if (isFiltered) {
+			const result = await pool.query('SELECT COUNT(*) AS total FROM books WHERE genre = $1', [genre])
+			return NextResponse.json({ total: result.rows[0].total })
+		} else {
+			const result = await pool.query('SELECT COUNT(*) AS total FROM books')
+			return NextResponse.json({ total: result.rows[0].total })
+		}
+	} else {
+		if (isFiltered) {
+			const result = await pool.query("SELECT * FROM books WHERE genre = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3", [genre, limit, offset])
+			return NextResponse.json(result.rows)
+		} else {
+			const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2;', [limit, offset])
+			return NextResponse.json(result.rows)
+		}
+	}
 };
 
 export async function POST(req) {
-    const auth = req.headers.get("authorization")
-    const token = auth?.split(' ')[1]
-    if (!token) {
-        return NextResponse.json({ error: "Доступа нет" }, { status: 401 })
-    }
+	const auth = req.headers.get("authorization")
+	const token = auth?.split(' ')[1]
+	if (!token) {
+		return NextResponse.json({ error: "Доступа нет" }, { status: 401 })
+	}
 
-    const payload = jwt.verify(token,process.env.JWT_SECRET)
-    if(payload.role !== 'admin') {
-        return NextResponse.json({ error: "Только для Админа" }, { status: 403 })
-    }
+	const secret = process.env.JWT_SECRET
+	if (!secret) {
+		return NextResponse.json({ error: "JWT_SECRET не задан" }, { status: 500 })
+	}
 
-    const { title, author, genre, year, description, cover_url, available, file } = await req.json();
+	let payload
+	try {
+		payload = jwt.verify(token, secret)
+	} catch (err) {
+		if (err.name === 'TokenExpiredError') {
+			return NextResponse.json({ error: "Токен истёк, войдите заново" }, { status: 401 })
+		}
+		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
+	}
 
-    await pool.query("INSERT INTO books(title, author, genre, year, description,cover_url, available,file) VALUES($1,$2,$3,$4,$5,$6,$7,$8);",[title, author,genre,year, description,cover_url,available,file])
-    
-    return NextResponse.json({ success: true })
+	if (payload.role !== 'admin') {
+		return NextResponse.json({ error: "Только для Админа" }, { status: 403 })
+	}
+
+	const { title, author, genre, year, description, cover_url, available, file } = await req.json();
+
+	await pool.query("INSERT INTO books(title, author, genre, year, description, cover_url, available, file) VALUES($1,$2,$3,$4,$5,$6,$7,$8);", [title, author, genre, year, description, cover_url, available, file])
+
+	return NextResponse.json({ success: true })
 }
