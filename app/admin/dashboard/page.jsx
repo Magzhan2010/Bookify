@@ -7,7 +7,6 @@ const TeacherDashboard = () => {
   const [reports, setReports] = useState([])
   const [selectedReport, setSelectedReport] = useState(null)
   const [loading, setLoading] = useState(true)
-  
   const [searchQuery, setSearchQuery] = useState('')
   const [filterStatus, setFilterStatus] = useState('pending')
   const router = useRouter()
@@ -56,17 +55,11 @@ const TeacherDashboard = () => {
     .filter(r => {
       if (!searchQuery) return true
       const q = searchQuery.toLowerCase()
-      return r.student_name.toLowerCase().includes(q) || r.book_title.toLowerCase().includes(q)
+      return r.student_name?.toLowerCase().includes(q) || r.book_title?.toLowerCase().includes(q)
     })
 
   const pendingCount = reports.filter(r => r.status !== 'approved').length
   const approvedCount = reports.filter(r => r.status === 'approved').length
-
-  const getScoreStyle = (score) => {
-    if (score >= 70) return 'text-sky-400 border-sky-400/20 bg-sky-400/5'
-    if (score >= 40) return 'text-amber-400 border-amber-400/20 bg-amber-400/5'
-    return "text-rose-400 border-rose-400/20 bg-rose-400/5"
-  }
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -89,7 +82,6 @@ const TeacherDashboard = () => {
     })
     
     if (res.ok) {
-      // Обновляем список без перезагрузки страницы
       setReports(prev => prev.map(r => 
         r.id === reportItem.id ? { ...r, status: 'approved' } : r
       ))
@@ -99,7 +91,6 @@ const TeacherDashboard = () => {
         style: { background: '#0d1a2e', border: '1px solid #10b981', color: '#fff' }
       })
       
-      // Если модалка была открыта, закрываем её
       if (selectedReport?.id === reportItem.id) setSelectedReport(null)
     }
   }
@@ -115,8 +106,19 @@ const TeacherDashboard = () => {
     if (res.ok) {
       setReports(prev => prev.filter(r => r.id !== id))
       if (selectedReport?.id === id) setSelectedReport(null)
+      toast.success("Отчет удалён", {
+        style: { background: '#0d1a2e', border: '1px solid #ef4444', color: '#fff' }
+      })
     }
   }
+
+  const answers = selectedReport ? [
+    { num: 1, label: 'Две важные цитаты и их смысл', text: selectedReport.quote1 },
+    { num: 2, label: 'Что было непонятно или удивило', text: selectedReport.quote2 },
+    { num: 3, label: 'Как это проявляется в жизни', text: selectedReport.life_example },
+    { num: 4, label: 'Что попробуешь применить уже сегодня', text: selectedReport.apply_today },
+    { num: 5, label: 'Новые факты', text: selectedReport.confusing },
+  ] : []
   
   return (
     <div className="min-h-screen bg-[#06090f] text-white font-montserrat pb-20">
@@ -130,10 +132,10 @@ const TeacherDashboard = () => {
               Teacher <span className="text-sky-500">Console</span>
             </h1>
           </div>
-          <div className="flex gap-8">
-            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-5 rounded-xl border border-white/5 font-medium text-sm" 
-              onClick={() => router.push('/library')}>Главная страница</button>
-            <button onClick={handleLogout} className="bg-[#111c2e] hover:bg-rose-500/10 hover:text-rose-400 text-[#5c7294] transition-all py-2.5 px-6 rounded-xl border border-white/5 text-sm font-semibold">
+          <div className="flex gap-3 sm:gap-8">
+            <button className="bg-[#162236] hover:bg-sky-500/20 hover:text-sky-400 text-[#4a6080] transition-all py-2 px-4 sm:px-5 rounded-xl border border-white/5 font-medium text-sm" 
+              onClick={() => router.push('/library')}>Главная</button>
+            <button onClick={handleLogout} className="bg-[#111c2e] hover:bg-rose-500/10 hover:text-rose-400 text-[#5c7294] transition-all py-2.5 px-4 sm:px-6 rounded-xl border border-white/5 text-sm font-semibold">
               Выйти
             </button>
           </div>
@@ -142,19 +144,19 @@ const TeacherDashboard = () => {
 
       <div className="max-w-[1300px] mx-auto px-6 md:px-8 pt-10">
         
-        {/* СТАТИСТИКА (Быстрый взгляд) */}
-        <div className="grid grid-cols-3 gap-4 mb-10">
-          <div className="bg-[#0a121e]/60 border border-white/5 p-5 rounded-2xl">
-            <p className="text-xs text-[#5c7294] uppercase tracking-widest font-bold mb-1">Всего работ</p>
-            <p className="text-3xl font-black text-white">{reports.length}</p>
+        {/* СТАТИСТИКА */}
+        <div className="grid grid-cols-3 gap-3 sm:gap-4 mb-10">
+          <div className="bg-[#0a121e]/60 border border-white/5 p-4 sm:p-5 rounded-2xl">
+            <p className="text-[10px] sm:text-xs text-[#5c7294] uppercase tracking-widest font-bold mb-1">Всего работ</p>
+            <p className="text-2xl sm:text-3xl font-black text-white">{reports.length}</p>
           </div>
-          <div className="bg-amber-500/5 border border-amber-500/10 p-5 rounded-2xl">
-            <p className="text-xs text-amber-400/80 uppercase tracking-widest font-bold mb-1">Ожидают проверки</p>
-            <p className="text-3xl font-black text-amber-400">{pendingCount}</p>
+          <div className="bg-amber-500/5 border border-amber-500/10 p-4 sm:p-5 rounded-2xl">
+            <p className="text-[10px] sm:text-xs text-amber-400/80 uppercase tracking-widest font-bold mb-1">Ожидают проверки</p>
+            <p className="text-2xl sm:text-3xl font-black text-amber-400">{pendingCount}</p>
           </div>
-          <div className="bg-emerald-500/5 border border-emerald-500/10 p-5 rounded-2xl">
-            <p className="text-xs text-emerald-400/80 uppercase tracking-widest font-bold mb-1">Проверено</p>
-            <p className="text-3xl font-black text-emerald-400">{approvedCount}</p>
+          <div className="bg-emerald-500/5 border border-emerald-500/10 p-4 sm:p-5 rounded-2xl">
+            <p className="text-[10px] sm:text-xs text-emerald-400/80 uppercase tracking-widest font-bold mb-1">Проверено</p>
+            <p className="text-2xl sm:text-3xl font-black text-emerald-400">{approvedCount}</p>
           </div>
         </div>
 
@@ -214,27 +216,26 @@ const TeacherDashboard = () => {
                   </div>
                 </div>
 
-                {/* Книга (скрывается на мобилках, показывается выше) */}
+                {/* Книга */}
                 <div className="hidden md:block text-[#7a8eb0] italic text-sm pr-8 truncate md:w-[2.5fr]">
                   «{item.book_title}»
                 </div>
 
-                {/* Оценка ИИ */}
+                {/* Рейтинг */}
                 <div className="flex items-center justify-between md:justify-center md:w-24">
-                  <span className={`px-4 py-1.5 rounded-full border text-xs font-black ${getScoreStyle(item.ai_score)}`}>
-                    {item.ai_score}%
+                  <span className="text-yellow-400 text-sm">
+                    {'★'.repeat(item.rating || 0)}{'☆'.repeat(5 - (item.rating || 0))}
                   </span>
                 </div>
 
-                {/* КНОПКИ ДЕЙСТВИЙ (Самое важное!) */}
+                {/* КНОПКИ ДЕЙСТВИЙ */}
                 <div className="flex items-center gap-2 md:w-auto justify-end">
                   
-                  {/* БЫСТРАЯ КНОПКА ОДОБРИТЬ (без открытия модалки) */}
                   {item.status !== 'approved' && (
                     <button 
                       onClick={(e) => {
                         e.stopPropagation(); 
-                        handleApprove(item); // Передаем сам объект!
+                        handleApprove(item);
                       }}
                       className="p-2.5 text-emerald-400/60 hover:text-emerald-400 hover:bg-emerald-500/10 rounded-xl transition-all opacity-100 md:opacity-0 md:group-hover:opacity-100"
                       title="Быстро одобрить"
@@ -266,58 +267,59 @@ const TeacherDashboard = () => {
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md" onClick={() => setSelectedReport(null)}>
           <div className="bg-[#0a121e] border border-white/10 w-full max-w-3xl max-h-[85vh] rounded-[32px] flex flex-col shadow-2xl overflow-hidden" onClick={e => e.stopPropagation()}>
             
-            <div className="p-8 border-b border-white/5 flex justify-between items-start bg-[#0d1624]">
+            <div className="p-6 sm:p-8 border-b border-white/5 flex justify-between items-start bg-[#0d1624]">
               <div>
-                <div className="text-xs uppercase tracking-[0.2em] text-sky-500 font-bold mb-1">Детали отчета</div>
-                <h3 className="text-3xl font-extrabold tracking-tighter">{selectedReport.student_name}</h3>
+                <div className="text-xs uppercase tracking-[0.2em] text-sky-500 font-bold mb-1">Отчёт ученика</div>
+                <h3 className="text-2xl sm:text-3xl font-extrabold tracking-tighter">{selectedReport.student_name}</h3>
                 <p className="text-[#7a8eb0] mt-1">Книга: <span className="text-white italic">«{selectedReport.book_title}»</span></p>
               </div>
               <button onClick={() => setSelectedReport(null)} className="p-3 bg-[#162236] hover:bg-rose-500/10 hover:text-rose-400 rounded-full transition-colors text-[#5c7294]">✕</button>
             </div>
             
-            <div className="p-9 overflow-y-auto space-y-8 bg-[#0a121e]">
+            <div className="p-6 sm:p-9 overflow-y-auto space-y-6 bg-[#0a121e]">
+              {/* Статус */}
               <div className="flex items-center gap-6 p-5 bg-[#0d1624] rounded-2xl border border-white/5">
                 <div>
-                    <h4 className="text-xs uppercase tracking-widest text-[#5c7294] mb-2 font-bold">Оценка ИИ</h4>
-                    <span className={`px-6 py-2.5 rounded-full border text-base font-black ${getScoreStyle(selectedReport.ai_score)}`}>
-                        {selectedReport.ai_score} / 100
-                    </span>
+                  <h4 className="text-xs uppercase tracking-widest text-[#5c7294] mb-2 font-bold">Статус</h4>
+                  <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${selectedReport.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
+                    {selectedReport.status === 'approved' ? '✅ Зачтено' : '⏳ На проверке'}
+                  </span>
                 </div>
                 <div className="w-px h-12 bg-white/5" />
                 <div>
-                    <h4 className="text-xs uppercase tracking-widest text-[#5c7294] mb-2 font-bold">Статус</h4>
-                    <span className={`px-4 py-1.5 rounded-full text-sm font-bold border ${selectedReport.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400 border-emerald-500/20' : 'bg-amber-500/10 text-amber-400 border-amber-500/20'}`}>
-                        {selectedReport.status === 'approved' ? '✅ Проверен' : '⏳ Ожидает'}
-                    </span>
+                  <h4 className="text-xs uppercase tracking-widest text-[#5c7294] mb-2 font-bold">Оценка ученика</h4>
+                  <span className="text-yellow-400 text-lg">
+                    {'★'.repeat(selectedReport.rating || 0)}{'☆'.repeat(5 - (selectedReport.rating || 0))}
+                  </span>
                 </div>
               </div>
               
-              <div className="p-7 bg-[#080c14] rounded-2xl border border-white/5">
-                <h4 className="text-xs uppercase tracking-widest text-sky-500 mb-5 font-bold">Анализ Claude AI</h4>
-                <div className="space-y-5 text-[#bdcadd] leading-relaxed">
-                    {selectedReport.ai_feedback.split('Вопрос').map((text,index) => (
-                      text && (
-                        <div key={index} className="p-5 bg-[#0d1624] rounded-xl border border-white/5">
-                          <p className="text-base"><strong className="text-sky-400">Вопрос</strong>{text}</p>
-                        </div>
-                      )
-                    ))}
+              {/* Ответы ученика */}
+              <div className="p-6 sm:p-7 bg-[#080c14] rounded-2xl border border-white/5">
+                <h4 className="text-xs uppercase tracking-widest text-sky-500 mb-5 font-bold">Ответы ученика</h4>
+                <div className="space-y-4">
+                  {answers.map(a => (
+                    <div key={a.num} className="p-4 sm:p-5 bg-[#0d1624] rounded-xl border border-white/5">
+                      <p className="text-xs text-sky-400 font-bold mb-2">Вопрос {a.num}: {a.label}</p>
+                      <p className="text-[#bdcadd] leading-relaxed text-sm sm:text-base">{a.text}</p>
+                    </div>
+                  ))}
                 </div>
               </div>
             </div>
 
-            <div className="p-7 bg-[#0d1624] border-t border-white/5 flex gap-4">
-                {selectedReport.status !== 'approved' && (
-                    <button 
-                      className="flex-1 bg-sky-600 hover:bg-sky-500 py-4 rounded-xl font-bold transition-all text-lg shadow-[0_5px_15px_rgba(56,189,248,0.2)]" 
-                      onClick={() => handleApprove(selectedReport)} // ИСправлено!
-                    >
-                        Подтвердить и зачесть
-                    </button>
-                )}
-                <button onClick={() => setSelectedReport(null)} className="px-10 py-4 border border-white/10 rounded-xl hover:bg-white/5 transition-all text-[#7a8eb0] font-semibold">
-                    Закрыть
+            <div className="p-5 sm:p-7 bg-[#0d1624] border-t border-white/5 flex gap-4">
+              {selectedReport.status !== 'approved' && (
+                <button 
+                  className="flex-1 bg-sky-600 hover:bg-sky-500 py-4 rounded-xl font-bold transition-all text-lg shadow-[0_5px_15px_rgba(56,189,248,0.2)]" 
+                  onClick={() => handleApprove(selectedReport)}
+                >
+                  Подтвердить и зачесть
                 </button>
+              )}
+              <button onClick={() => setSelectedReport(null)} className="px-8 sm:px-10 py-4 border border-white/10 rounded-xl hover:bg-white/5 transition-all text-[#7a8eb0] font-semibold">
+                Закрыть
+              </button>
             </div>
           </div>
         </div>

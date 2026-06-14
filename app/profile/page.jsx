@@ -5,15 +5,10 @@ import { BookOpen, Heart, FileText, Trash2, ArrowLeft, Trophy, BookOpenText, Che
 import { useRouter } from "next/navigation"
 import { toast } from "sonner"
 
-const getScoreStyle = (score) => {
-  if (score >= 70) return 'text-sky-400 border-sky-400/20 bg-sky-400/5'
-  if (score >= 40) return 'text-amber-400 border-amber-400/20 bg-amber-400/5'
-  return "text-rose-400 border-rose-400/20 bg-rose-400/5"
-}
-
 const Profile = () => {
   const [user, setUser] = useState(null)
   const [activeBooks, setActiveBooks] = useState([])
+  const [submittedBooks, setSubmittedBooks] = useState([])
   const [finishedBooks, setFinishedBooks] = useState([])
   const [favorites, setFavorites] = useState([])
   const [activeTab, setActiveTab] = useState('reading') 
@@ -53,6 +48,7 @@ const Profile = () => {
         setUser(data.user)
         setFinishedBooks(data.finished || [])
         setActiveBooks(data.active || [])
+        setSubmittedBooks(data.submitted || [])
       }
       if (resFav.ok) setFavorites(await resFav.json() || [])
       if (resRep.ok) setReport(await resRep.json() || [])
@@ -160,7 +156,7 @@ const Profile = () => {
           <div className="grid grid-cols-5 justify-center items-center sm:flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
             {[
               { id: 'shelf', label: 'Полка', icon: Trophy, count: finishedBooks?.length },
-              { id: 'reading', label: 'Читаю', icon: BookOpenText, count: activeBooks?.length },
+              { id: 'reading', label: 'Читаю', icon: BookOpenText, count: activeBooks?.length + submittedBooks?.length },
               { id: 'favorites', label: 'Избранное', icon: Heart, count: favorites?.length },
               { id: 'reports', label: 'Отчёты', icon: FileText, count: report?.length },
               { id: 'tracker', label: 'Трекер', icon: Clock, count: trackerLogs.length }
@@ -195,47 +191,72 @@ const Profile = () => {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ duration: 0.35 }}
               >
-                {activeBooks.length === 0 ? (
+                {activeBooks.length === 0 && submittedBooks.length === 0 ? (
                   <EmptyState message="Сейчас вы ничего не читаете" actionLabel="Выбрать книгу" />
                 ) : (
-                  activeBooks.map(book => (
-                    <motion.div
-                      key={book.borrow_id}
-                      className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.98 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <img
-                        src={book.cover_url}
-                        className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0"
-                        alt=""
-                      />
-                      <div className="flex-1 text-center sm:text-left">
-                        <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
-                        <p className="text-[#4a6080] mb-3">{book.author}</p>
-                        <div className="text-orange-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full w-fit mx-auto sm:mx-0">
-                          Срок: 14 дней
-                        </div>
-                      </div>
-                      <button 
-                        onClick={() => router.push(`/report/${book.borrow_id}`)}
-                        className="w-full sm:w-auto px-8 py-3 bg-[#1a56db] hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20"
+                  <>
+                    {/* Активные книги */}
+                    {activeBooks.map(book => (
+                      <motion.div
+                        key={book.borrow_id}
+                        className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        whileHover={{ y: -2 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ duration: 0.25 }}
                       >
-                        Сдать отчет
-                      </button>
-                    </motion.div>
-                  ))
+                        <img
+                          src={book.cover_url}
+                          className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0"
+                          alt=""
+                        />
+                        <div className="flex-1 text-center sm:text-left">
+                          <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
+                          <p className="text-[#4a6080] mb-3">{book.author}</p>
+                          <div className="text-orange-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full w-fit mx-auto sm:mx-0">
+                            Срок: 14 дней
+                          </div>
+                        </div>
+                        <button 
+                          onClick={() => router.push(`/report/${book.borrow_id}`)}
+                          className="w-full sm:w-auto px-8 py-3 bg-[#1a56db] hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20"
+                        >
+                          Сдать отчет
+                        </button>
+                      </motion.div>
+                    ))}
+
+                    {/* Книги на проверке */}
+                    {submittedBooks.map(book => (
+                      <motion.div
+                        key={book.borrow_id}
+                        className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-amber-500/5 border border-amber-500/10 rounded-[24px]"
+                        initial={{ opacity: 0, y: 12 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ duration: 0.25 }}
+                      >
+                        <img
+                          src={book.cover_url}
+                          className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0 opacity-80"
+                          alt=""
+                        />
+                        <div className="flex-1 text-center sm:text-left">
+                          <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
+                          <p className="text-[#4a6080] mb-3">{book.author}</p>
+                          <div className="text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full w-fit mx-auto sm:mx-0 flex items-center gap-1.5">
+                            <Clock size={12} /> На проверке у учителя
+                          </div>
+                        </div>
+                      </motion.div>
+                    ))}
+                  </>
                 )}
               </motion.div>
             )}
 
             {/* SHELF TAB */}
-            
             {activeTab === 'shelf' && (
-              
               <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
                 {finishedBooks.length === 0 ? (
                   <div className="col-span-full py-20 text-center text-[#4a6080] border border-dashed border-white/5 rounded-3xl">
@@ -280,6 +301,7 @@ const Profile = () => {
               </div>
             )}
 
+            {/* REPORTS TAB — без AI */}
             {activeTab === 'reports' && (
               <motion.div
                 key="reports"
@@ -306,27 +328,17 @@ const Profile = () => {
                           <p className="text-sm text-[#4a6080] mt-1">{new Date(rep.created_at).toLocaleDateString()}</p>
                         </div>
                         <div className="flex items-center gap-4">
-                          <span className={`px-5 py-2 rounded-full border text-sm font-black shadow-inner ${getScoreStyle(rep.ai_score)}`}>
-                            ИИ: {rep.ai_score}%
-                          </span>
+                          {rep.rating > 0 && (
+                            <span className="text-yellow-400">
+                              {'★'.repeat(rep.rating)}{'☆'.repeat(5 - rep.rating)}
+                            </span>
+                          )}
                           <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${rep.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
                             {rep.status === 'approved' ? <CheckCircle size={18} /> : <Clock size={18} />}
-                            {rep.status === 'approved' ? 'Зачтено' : 'На проверке'}
+                            {rep.status === 'approved' ? 'Зачтено' : 'На проверке у учителя'}
                           </div>
                         </div>
                       </div>
-                      {rep.ai_feedback && (
-                        <div className="bg-[#080c14] p-6 rounded-2xl border border-white/5">
-                          <h4 className="text-xs uppercase tracking-widest text-sky-500 mb-5 font-bold">Разбор от AI</h4>
-                          <div className="space-y-4 text-[#bdcadd]">
-                            {rep.ai_feedback.split('Вопрос').map((text, index) => text && (
-                              <div key={index} className="p-4 bg-[#0d1624] rounded-xl border border-white/5 text-sm">
-                                <strong className="text-sky-400">Вопрос</strong>{text}
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      )}
                     </motion.div>
                   ))
                 )}
@@ -369,7 +381,6 @@ const Profile = () => {
                       </p>
                     </div>
 
-                    {/* Прогресс-бар тоже нужно обновить под новый стейт */}
                     <div className="flex flex-col items-end gap-2">
                       <div className="text-2xl font-black text-white">
                         {Math.round((finishedBooks.length / (readingGoal || 1)) * 100)}%
@@ -383,12 +394,11 @@ const Profile = () => {
                     </div>
                   </div>
                   
-                  {/* Декоративный элемент фона */}
                   <div className="absolute -right-10 -bottom-10 text-blue-500/5 rotate-12">
                     <BookOpenText size={200} />
                   </div>
                 </div>
-                {/* Header Section */}
+
                 <div className="flex flex-col gap-4">
                   <div>
                     <h2 className="text-xl md:text-2xl font-bold">Трекер чтения</h2>
@@ -403,7 +413,7 @@ const Profile = () => {
                 </div>
 
                 {isAddingLog ? (
-                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-4 md:p-10  max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
+                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-4 md:p-10 max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
                     <div className="space-y-5">
                       <div className="space-y-2">
                         <label className="text-[13px] uppercase tracking-widest text-sky-500 font-bold ml-1">Название книги</label>
@@ -478,7 +488,6 @@ const Profile = () => {
                     </div>
                   </div>
                 ) : (
-                  /* Logs List: Stacked on mobile, 2 columns on tablet+ */
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
                     {trackerLogs.length === 0 ? (
                       <div className="col-span-full">

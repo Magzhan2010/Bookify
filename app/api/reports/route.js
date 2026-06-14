@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server"
 import jwt from "jsonwebtoken"
 import pool from '../../../lib/db'
-import Anthropic from '@anthropic-ai/sdk'
 
 export async function POST(req) {
 	try {
@@ -28,7 +27,7 @@ export async function POST(req) {
 
 		const userId = payload.id
 
-		// ИСПРАВЛЕНО: проверяем что заём принадлежит этому студенту
+		// Проверяем что заём принадлежит этому студенту
 		const borrowCheck = await pool.query(
 			"SELECT * FROM borrows WHERE id = $1 AND user_id = $2 AND status = 'active'",
 			[borrowId, userId]
@@ -46,67 +45,32 @@ export async function POST(req) {
 			return NextResponse.json({ error: "Все поля обязательны" }, { status: 400 })
 		}
 		if (quote1.length < 20 || quote2.length < 20 || confusing.length < 20 || life_example.length < 20 || apply_today.length < 20) {
-			return NextResponse.json({ error: "Минимум 20 слов" }, { status: 400 })
+			return NextResponse.json({ error: "Минимум 20 символов в каждом ответе" }, { status: 400 })
 		}
 
-		const resultTitle = await pool.query("SELECT title FROM books WHERE id = $1", [bookId])
-		const nameBook = resultTitle.rows[0].title
-
-		const anthropic = new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
-
-		const message = await anthropic.messages.create({
-			model: "claude-3-haiku-20240307",
-			max_tokens: 1024,
-			messages: [
-				{
-					role: "user",
-					content: `Ты строгий но справедливый учитель. Оцени отчёт ученика по книге.
-						Книга: ${nameBook}
-						Вопрос 1 — Две важные цитаты и их смысл:
-						${quote1}
-
-						Вопрос 2 — Что было непонятно или удивило:
-						${quote2}
-
-						Вопрос 3 — Как это проявляется в моей жизни:
-						${life_example}
-
-						Вопрос 4 — Что попробую применить уже сегодня:
-						${apply_today}
-
-						Вопрос 5 — Какие новые факты узнал:
-						${confusing}
-
-						Критерии оценки:
-						- Осмысленность — ответы должны быть связаны с книгой
-						- Глубина понимания — не поверхностно
-						- Личная связь — конкретные примеры из жизни
-						- Если ответы бессмысленные или одинаковые слова повторяются — score 0
-
-						Верни ТОЛЬКО JSON без лишнего текста:
-						{"ai_score": число от 0 до 100, "ai_feedback": "подробный комментарий на русском языке по каждому вопросу"}`
-				}
-			]
-		})
-		const responseText = message.content[0].text
-		const cleanJson = responseText.replace(/```json|```/g, "").trim();
-		const parsed = JSON.parse(cleanJson)
-		const ai_score = parsed.ai_score
-		const ai_feedback = parsed.ai_feedback
-
+		// Без AI — сохраняем отчёт со статусом pending
 		await pool.query(
 			`INSERT INTO reports 
-			(user_id, book_id, borrow_id, quote1, quote2, confusing, life_example, apply_today, rating, ai_score, ai_feedback) 
-			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+			(user_id, book_id, borrow_id, quote1, quote2, confusing, life_example, apply_today, rating, ai_score, ai_feedback, status) 
+			VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12)`,
 			[
 				userId,
 				bookId,
 				borrowId,
-				quote1, quote2, confusing, life_example, apply_today, rating, ai_score, ai_feedback,
+				quote1, quote2, confusing, life_example, apply_today, rating,
+				0, // ai_score = 0
+				'Ожидает проверки учителем', // ai_feedback
+				'pending' // status
 			]
 		)
 
-		return NextResponse.json({ success: true, ai_score, ai_feedback })
+		// Меняем статус заёма на submitted — освобождает слот (больше не active)
+		await pool.query("UPDATE borrows SET status = 'submitted' WHERE id = $1", [borrowId])
+
+		// Книга снова доступна для других
+		await pool.query("UPDATE books SET available = true WHERE id = $1", [bookId])
+
+		return NextResponse.json({ success: true, message: "Отчет отправлен учителю" })
 
 	} catch (err) {
 		console.error(err)

@@ -82,8 +82,9 @@ export async function PATCH(req) {
 		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
 	}
 
-	if (payload.role !== 'admin') {
-		return NextResponse.json({ error: "Только Админ" }, { status: 403 })
+	// И учителя и админы могут закреплять комментарии
+	if (payload.role !== 'admin' && payload.role !== 'teacher') {
+		return NextResponse.json({ error: "Только Админ или Учитель" }, { status: 403 })
 	}
 
 	const result = await pool.query('UPDATE comment SET is_pinned = NOT is_pinned WHERE id = $1 RETURNING *', [commentId])

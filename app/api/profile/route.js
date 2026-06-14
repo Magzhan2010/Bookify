@@ -26,6 +26,8 @@ export async function GET(req) {
 
 	const userId = payload.id;
 	const result = await pool.query("SELECT id,name,email,role FROM users WHERE id = $1", [userId])
+
+	// Активные книги (ученик сейчас читает)
 	const activeBooks = await pool.query(`
 		SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author, books.id as book_id, borrows.deadline
 		FROM borrows 
@@ -33,6 +35,15 @@ export async function GET(req) {
 		WHERE borrows.user_id = $1 AND borrows.status = 'active'
 	`, [userId])
 
+	// Книги на проверке (отчёт сдан, ждёт учителя)
+	const submittedBooks = await pool.query(`
+		SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author, books.id as book_id
+		FROM borrows 
+		JOIN books ON borrows.book_id = books.id 
+		WHERE borrows.user_id = $1 AND borrows.status = 'submitted'
+	`, [userId])
+
+	// Законченные книги (учитель подтвердил — на полке)
 	const finishedBooks = await pool.query(`
 		SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author
 		FROM borrows 
@@ -40,5 +51,10 @@ export async function GET(req) {
 		WHERE borrows.user_id = $1 AND borrows.status = 'approved'
 	`, [userId]);
 
-	return NextResponse.json({ user: result.rows[0], active: activeBooks.rows, finished: finishedBooks.rows })
+	return NextResponse.json({ 
+		user: result.rows[0], 
+		active: activeBooks.rows, 
+		submitted: submittedBooks.rows,
+		finished: finishedBooks.rows 
+	})
 }

@@ -12,6 +12,7 @@ export async function GET(req, { params }) {
 		return NextResponse.json(res.rows[0])
 	} catch (err) {
 		console.error(err)
+		return NextResponse.json({ error: "Ошибка сервера" }, { status: 500 })
 	}
 }
 
