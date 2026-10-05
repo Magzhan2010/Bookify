@@ -83,16 +83,16 @@ const Navbar = () => {
     <header
       className={`sticky top-0 z-50 w-full transition-all duration-300 ${
         scrolled
-          ? 'bg-white/85 backdrop-blur-xl border-b border-black/5'
-          : 'bg-white/70 backdrop-blur-md border-b border-transparent'
+          ? 'bg-[var(--color-bg-overlay)] backdrop-blur-xl border-b border-[var(--color-border)]'
+          : 'bg-[var(--color-bg-overlay)] backdrop-blur-md border-b border-transparent'
       }`}
     >
       <div className="max-w-[1300px] mx-auto px-4 sm:px-6 h-14 md:h-16 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2.5">
-          <div className="w-8 h-8 rounded-lg overflow-hidden bg-white ring-1 ring-black/5">
+          <div className="w-8 h-8 rounded-lg overflow-hidden bg-[var(--color-bg-card)] ring-1 ring-[var(--color-border)]">
             <Image src="/lb_logo.png" width={32} height={32} alt="DLS" className="object-contain" />
           </div>
-          <div className="font-semibold text-[16px] tracking-tight">Bookify</div>
+          <div className="font-semibold text-[16px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
         </Link>
 
         <div className="hidden lg:flex items-center gap-1 flex-1 justify-center max-w-md mx-6">

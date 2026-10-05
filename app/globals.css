@@ -1,32 +1,34 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
-  /* === Apple-inspired light theme === */
+  /* === Light theme (Apple-style, default) === */
   --color-bg: #ffffff;
-  --color-bg-soft: #fafafa;
+  --color-bg-soft: #f5f5f7;
+  --color-bg-elevated: #fafafa;
   --color-bg-card: #ffffff;
-  --color-bg-elevated: #f5f5f7;
+  --color-bg-overlay: rgba(255, 255, 255, 0.85);
 
   --color-text-primary: #1d1d1f;
   --color-text-secondary: #6e6e73;
   --color-text-tertiary: #86868b;
+  --color-text-on-brand: #ffffff;
 
   --color-border: rgba(0, 0, 0, 0.08);
   --color-border-strong: rgba(0, 0, 0, 0.12);
+  --color-border-brand: rgba(26, 86, 219, 0.3);
 
-  /* Brand — цвет логотипа DLS (синий) */
   --color-brand: #1a56db;
   --color-brand-hover: #1849b8;
   --color-brand-soft: #e6efff;
-  --color-brand-light: #3b82f6;
-
-  --color-accent: var(--color-brand);
-  --color-accent-light: var(--color-brand-light);
 
   --color-success: #34c759;
   --color-danger: #ff3b30;
   --color-warning: #ff9500;
-  --color-pink: #ff2d55;
+
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
 
   --font-sans: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'SF Pro Text',
                'Inter', 'Helvetica Neue', system-ui, sans-serif;
@@ -34,10 +36,41 @@
                   'Inter', 'Helvetica Neue', system-ui, sans-serif;
 }
 
+/* === Dark theme — deep navy (цвет логотипа) === */
+.dark {
+  --color-bg: #0a1530;
+  --color-bg-soft: #0f1d44;
+  --color-bg-elevated: #122452;
+  --color-bg-card: #0f1d44;
+  --color-bg-overlay: rgba(10, 21, 48, 0.85);
+
+  --color-text-primary: #e8edff;
+  --color-text-secondary: #a5b4d8;
+  --color-text-tertiary: #7c8db5;
+  --color-text-on-brand: #ffffff;
+
+  --color-border: rgba(165, 180, 216, 0.15);
+  --color-border-strong: rgba(165, 180, 216, 0.25);
+  --color-border-brand: rgba(91, 141, 239, 0.4);
+
+  --color-brand: #5b8def;
+  --color-brand-hover: #7ba2f3;
+  --color-brand-soft: rgba(91, 141, 239, 0.15);
+
+  --color-success: #34c759;
+  --color-danger: #ff453a;
+  --color-warning: #ff9f0a;
+
+  --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.3), 0 1px 2px rgba(0, 0, 0, 0.2);
+  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.4), 0 2px 6px rgba(0, 0, 0, 0.3);
+}
+
 :root {
-  --shadow-card: 0 1px 3px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06);
-  --shadow-card-hover: 0 4px 16px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.06), 0 2px 6px rgba(0, 0, 0, 0.04);
+  --grid: rgba(0, 0, 0, 0.04);
+}
+
+.dark {
+  --grid: rgba(91, 141, 239, 0.05);
 }
 
 html {
@@ -47,6 +80,7 @@ html {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   text-rendering: optimizeLegibility;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 body {
@@ -55,6 +89,7 @@ body {
   font-family: var(--font-sans);
   font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
   letter-spacing: -0.01em;
+  transition: background-color 0.3s ease, color 0.3s ease;
 }
 
 h1, h2, h3, h4 {
@@ -75,70 +110,31 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
-.animate-shimmer {
-  background: linear-gradient(90deg, rgba(0,0,0,0.04) 25%, rgba(0,0,0,0.08) 50%, rgba(0,0,0,0.04) 75%);
-  background-size: 200% 100%;
-  animation: shimmer 1.8s linear infinite;
-}
 
 /* === Utilities === */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
 .no-scrollbar::-webkit-scrollbar { display: none; }
 
-/* Apple-style subtle scrollbar */
-::-webkit-scrollbar { width: 8px; height: 8px; }
+/* Стилизованный scrollbar в обеих темах */
+::-webkit-scrollbar { width: 10px; height: 10px; }
 ::-webkit-scrollbar-track { background: transparent; }
 ::-webkit-scrollbar-thumb {
-  background: rgba(0, 0, 0, 0.18);
-  border-radius: 4px;
+  background: var(--color-border-strong);
+  border-radius: 5px;
   border: 2px solid transparent;
   background-clip: padding-box;
 }
-::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.32); background-clip: padding-box; }
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-text-tertiary);
+  background-clip: padding-box;
+}
 
 ::selection {
   background: var(--color-brand);
-  color: white;
+  color: var(--color-text-on-brand);
 }
 
-/* Card with soft shadow like Apple */
-.card {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 18px;
-  box-shadow: var(--shadow-card);
-  transition: all 0.2s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.card:hover {
-  box-shadow: var(--shadow-card-hover);
-}
-
-/* Subtle elevated panel */
-.panel {
-  background: var(--color-bg-card);
-  border: 1px solid var(--color-border);
-  border-radius: 14px;
-}
-
-/* Button primary — Apple-style blue */
-.btn-primary {
-  background: var(--color-brand);
-  color: white;
-  font-weight: 500;
-  border-radius: 12px;
-  transition: all 0.18s cubic-bezier(0.23, 1, 0.32, 1);
-}
-.btn-primary:hover {
-  background: var(--color-brand-hover);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px rgba(26, 86, 219, 0.25);
-}
-.btn-primary:active {
-  transform: translateY(0);
-  box-shadow: 0 2px 8px rgba(26, 86, 219, 0.2);
-}
-
-/* Reduced motion */
+/* === Reduced motion === */
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after {
     animation-duration: 0.01ms !important;

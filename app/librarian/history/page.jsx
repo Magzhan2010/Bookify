@@ -38,24 +38,24 @@ export default function HistoryPage() {
   return (
     <div className="max-w-[1300px] mx-auto">
       <div className="mb-7">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
           История операций
         </h1>
-        <p className="text-[15px] text-[#6e6e73]">Полный журнал выдач и возвратов</p>
+        <p className="text-[15px] text-[var(--color-text-secondary)]">Полный журнал выдач и возвратов</p>
       </div>
 
-      <div className="bg-white border border-black/8 rounded-2xl p-5 mb-5">
+      <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 mb-5">
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3">
           <FilterField label="От даты" type="date" value={filters.from} onChange={v => setFilters({...filters, from: v})} />
           <FilterField label="До даты" type="date" value={filters.to} onChange={v => setFilters({...filters, to: v})} />
           <FilterField label="Ученик" value={filters.student} onChange={v => setFilters({...filters, student: v})} />
           <FilterField label="Книга" value={filters.book} onChange={v => setFilters({...filters, book: v})} />
           <div>
-            <label className="block text-[11px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">Статус</label>
+            <label className="block text-[11px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-1.5">Статус</label>
             <select
               value={filters.status}
               onChange={e => setFilters({...filters, status: e.target.value})}
-              className="w-full bg-[#f5f5f7] border border-transparent px-3 py-2.5 rounded-xl text-[#1d1d1f] text-[13px] outline-none cursor-pointer focus:border-[#1a56db]/30 focus:bg-white"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3 py-2.5 rounded-xl text-[var(--color-text-primary)] text-[13px] outline-none cursor-pointer focus:border-[var(--color-brand)]/30 focus:bg-[var(--color-bg-card)]"
             >
               <option value="">Любой</option>
               <option value="active">Активна</option>
@@ -66,13 +66,13 @@ export default function HistoryPage() {
         <div className="flex gap-2 mt-3">
           <button
             onClick={fetchHistory}
-            className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium flex items-center gap-1.5 transition-colors"
+            className="px-4 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium flex items-center gap-1.5 transition-colors"
           >
             <Filter size={13} /> Применить
           </button>
           <button
             onClick={() => { setFilters({ from: '', to: '', student: '', book: '', status: '' }); setTimeout(fetchHistory, 100) }}
-            className="px-4 py-2 rounded-xl bg-[#f5f5f7] hover:bg-[#ececec] text-[#6e6e73] text-[13px] font-medium transition-colors"
+            className="px-4 py-2 rounded-xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-border)] text-[var(--color-text-secondary)] text-[13px] font-medium transition-colors"
           >
             Сбросить
           </button>
@@ -81,19 +81,19 @@ export default function HistoryPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : history.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl">
-          <p className="text-[#86868b] text-[14px]">Нет операций по фильтрам</p>
+        <div className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+          <p className="text-[var(--color-text-tertiary)] text-[14px]">Нет операций по фильтрам</p>
         </div>
       ) : (
         <>
-          <p className="text-[13px] text-[#86868b] mb-3">Найдено: {history.length}</p>
-          <div className="bg-white border border-black/8 rounded-2xl overflow-hidden">
+          <p className="text-[13px] text-[var(--color-text-tertiary)] mb-3">Найдено: {history.length}</p>
+          <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden">
             <div className="overflow-x-auto">
               <table className="w-full text-[13px]">
-                <thead className="bg-[#f5f5f7] text-[11px] uppercase tracking-wider text-[#86868b] font-medium">
+                <thead className="bg-[var(--color-bg-soft)] text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">
                   <tr>
                     <th className="text-left px-4 py-3">Дата</th>
                     <th className="text-left px-4 py-3">Ученик</th>
@@ -111,21 +111,21 @@ export default function HistoryPage() {
                         initial={{ opacity: 0 }}
                         animate={{ opacity: 1 }}
                         transition={{ delay: i * 0.008 }}
-                        className="hover:bg-[#f5f5f7]"
+                        className="hover:bg-[var(--color-bg-soft)]"
                       >
                         <td className="px-4 py-3 whitespace-nowrap">
-                          <div className="text-[#1d1d1f]">{new Date(h.borrowed_at).toLocaleDateString('ru-RU')}</div>
-                          <div className="text-[10px] text-[#86868b]">{new Date(h.borrowed_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
+                          <div className="text-[var(--color-text-primary)]">{new Date(h.borrowed_at).toLocaleDateString('ru-RU')}</div>
+                          <div className="text-[10px] text-[var(--color-text-tertiary)]">{new Date(h.borrowed_at).toLocaleTimeString('ru-RU', { hour: '2-digit', minute: '2-digit' })}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-medium text-[#1d1d1f]">{h.student_name}</div>
-                          <div className="text-[11px] text-[#86868b]">{h.student_class || '—'}</div>
+                          <div className="font-medium text-[var(--color-text-primary)]">{h.student_name}</div>
+                          <div className="text-[11px] text-[var(--color-text-tertiary)]">{h.student_class || '—'}</div>
                         </td>
                         <td className="px-4 py-3">
-                          <div className="font-medium text-[#1d1d1f]">{h.book_title}</div>
-                          <div className="text-[11px] text-[#86868b]">{h.book_author}</div>
+                          <div className="font-medium text-[var(--color-text-primary)]">{h.book_title}</div>
+                          <div className="text-[11px] text-[var(--color-text-tertiary)]">{h.book_author}</div>
                         </td>
-                        <td className="px-4 py-3 text-[#86868b] text-[12px]">{h.issued_by_name || '—'}</td>
+                        <td className="px-4 py-3 text-[var(--color-text-tertiary)] text-[12px]">{h.issued_by_name || '—'}</td>
                         <td className="px-4 py-3 text-center">
                           <span
                             className="inline-block px-2.5 py-1 rounded-full text-[11px] font-medium"
@@ -149,12 +149,12 @@ export default function HistoryPage() {
 
 const FilterField = ({ label, value, onChange, type = 'text' }) => (
   <div>
-    <label className="block text-[11px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">{label}</label>
+    <label className="block text-[11px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-1.5">{label}</label>
     <input
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full bg-[#f5f5f7] border border-transparent px-3 py-2.5 rounded-xl text-[#1d1d1f] text-[13px] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all"
+      className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3 py-2.5 rounded-xl text-[var(--color-text-primary)] text-[13px] outline-none focus:border-[var(--color-brand)]/30 focus:bg-[var(--color-bg-card)] transition-all"
     />
   </div>
 )

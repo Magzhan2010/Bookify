@@ -19,7 +19,7 @@ const StatCard = ({ icon: Icon, label, value, accent, href, delay = 0 }) => (
   >
     <Link
       href={href || '#'}
-      className="group block bg-white border border-black/8 rounded-2xl p-5 hover:border-black/12 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all"
+      className="group block bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 hover:border-[var(--color-border-strong)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all"
     >
       <div className="flex items-center justify-between mb-4">
         <div
@@ -29,8 +29,8 @@ const StatCard = ({ icon: Icon, label, value, accent, href, delay = 0 }) => (
           <Icon size={18} />
         </div>
       </div>
-      <div className="text-[32px] font-semibold tracking-tight mb-1 text-[#1d1d1f]">{value}</div>
-      <div className="text-[11px] uppercase tracking-wider text-[#86868b] font-medium">{label}</div>
+      <div className="text-[32px] font-semibold tracking-tight mb-1 text-[var(--color-text-primary)]">{value}</div>
+      <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">{label}</div>
     </Link>
   </motion.div>
 )
@@ -62,7 +62,7 @@ export default function LibrarianDashboard() {
   if (loading) {
     return (
       <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
       </div>
     )
   }
@@ -81,18 +81,18 @@ export default function LibrarianDashboard() {
         className="flex flex-col sm:flex-row sm:items-end justify-between gap-4"
       >
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
             Добро пожаловать
           </h1>
-          <p className="text-[14px] text-[#6e6e73]">
+          <p className="text-[14px] text-[var(--color-text-secondary)]">
             {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' })}
           </p>
         </div>
         <div className="flex gap-2">
-          <Link href="/librarian/issue" className="px-4 py-2.5 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium transition-colors flex items-center gap-2">
+          <Link href="/librarian/issue" className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium transition-colors flex items-center gap-2">
             <BookMarked size={14} /> Выдать книгу
           </Link>
-          <Link href="/librarian/returns" className="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-[#1d1d1f] text-[13px] font-medium hover:bg-[#f5f5f7] transition-colors flex items-center gap-2">
+          <Link href="/librarian/returns" className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[13px] font-medium hover:bg-[var(--color-bg-soft)] transition-colors flex items-center gap-2">
             <ArrowDownToLine size={14} /> Принять возврат
           </Link>
         </div>
@@ -110,14 +110,14 @@ export default function LibrarianDashboard() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.2 }}
-          className="lg:col-span-2 bg-white border border-black/8 rounded-2xl p-6"
+          className="lg:col-span-2 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6"
         >
           <div className="flex items-center justify-between mb-5">
             <div>
-              <h3 className="text-[16px] font-semibold text-[#1d1d1f]">Активность за 30 дней</h3>
-              <p className="text-[12px] text-[#86868b] mt-0.5">Выдачи и возвраты</p>
+              <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Активность за 30 дней</h3>
+              <p className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5">Выдачи и возвраты</p>
             </div>
-            <TrendingUp size={16} className="text-[#1a56db]" />
+            <TrendingUp size={16} className="text-[var(--color-brand)]" />
           </div>
           <div className="h-64">
             {timeline.length > 0 ? (
@@ -142,7 +142,7 @@ export default function LibrarianDashboard() {
                 </AreaChart>
               </ResponsiveContainer>
             ) : (
-              <div className="flex items-center justify-center h-full text-[#86868b] text-[13px]">Нет активности</div>
+              <div className="flex items-center justify-center h-full text-[var(--color-text-tertiary)] text-[13px]">Нет активности</div>
             )}
           </div>
         </motion.div>
@@ -151,26 +151,26 @@ export default function LibrarianDashboard() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.25 }}
-          className="bg-white border border-black/8 rounded-2xl p-6"
+          className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6"
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[16px] font-semibold text-[#1d1d1f]">Должники</h3>
-              <p className="text-[12px] text-[#86868b] mt-0.5">Просроченные</p>
+              <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Должники</h3>
+              <p className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5">Просроченные</p>
             </div>
-            <Clock size={16} className="text-[#ff3b30]" />
+            <Clock size={16} className="text-[var(--color-danger)]" />
           </div>
           <div className="space-y-1.5 max-h-72 overflow-y-auto">
             {debtors.length === 0 ? (
-              <div className="text-center py-8 text-[#86868b] text-[13px]">Все вернули вовремя</div>
+              <div className="text-center py-8 text-[var(--color-text-tertiary)] text-[13px]">Все вернули вовремя</div>
             ) : debtors.slice(0, 8).map(d => (
-              <Link href="/librarian/returns" key={d.borrow_id} className="block p-3 rounded-xl hover:bg-[#f5f5f7] transition-colors">
+              <Link href="/librarian/returns" key={d.borrow_id} className="block p-3 rounded-xl hover:bg-[var(--color-bg-soft)] transition-colors">
                 <div className="flex items-start justify-between gap-2">
                   <div className="flex-1 min-w-0">
-                    <div className="font-medium text-[13px] truncate text-[#1d1d1f]">{d.student_name}</div>
-                    <div className="text-[11px] text-[#86868b] truncate">{d.book_title}</div>
+                    <div className="font-medium text-[13px] truncate text-[var(--color-text-primary)]">{d.student_name}</div>
+                    <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{d.book_title}</div>
                   </div>
-                  <div className="text-[11px] font-semibold text-[#ff3b30] shrink-0">−{d.overdue_days}д</div>
+                  <div className="text-[11px] font-semibold text-[var(--color-danger)] shrink-0">−{d.overdue_days}д</div>
                 </div>
               </Link>
             ))}
@@ -183,29 +183,29 @@ export default function LibrarianDashboard() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.3 }}
-          className="lg:col-span-2 bg-white border border-black/8 rounded-2xl p-6"
+          className="lg:col-span-2 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6"
         >
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-[16px] font-semibold text-[#1d1d1f]">Последние выдачи</h3>
-              <p className="text-[12px] text-[#86868b] mt-0.5">Что происходило</p>
+              <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Последние выдачи</h3>
+              <p className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5">Что происходило</p>
             </div>
-            <Link href="/librarian/history" className="text-[12px] text-[#1a56db] hover:underline font-medium">Все →</Link>
+            <Link href="/librarian/history" className="text-[12px] text-[var(--color-brand)] hover:underline font-medium">Все →</Link>
           </div>
           <div className="space-y-2">
             {recent.length === 0 ? (
-              <div className="text-center py-10 text-[#86868b] text-[13px]">Выдач пока нет</div>
+              <div className="text-center py-10 text-[var(--color-text-tertiary)] text-[13px]">Выдач пока нет</div>
             ) : recent.map(r => (
-              <div key={r.borrow_id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[#f5f5f7] transition-colors">
-                <div className="w-9 h-12 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0">
+              <div key={r.borrow_id} className="flex items-center gap-3 p-2.5 rounded-xl hover:bg-[var(--color-bg-soft)] transition-colors">
+                <div className="w-9 h-12 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
                   {r.cover_url && <img src={r.cover_url} className="w-full h-full object-cover" />}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-medium text-[13px] truncate text-[#1d1d1f]">{r.title}</div>
-                  <div className="text-[11px] text-[#86868b] truncate">{r.student_name} · {r.class_name || '—'}</div>
+                  <div className="font-medium text-[13px] truncate text-[var(--color-text-primary)]">{r.title}</div>
+                  <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{r.student_name} · {r.class_name || '—'}</div>
                 </div>
                 <div className="text-right shrink-0">
-                  <div className="text-[11px] text-[#86868b]">{new Date(r.borrowed_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</div>
+                  <div className="text-[11px] text-[var(--color-text-tertiary)]">{new Date(r.borrowed_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}</div>
                 </div>
               </div>
             ))}
@@ -216,10 +216,10 @@ export default function LibrarianDashboard() {
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.35 }}
-          className="bg-white border border-black/8 rounded-2xl p-6"
+          className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6"
         >
-          <h3 className="text-[16px] font-semibold mb-1 text-[#1d1d1f]">Топ жанров</h3>
-          <p className="text-[12px] text-[#86868b] mb-5">Что читают ученики</p>
+          <h3 className="text-[16px] font-semibold mb-1 text-[var(--color-text-primary)]">Топ жанров</h3>
+          <p className="text-[12px] text-[var(--color-text-tertiary)] mb-5">Что читают ученики</p>
           <div className="space-y-3">
             {data?.genres?.slice(0, 6).map((g, i) => {
               const max = data.genres[0]?.count || 1
@@ -227,15 +227,15 @@ export default function LibrarianDashboard() {
               return (
                 <div key={g.genre}>
                   <div className="flex justify-between text-[13px] mb-1.5">
-                    <span className="font-medium text-[#1d1d1f]">{g.genre}</span>
-                    <span className="text-[#86868b]">{g.count}</span>
+                    <span className="font-medium text-[var(--color-text-primary)]">{g.genre}</span>
+                    <span className="text-[var(--color-text-tertiary)]">{g.count}</span>
                   </div>
-                  <div className="h-1.5 bg-[#f5f5f7] rounded-full overflow-hidden">
+                  <div className="h-1.5 bg-[var(--color-bg-soft)] rounded-full overflow-hidden">
                     <motion.div
                       initial={{ width: 0 }}
                       animate={{ width: `${pct}%` }}
                       transition={{ duration: 0.7, ease: [0.23, 1, 0.32, 1] }}
-                      className="h-full bg-[#1a56db] rounded-full"
+                      className="h-full bg-[var(--color-brand)] rounded-full"
                     />
                   </div>
                 </div>

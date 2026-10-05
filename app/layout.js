@@ -1,6 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
+import { ThemeProvider, ThemeToggle } from '../components/ThemeContext';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -19,26 +20,44 @@ export const metadata = {
   }
 };
 
+// Inline-скрипт применяет тему ДО рендера (нет flash)
+const themeScript = `
+(function() {
+  try {
+    var saved = localStorage.getItem('bookify-theme');
+    var prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+    var theme = saved || (prefersDark ? 'dark' : 'light');
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+    }
+  } catch (e) {}
+})();
+`;
+
 export default function RootLayout({ children }) {
   return (
-    <html
-      lang="ru"
-      className={inter.variable}
-      suppressHydrationWarning
-    >
-      <body className="min-h-screen flex flex-col bg-white text-[#1d1d1f] antialiased">
-        {children}
+    <html lang="ru" className={inter.variable} suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeScript }} />
+      </head>
+      <body className="min-h-screen flex flex-col antialiased bg-[var(--color-bg)] text-[var(--color-text-primary)]">
+        <ThemeProvider>
+          {children}
+          <div className="fixed bottom-4 right-4 z-50 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-full p-2 shadow-[var(--shadow-elevated)]">
+            <ThemeToggle />
+          </div>
+        </ThemeProvider>
         <Toaster
           position="top-center"
           closeButton
           toastOptions={{
             style: {
-              background: '#1d1d1f',
-              border: 'none',
-              color: '#fff',
+              background: 'var(--color-bg-elevated)',
+              border: '1px solid var(--color-border)',
+              color: 'var(--color-text-primary)',
               borderRadius: 14,
-              fontFamily: 'var(--font-inter)',
-              boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
+              fontFamily: 'var(--font-sans)',
+              boxShadow: 'var(--shadow-elevated)'
             }
           }}
         />

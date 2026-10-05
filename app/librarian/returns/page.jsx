@@ -78,13 +78,13 @@ export default function ReturnsPage() {
     <div className="max-w-[1100px] mx-auto">
       <div className="mb-7 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
             Принять возврат
           </h1>
-          <p className="text-[15px] text-[#6e6e73]">Книги, которые сейчас на руках у учеников</p>
+          <p className="text-[15px] text-[var(--color-text-secondary)]">Книги, которые сейчас на руках у учеников</p>
         </div>
         {overdueCount > 0 && (
-          <div className="px-4 py-2 rounded-xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#ff3b30] text-[13px] font-medium flex items-center gap-2">
+          <div className="px-4 py-2 rounded-xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 text-[var(--color-danger)] text-[13px] font-medium flex items-center gap-2">
             <AlertTriangle size={14} /> {overdueCount} просрочено
           </div>
         )}
@@ -92,15 +92,15 @@ export default function ReturnsPage() {
 
       <div className="flex flex-col md:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white border border-black/10 pl-11 pr-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db] focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[14px]"
+            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] pl-11 pr-4 py-3 rounded-xl text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-soft)] transition-all text-[14px]"
           />
         </div>
-        <div className="flex bg-white p-1 rounded-xl border border-black/8">
+        <div className="flex bg-[var(--color-bg-card)] p-1 rounded-xl border border-[var(--color-border)]">
           {[
             { key: 'all', label: 'Все' },
             { key: 'active', label: 'Активные' },
@@ -110,7 +110,7 @@ export default function ReturnsPage() {
               key={f.key}
               onClick={() => setFilter(f.key)}
               className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
-                filter === f.key ? 'bg-[#1a56db] text-white' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+                filter === f.key ? 'bg-[var(--color-brand)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
               }`}
             >
               {f.label}
@@ -121,19 +121,19 @@ export default function ReturnsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : loans.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl"
+          className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl"
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#34c759]/10 text-[#34c759] mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-success)]/10 text-[var(--color-success)] mx-auto mb-4 flex items-center justify-center">
             <Check size={32} />
           </div>
-          <p className="text-[17px] font-semibold mb-1 text-[#1d1d1f]">Пусто</p>
-          <p className="text-[13px] text-[#86868b]">
+          <p className="text-[17px] font-semibold mb-1 text-[var(--color-text-primary)]">Пусто</p>
+          <p className="text-[13px] text-[var(--color-text-tertiary)]">
             {filter === 'overdue' ? 'Никто ничего не просрочил' : 'Нет активных выдач'}
           </p>
         </motion.div>
@@ -155,34 +155,34 @@ export default function ReturnsPage() {
                   exit={{ opacity: 0, x: 100 }}
                   className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
                     overdue
-                      ? 'bg-[#ff3b30]/5 border-[#ff3b30]/20'
-                      : 'bg-white border-black/8 hover:border-black/12'
+                      ? 'bg-[var(--color-danger)]/5 border-[var(--color-danger)]/30'
+                      : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
                   }`}
                 >
-                  <div className="w-11 h-15 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0">
+                  <div className="w-11 h-15 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
                     {loan.book_cover && <img src={loan.book_cover} className="w-full h-full object-cover" />}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <BookOpen size={13} className="text-[#1a56db] shrink-0" />
-                      <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{loan.book_title}</div>
+                      <BookOpen size={13} className="text-[var(--color-brand)] shrink-0" />
+                      <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{loan.book_title}</div>
                     </div>
-                    <div className="flex items-center gap-2 text-[13px] text-[#6e6e73]">
+                    <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)]">
                       <UserIcon size={11} />
                       <span className="truncate">{loan.student_name}</span>
-                      {loan.student_class && <span className="text-[#86868b] text-[12px]">· {loan.student_class}</span>}
+                      {loan.student_class && <span className="text-[var(--color-text-tertiary)] text-[12px]">· {loan.student_class}</span>}
                     </div>
                     <div className="flex items-center gap-3 mt-1.5 text-[11px]">
-                      <span className="text-[#86868b]">
+                      <span className="text-[var(--color-text-tertiary)]">
                         Выдано: {new Date(loan.borrowed_at).toLocaleDateString('ru-RU')}
                       </span>
                       {overdue ? (
-                        <span className="text-[#ff3b30] font-semibold flex items-center gap-1">
+                        <span className="text-[var(--color-danger)] font-semibold flex items-center gap-1">
                           <Clock size={10} /> {overdueDays} д. просрочки
                         </span>
                       ) : (
-                        <span className="text-[#86868b]">
+                        <span className="text-[var(--color-text-tertiary)]">
                           До: {new Date(loan.due_date).toLocaleDateString('ru-RU')}
                         </span>
                       )}
@@ -194,10 +194,10 @@ export default function ReturnsPage() {
                     disabled={isSubmitting}
                     className={`shrink-0 px-4 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 transition-colors ${
                       isSubmitting
-                        ? 'bg-[#f5f5f7] text-[#86868b]'
+                        ? 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)]'
                         : overdue
-                          ? 'bg-[#ff3b30] hover:bg-[#e0291f] text-white'
-                          : 'bg-[#1a56db] hover:bg-[#1849b8] text-white'
+                          ? 'bg-[var(--color-danger)] hover:bg-[#e0291f] text-white'
+                          : 'bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white'
                     }`}
                   >
                     {isSubmitting ? (

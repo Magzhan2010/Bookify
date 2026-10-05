@@ -38,17 +38,17 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
             variants={cardVariants}
             whileHover={{ y: -4, transition: { duration: 0.18 } }}
             whileTap={{ scale: 0.98 }}
-            className="group bg-white border border-black/8 rounded-2xl overflow-hidden cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-black/12 transition-all"
+            className="group bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-[var(--color-border-strong)] transition-all"
             onClick={() => router.push(`/books/${book.id}`)}
           >
             <div className="absolute z-10 top-2 left-2 flex flex-col items-start gap-1">
               {isFinished && (
-                <span className="px-2 py-0.5 rounded-full bg-[#34c759]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full bg-[var(--color-success)]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
                   <CheckCircle size={10} /> Прочитано
                 </span>
               )}
               {isReading && (
-                <span className="px-2 py-0.5 rounded-full bg-[#1a56db]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
+                <span className="px-2 py-0.5 rounded-full bg-[var(--color-brand)]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
                   <BookOpen size={10} /> Читаю
                 </span>
               )}
@@ -59,7 +59,7 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
               )}
             </div>
 
-            <div className="relative aspect-[2/3] bg-[#f5f5f7] overflow-hidden">
+            <div className="relative aspect-[2/3] bg-[var(--color-bg-soft)] overflow-hidden">
               {book.cover_url ? (
                 <img
                   src={book.cover_url}
@@ -69,19 +69,19 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen size={32} className="text-[#86868b]" />
+                  <BookOpen size={32} className="text-[var(--color-text-tertiary)]" />
                 </div>
               )}
             </div>
 
             <div className="p-3 sm:p-4">
-              <h3 className="font-semibold text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-1 group-hover:text-[#1a56db] transition-colors text-[#1d1d1f]">
+              <h3 className="font-semibold text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-1 group-hover:text-[var(--color-brand)] transition-colors text-[var(--color-text-primary)]">
                 {book.title}
               </h3>
-              <p className="text-[12px] text-[#86868b] line-clamp-1 mb-2">{book.author}</p>
+              <p className="text-[12px] text-[var(--color-text-tertiary)] line-clamp-1 mb-2">{book.author}</p>
 
               {book.genre && (
-                <span className="inline-block px-2 py-0.5 rounded-md bg-[#f5f5f7] text-[10px] font-medium text-[#1a56db]">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-[var(--color-bg-soft)] text-[10px] font-medium text-[var(--color-brand)]">
                   {book.genre}
                 </span>
               )}

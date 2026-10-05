@@ -32,28 +32,28 @@ export default function LookupPage() {
   return (
     <div className="max-w-[1100px] mx-auto">
       <div className="mb-7">
-        <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
           У кого книга?
         </h1>
-        <p className="text-[15px] text-[#6e6e73]">Поиск по названию или имени</p>
+        <p className="text-[15px] text-[var(--color-text-secondary)]">Поиск по названию или имени</p>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
           <input
             type="text"
             value={query}
             onChange={e => { setQuery(e.target.value); setFilter('all') }}
-            className="w-full bg-white border border-black/10 pl-11 pr-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db] focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[14px]"
+            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] pl-11 pr-4 py-3 rounded-xl text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-soft)] transition-all text-[14px]"
           />
         </div>
         <button
           onClick={() => { setFilter('overdue'); setQuery('') }}
           className={`px-5 py-3 rounded-xl border font-medium text-[13px] flex items-center gap-2 transition-all ${
             filter === 'overdue'
-              ? 'bg-[#ff3b30] text-white border-[#ff3b30]'
-              : 'bg-white border-black/10 text-[#6e6e73] hover:text-[#1d1d1f]'
+              ? 'bg-[var(--color-danger)] text-white border-[#ff3b30]'
+              : 'bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
           }`}
         >
           <AlertTriangle size={14} /> Только просрочки
@@ -62,11 +62,11 @@ export default function LookupPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : results.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl">
-          <p className="text-[#86868b] text-[14px]">Ничего не нашли</p>
+        <div className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+          <p className="text-[var(--color-text-tertiary)] text-[14px]">Ничего не нашли</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
@@ -79,30 +79,30 @@ export default function LookupPage() {
                 animate={{ opacity: 1, y: 0 }}
                 transition={{ delay: i * 0.03 }}
                 className={`p-4 rounded-2xl border ${
-                  overdue ? 'bg-[#ff3b30]/5 border-[#ff3b30]/20' : 'bg-white border-black/8'
+                  overdue ? 'bg-[var(--color-danger)]/5 border-[var(--color-danger)]/30' : 'bg-[var(--color-bg-card)] border-[var(--color-border)]'
                 }`}
               >
                 <div className="flex gap-3 mb-3">
-                  <div className="w-11 h-15 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0">
+                  <div className="w-11 h-15 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
                     {r.book_cover && <img src={r.book_cover} className="w-full h-full object-cover" />}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[13px] line-clamp-2 text-[#1d1d1f]">{r.book_title}</div>
-                    <div className="text-[11px] text-[#86868b]">{r.book_author}</div>
+                    <div className="font-semibold text-[13px] line-clamp-2 text-[var(--color-text-primary)]">{r.book_title}</div>
+                    <div className="text-[11px] text-[var(--color-text-tertiary)]">{r.book_author}</div>
                   </div>
                 </div>
 
                 <div className="space-y-1.5 text-[13px]">
                   <div className="flex items-center gap-2">
-                    <UserIcon size={12} className="text-[#1a56db] shrink-0" />
-                    <span className="font-medium truncate text-[#1d1d1f]">{r.student_name}</span>
+                    <UserIcon size={12} className="text-[var(--color-brand)] shrink-0" />
+                    <span className="font-medium truncate text-[var(--color-text-primary)]">{r.student_name}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <span className="text-[#86868b]">{r.student_class || '—'}</span>
+                    <span className="text-[var(--color-text-tertiary)]">{r.student_class || '—'}</span>
                   </div>
                   <div className="flex items-center gap-2 text-[11px]">
-                    <Calendar size={11} className="text-[#86868b] shrink-0" />
-                    <span className={overdue ? 'text-[#ff3b30] font-semibold' : 'text-[#86868b]'}>
+                    <Calendar size={11} className="text-[var(--color-text-tertiary)] shrink-0" />
+                    <span className={overdue ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}>
                       Вернуть: {new Date(r.due_date).toLocaleDateString('ru-RU')}
                     </span>
                   </div>

@@ -39,14 +39,14 @@ export default function StudentsPage() {
     <div className="max-w-[1300px] mx-auto">
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
             Ученики
           </h1>
-          <p className="text-[15px] text-[#6e6e73]">{students.length} зарегистрировано</p>
+          <p className="text-[15px] text-[var(--color-text-secondary)]">{students.length} зарегистрировано</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium transition-colors flex items-center gap-2"
+          className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium transition-colors flex items-center gap-2"
         >
           <UserPlus size={14} /> Добавить ученика
         </button>
@@ -54,19 +54,19 @@ export default function StudentsPage() {
 
       <div className="flex flex-col md:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
           <input
             type="text"
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-white border border-black/10 pl-11 pr-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db] focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[14px]"
+            className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] pl-11 pr-4 py-3 rounded-xl text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-soft)] transition-all text-[14px]"
           />
         </div>
         {classes.length > 0 && (
           <select
             value={classFilter}
             onChange={e => setClassFilter(e.target.value)}
-            className="bg-white border border-black/10 px-4 py-3 rounded-xl text-[#1d1d1f] outline-none cursor-pointer text-[14px]"
+            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] px-4 py-3 rounded-xl text-[var(--color-text-primary)] outline-none cursor-pointer text-[14px]"
           >
             <option value="">Все классы</option>
             {classes.map(c => <option key={c} value={c}>{c}</option>)}
@@ -76,11 +76,11 @@ export default function StudentsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : students.length === 0 ? (
-        <div className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl">
-          <p className="text-[#86868b] text-[14px]">Нет учеников</p>
+        <div className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+          <p className="text-[var(--color-text-tertiary)] text-[14px]">Нет учеников</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
@@ -90,21 +90,21 @@ export default function StudentsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
-              className="bg-white border border-black/8 rounded-2xl p-4 hover:border-black/12 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all"
+              className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-border-strong)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-[#1a56db] flex items-center justify-center font-semibold text-white shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0">
                   {s.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{s.name}</div>
-                  <div className="text-[11px] text-[#86868b] truncate">{s.class_name || '—'}</div>
+                  <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{s.name}</div>
+                  <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{s.class_name || '—'}</div>
                 </div>
               </div>
 
-              <div className="text-[11px] text-[#86868b] mb-3 truncate">{s.email}</div>
+              <div className="text-[11px] text-[var(--color-text-tertiary)] mb-3 truncate">{s.email}</div>
 
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-black/5">
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-[var(--color-border)]">
                 <Stat label="Всего" value={s.total_borrows} color="#1a56db" />
                 <Stat label="Сейчас" value={s.currently_holding} color="#ff9500" />
                 <Stat label="Долги" value={s.overdue_count} color={s.overdue_count > 0 ? '#ff3b30' : '#86868b'} />
@@ -126,7 +126,7 @@ export default function StudentsPage() {
 const Stat = ({ label, value, color }) => (
   <div className="text-center">
     <div className="text-[16px] font-semibold" style={{ color }}>{value}</div>
-    <div className="text-[9px] uppercase tracking-wider text-[#86868b] font-medium mt-0.5">{label}</div>
+    <div className="text-[9px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mt-0.5">{label}</div>
   </div>
 )
 
@@ -176,11 +176,11 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 16 }}
             onClick={e => e.stopPropagation()}
-            className="bg-white border border-black/10 rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
+            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
           >
             <div className="flex items-center justify-between mb-5">
-              <h2 className="text-[18px] font-semibold text-[#1d1d1f]">Новый ученик</h2>
-              <button onClick={onClose} className="text-[#86868b] hover:text-[#1d1d1f]">
+              <h2 className="text-[18px] font-semibold text-[var(--color-text-primary)]">Новый ученик</h2>
+              <button onClick={onClose} className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]">
                 <X size={18} />
               </button>
             </div>
@@ -196,7 +196,7 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full mt-6 py-3 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[14px] font-medium disabled:opacity-50 transition-colors"
+              className="w-full mt-6 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[14px] font-medium disabled:opacity-50 transition-colors"
             >
               {submitting ? 'Создаю...' : 'Создать'}
             </button>
@@ -209,12 +209,12 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
 
 const Field = ({ label, value, onChange, type = 'text' }) => (
   <div>
-    <label className="block text-[12px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">{label}</label>
+    <label className="block text-[12px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-1.5">{label}</label>
     <input
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
-      className="w-full bg-[#f5f5f7] border border-transparent px-4 py-2.5 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all text-[14px]"
+      className="w-full bg-[var(--color-bg-soft)] border border-transparent px-4 py-2.5 rounded-xl text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/30 focus:bg-[var(--color-bg-card)] transition-all text-[14px]"
     />
   </div>
 )

@@ -60,13 +60,13 @@ export default function RequestsPage() {
     <div className="max-w-[1100px] mx-auto">
       <div className="mb-7 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
         <div>
-          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[var(--color-text-primary)]">
             Заявки учеников
           </h1>
-          <p className="text-[15px] text-[#6e6e73]">
+          <p className="text-[15px] text-[var(--color-text-secondary)]">
             Кто хочет взять книгу
             {pendingCount > 0 && filter === 'pending' && (
-              <span className="ml-2 px-2 py-0.5 rounded-full bg-[#ff9500] text-white text-[12px] font-bold">
+              <span className="ml-2 px-2 py-0.5 rounded-full bg-[var(--color-warning)] text-white text-[12px] font-bold">
                 {pendingCount}
               </span>
             )}
@@ -74,7 +74,7 @@ export default function RequestsPage() {
         </div>
       </div>
 
-      <div className="flex bg-white p-1 rounded-xl border border-black/8 mb-5 w-fit">
+      <div className="flex bg-[var(--color-bg-card)] p-1 rounded-xl border border-[var(--color-border)] mb-5 w-fit">
         {[
           { key: 'pending', label: 'Ожидают' },
           { key: 'approved', label: 'Одобренные' },
@@ -85,7 +85,7 @@ export default function RequestsPage() {
             key={f.key}
             onClick={() => setFilter(f.key)}
             className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
-              filter === f.key ? 'bg-[#1a56db] text-white' : 'text-[#6e6e73] hover:text-[#1d1d1f]'
+              filter === f.key ? 'bg-[var(--color-brand)] text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
             }`}
           >
             {f.label}
@@ -95,21 +95,21 @@ export default function RequestsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : requests.length === 0 ? (
         <motion.div
           initial={{ opacity: 0, scale: 0.97 }}
           animate={{ opacity: 1, scale: 1 }}
-          className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl"
+          className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl"
         >
-          <div className="w-16 h-16 rounded-2xl bg-[#34c759]/10 text-[#34c759] mx-auto mb-4 flex items-center justify-center">
+          <div className="w-16 h-16 rounded-2xl bg-[var(--color-success)]/10 text-[var(--color-success)] mx-auto mb-4 flex items-center justify-center">
             <Check size={32} />
           </div>
-          <p className="text-[17px] font-semibold mb-1 text-[#1d1d1f]">
+          <p className="text-[17px] font-semibold mb-1 text-[var(--color-text-primary)]">
             {filter === 'pending' ? 'Никто не ждёт' : 'Здесь пусто'}
           </p>
-          <p className="text-[13px] text-[#86868b]">
+          <p className="text-[13px] text-[var(--color-text-tertiary)]">
             {filter === 'pending' ? 'Ученики пока не оставили заявок' : 'Попробуй другой фильтр'}
           </p>
         </motion.div>
@@ -134,21 +134,21 @@ export default function RequestsPage() {
                   animate={{ opacity: 1, y: 0 }}
                   exit={{ opacity: 0, x: 100 }}
                   transition={{ delay: i * 0.02 }}
-                  className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-white border border-black/8 rounded-2xl"
+                  className="flex flex-col md:flex-row items-start md:items-center gap-4 p-4 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl"
                 >
-                  <div className="w-12 h-16 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0">
+                  <div className="w-12 h-16 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
                     {r.book_cover && <img src={r.book_cover} className="w-full h-full object-cover" />}
                   </div>
 
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1">
-                      <BookOpen size={14} className="text-[#1a56db] shrink-0" />
-                      <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{r.book_title}</div>
+                      <BookOpen size={14} className="text-[var(--color-brand)] shrink-0" />
+                      <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{r.book_title}</div>
                     </div>
-                    <div className="flex items-center gap-2 text-[13px] text-[#6e6e73] mb-1">
+                    <div className="flex items-center gap-2 text-[13px] text-[var(--color-text-secondary)] mb-1">
                       <User size={12} />
                       <span className="truncate">{r.student_name}</span>
-                      {r.student_class && <span className="text-[#86868b] text-[12px]">· {r.student_class}</span>}
+                      {r.student_class && <span className="text-[var(--color-text-tertiary)] text-[12px]">· {r.student_class}</span>}
                     </div>
                     <div className="flex items-center gap-3 text-[11px]">
                       <span
@@ -157,7 +157,7 @@ export default function RequestsPage() {
                       >
                         {badge.label}
                       </span>
-                      <span className="text-[#86868b]">
+                      <span className="text-[var(--color-text-tertiary)]">
                         <Calendar size={10} className="inline mr-1" />
                         {new Date(r.requested_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                       </span>
@@ -169,14 +169,14 @@ export default function RequestsPage() {
                       <button
                         onClick={() => handleAction(r.id, 'issue')}
                         disabled={isProcessing}
-                        className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+                        className="px-4 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
                       >
                         {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <><Check size={14} /> Выдать</>}
                       </button>
                       <button
                         onClick={() => handleAction(r.id, 'reject')}
                         disabled={isProcessing}
-                        className="px-4 py-2 rounded-xl bg-white border border-black/10 text-[#6e6e73] hover:text-[#1d1d1f] text-[13px] font-medium transition-colors"
+                        className="px-4 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-[13px] font-medium transition-colors"
                       >
                         Отклонить
                       </button>
@@ -187,7 +187,7 @@ export default function RequestsPage() {
                     <button
                       onClick={() => handleAction(r.id, 'issue')}
                       disabled={isProcessing}
-                      className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+                      className="px-4 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
                     >
                       {isProcessing ? <Loader2 size={14} className="animate-spin" /> : <><Check size={14} /> Выдать</>}
                     </button>

@@ -30,25 +30,25 @@ export default function LandingPage() {
   const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0])
 
   return (
-    <main className="min-h-screen bg-white text-[#1d1d1f] overflow-x-hidden">
+    <main className="min-h-screen bg-[var(--color-bg-card)] text-[var(--color-text-primary)] overflow-x-hidden">
 
       {/* === NAV === */}
-      <nav className="fixed top-0 w-full z-50 bg-white/75 backdrop-blur-xl border-b border-black/5">
+      <nav className="fixed top-0 w-full z-50 bg-[var(--color-bg-card)]/75 backdrop-blur-xl border-b border-[var(--color-border)]">
         <div className="max-w-[1200px] mx-auto px-6 h-14 md:h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="w-9 h-9 rounded-xl overflow-hidden bg-white ring-1 ring-black/5">
+            <div className="w-9 h-9 rounded-xl overflow-hidden bg-[var(--color-bg-card)] ring-1 ring-black/5">
               <Image src="/lb_logo.png" width={36} height={36} alt="DLS" className="object-contain" />
             </div>
             <div className="font-semibold text-[17px] tracking-tight">Bookify</div>
           </Link>
 
           <div className="flex items-center gap-2">
-            <Link href="/login" className="hidden sm:block px-4 py-2 text-[14px] text-[#1d1d1f] hover:text-[#1a56db] transition-colors font-medium">
+            <Link href="/login" className="hidden sm:block px-4 py-2 text-[14px] text-[var(--color-text-primary)] hover:text-[var(--color-brand)] transition-colors font-medium">
               Войти
             </Link>
             <Link
               href="/register"
-              className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[14px] font-medium transition-colors"
+              className="px-4 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[14px] font-medium transition-colors"
             >
               Регистрация
             </Link>
@@ -63,7 +63,7 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            className="inline-flex items-center gap-2 mb-7 px-3 py-1 bg-[#1a56db]/8 border border-[#1a56db]/15 rounded-full text-[12px] font-medium text-[#1a56db]"
+            className="inline-flex items-center gap-2 mb-7 px-3 py-1 bg-[var(--color-brand)]/8 border border-[var(--color-brand)]/15 rounded-full text-[12px] font-medium text-[var(--color-brand)]"
           >
             <Sparkles size={12} /> Цифровая библиотека DLS
           </motion.div>
@@ -72,22 +72,22 @@ export default function LandingPage() {
             initial={{ opacity: 0, y: 24 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.7, delay: 0.1 }}
-            className="text-5xl sm:text-7xl md:text-8xl font-semibold tracking-[-0.035em] leading-[0.95] mb-6 text-[#1d1d1f]"
+            className="text-5xl sm:text-7xl md:text-8xl font-semibold tracking-[-0.035em] leading-[0.95] mb-6 text-[var(--color-text-primary)]"
           >
             Возьми книгу.<br />
-            <span className="text-[#1a56db]">Онлайн.</span>
+            <span className="text-[var(--color-brand)]">Онлайн.</span>
           </motion.h1>
 
           <motion.p
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="text-[19px] md:text-[21px] text-[#6e6e73] mb-10 max-w-2xl mx-auto leading-[1.45]"
+            className="text-[19px] md:text-[21px] text-[var(--color-text-secondary)] mb-10 max-w-2xl mx-auto leading-[1.45]"
           >
             Платформа библиотеки Divergents Leadership School.
-            <span className="text-[#1d1d1f]"> 250+ книг</span> в каталоге,
-            <span className="text-[#1d1d1f]"> мгновенный поиск</span>,
-            <span className="text-[#1d1d1f]"> статистика чтения</span>.
+            <span className="text-[var(--color-text-primary)]"> 250+ книг</span> в каталоге,
+            <span className="text-[var(--color-text-primary)]"> мгновенный поиск</span>,
+            <span className="text-[var(--color-text-primary)]"> статистика чтения</span>.
           </motion.p>
 
           <motion.div
@@ -98,13 +98,13 @@ export default function LandingPage() {
           >
             <Link
               href="/register"
-              className="group px-7 py-3 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[16px] font-medium flex items-center justify-center gap-2 transition-all shadow-[0_8px_24px_rgba(26,86,219,0.25)]"
+              className="group px-7 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[16px] font-medium flex items-center justify-center gap-2 transition-all shadow-[0_8px_24px_rgba(26,86,219,0.25)]"
             >
               Начать читать <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
             </Link>
             <Link
               href="/library"
-              className="px-7 py-3 rounded-xl bg-white border border-black/10 text-[#1d1d1f] text-[16px] font-medium hover:bg-black/[0.03] transition-all flex items-center justify-center gap-2"
+              className="px-7 py-3 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[16px] font-medium hover:bg-black/[0.03] transition-all flex items-center justify-center gap-2"
             >
               <Library size={16} /> Каталог
             </Link>
@@ -118,12 +118,12 @@ export default function LandingPage() {
             className="relative max-w-[820px] mx-auto"
           >
             <div className="absolute -inset-x-12 -inset-y-6 bg-gradient-to-br from-[#1a56db]/8 to-transparent rounded-[40px] blur-2xl" />
-            <div className="relative bg-white border border-black/8 rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
-              <div className="flex items-center gap-1.5 px-5 py-3 border-b border-black/5 bg-[#fafafa]">
+            <div className="relative bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+              <div className="flex items-center gap-1.5 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
                 <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                 <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-                <div className="ml-auto text-xs text-[#86868b] font-mono">bookify.dls/library</div>
+                <div className="ml-auto text-xs text-[var(--color-text-tertiary)] font-mono">bookify.dls/library</div>
               </div>
 
               <div className="p-6 sm:p-8">
@@ -133,8 +133,8 @@ export default function LandingPage() {
                     { label: 'На руках', value: '38', color: '#ff9500' },
                     { label: 'Читателей', value: '142', color: '#34c759' }
                   ].map((s, i) => (
-                    <div key={i} className="bg-[#fafafa] rounded-2xl p-4 text-left">
-                      <div className="text-[11px] uppercase tracking-wider text-[#86868b] font-medium mb-1">{s.label}</div>
+                    <div key={i} className="bg-[var(--color-bg-elevated)] rounded-2xl p-4 text-left">
+                      <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-1">{s.label}</div>
                       <div className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</div>
                     </div>
                   ))}
@@ -146,18 +146,18 @@ export default function LandingPage() {
                     { name: 'Тимур К.', book: '1984', status: 'Возвращена' },
                     { name: 'Алия М.', book: 'Преступление и наказ.', status: 'Просрочка' }
                   ].map((row, i) => (
-                    <div key={i} className="flex items-center gap-3 p-3 bg-[#fafafa] rounded-xl">
+                    <div key={i} className="flex items-center gap-3 p-3 bg-[var(--color-bg-elevated)] rounded-xl">
                       <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#1a56db] to-[#3b82f6] flex items-center justify-center text-xs font-semibold text-white">
                         {row.name.charAt(0)}
                       </div>
                       <div className="flex-1 min-w-0">
                         <div className="text-[13px] font-medium truncate">{row.name}</div>
-                        <div className="text-[11px] text-[#86868b] truncate">{row.book}</div>
+                        <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{row.book}</div>
                       </div>
                       <div className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                        row.status === 'Выдана' ? 'bg-[#1a56db]/10 text-[#1a56db]' :
-                        row.status === 'Возвращена' ? 'bg-[#34c759]/10 text-[#34c759]' :
-                        'bg-[#ff3b30]/10 text-[#ff3b30]'
+                        row.status === 'Выдана' ? 'bg-[var(--color-brand)]/10 text-[var(--color-brand)]' :
+                        row.status === 'Возвращена' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' :
+                        'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'
                       }`}>
                         {row.status}
                       </div>
@@ -173,14 +173,14 @@ export default function LandingPage() {
         <motion.div
           animate={{ y: [0, 6, 0] }}
           transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[#86868b]"
+          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[var(--color-text-tertiary)]"
         >
           <ChevronDown size={20} />
         </motion.div>
       </section>
 
       {/* === STATS === */}
-      <section className="py-14 px-6 border-y border-black/5 bg-[#fafafa]">
+      <section className="py-14 px-6 border-y border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
         <motion.div
           initial="hidden"
           whileInView="visible"
@@ -195,8 +195,8 @@ export default function LandingPage() {
             { num: '1 клик', label: 'Чтобы взять' }
           ].map((s, i) => (
             <motion.div key={i} variants={fadeIn}>
-              <div className="text-4xl md:text-5xl font-semibold text-[#1d1d1f] mb-1 tracking-tight">{s.num}</div>
-              <div className="text-[12px] md:text-[13px] text-[#86868b] font-medium">{s.label}</div>
+              <div className="text-4xl md:text-5xl font-semibold text-[var(--color-text-primary)] mb-1 tracking-tight">{s.num}</div>
+              <div className="text-[12px] md:text-[13px] text-[var(--color-text-tertiary)] font-medium">{s.label}</div>
             </motion.div>
           ))}
         </motion.div>
@@ -212,13 +212,13 @@ export default function LandingPage() {
             variants={stagger}
             className="text-center mb-16"
           >
-            <motion.div variants={fadeIn} className="inline-block mb-4 text-[12px] font-medium text-[#1a56db] uppercase tracking-[0.15em]">
+            <motion.div variants={fadeIn} className="inline-block mb-4 text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em]">
               Для учеников
             </motion.div>
-            <motion.h2 variants={fadeIn} className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-4 text-[#1d1d1f]">
+            <motion.h2 variants={fadeIn} className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-4 text-[var(--color-text-primary)]">
               Три шага до книги
             </motion.h2>
-            <motion.p variants={fadeIn} className="text-[19px] text-[#6e6e73] max-w-xl mx-auto">
+            <motion.p variants={fadeIn} className="text-[19px] text-[var(--color-text-secondary)] max-w-xl mx-auto">
               Больше никаких бумажных журналов. Всё в телефоне.
             </motion.p>
           </motion.div>
@@ -241,7 +241,7 @@ export default function LandingPage() {
                   key={i}
                   variants={fadeIn}
                   whileHover={{ y: -4, transition: { duration: 0.2 } }}
-                  className="bg-white border border-black/8 rounded-[24px] p-8 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all"
+                  className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] p-8 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all"
                 >
                   <div
                     className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6"
@@ -249,9 +249,9 @@ export default function LandingPage() {
                   >
                     <Icon size={22} />
                   </div>
-                  <div className="text-[12px] text-[#86868b] font-medium mb-1">0{i + 1}</div>
-                  <h3 className="text-[24px] font-semibold mb-2 text-[#1d1d1f] tracking-tight">{step.title}</h3>
-                  <p className="text-[15px] text-[#6e6e73] leading-[1.5]">{step.desc}</p>
+                  <div className="text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1">0{i + 1}</div>
+                  <h3 className="text-[24px] font-semibold mb-2 text-[var(--color-text-primary)] tracking-tight">{step.title}</h3>
+                  <p className="text-[15px] text-[var(--color-text-secondary)] leading-[1.5]">{step.desc}</p>
                 </motion.div>
               )
             })}
@@ -260,7 +260,7 @@ export default function LandingPage() {
       </section>
 
       {/* === ДЛЯ БИБЛИОТЕКАРЯ === */}
-      <section className="py-24 md:py-32 px-6 bg-[#fafafa] border-y border-black/5">
+      <section className="py-24 md:py-32 px-6 bg-[var(--color-bg-elevated)] border-y border-[var(--color-border)]">
         <div className="max-w-[1200px] mx-auto">
           <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
             <motion.div
@@ -269,15 +269,15 @@ export default function LandingPage() {
               viewport={{ once: true }}
               transition={{ duration: 0.7 }}
             >
-              <div className="inline-block mb-4 text-[12px] font-medium text-[#1a56db] uppercase tracking-[0.15em]">
+              <div className="inline-block mb-4 text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em]">
                 Для библиотекаря
               </div>
-              <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.025em] mb-6 leading-[1.05] text-[#1d1d1f]">
+              <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.025em] mb-6 leading-[1.05] text-[var(--color-text-primary)]">
                 Прощайте, тетрадки и Google Sheets
               </h2>
-              <p className="text-[19px] text-[#6e6e73] mb-10 leading-[1.5]">
+              <p className="text-[19px] text-[var(--color-text-secondary)] mb-10 leading-[1.5]">
                 Раньше нужно было записывать ручкой, кто какую книгу взял. Искать по журналу, считать на калькуляторе.
-                <span className="text-[#1d1d1f]"> Теперь всё в одном экране.</span>
+                <span className="text-[var(--color-text-primary)]"> Теперь всё в одном экране.</span>
               </p>
 
               <div className="space-y-4">
@@ -303,7 +303,7 @@ export default function LandingPage() {
                       >
                         <Icon size={16} />
                       </div>
-                      <span className="text-[16px] text-[#1d1d1f] font-medium">{item.label}</span>
+                      <span className="text-[16px] text-[var(--color-text-primary)] font-medium">{item.label}</span>
                     </motion.div>
                   )
                 })}
@@ -318,8 +318,8 @@ export default function LandingPage() {
               transition={{ duration: 0.7 }}
               className="relative"
             >
-              <div className="bg-white border border-black/8 rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
-                <div className="flex items-center gap-1.5 px-5 py-3 border-b border-black/5 bg-[#fafafa]">
+              <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden">
+                <div className="flex items-center gap-1.5 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-elevated)]">
                   <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
                   <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
                   <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
@@ -328,7 +328,7 @@ export default function LandingPage() {
                 <div className="p-6">
                   <div className="flex items-center justify-between mb-5">
                     <div className="font-semibold text-[15px]">Выдать книгу</div>
-                    <div className="text-[11px] text-[#86868b]">шаг 2 из 3</div>
+                    <div className="text-[11px] text-[var(--color-text-tertiary)]">шаг 2 из 3</div>
                   </div>
 
                   <div className="space-y-2">
@@ -338,18 +338,18 @@ export default function LandingPage() {
                       { name: 'Алия М.', cls: '9-А' }
                     ].map((s, i) => (
                       <div key={i} className={`p-3 rounded-xl flex items-center gap-3 ${
-                        i === 0 ? 'bg-[#1a56db]/8 border border-[#1a56db]/20' : 'bg-[#fafafa]'
+                        i === 0 ? 'bg-[var(--color-brand)]/8 border border-[var(--color-brand)]/20' : 'bg-[var(--color-bg-elevated)]'
                       }`}>
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold text-[13px] ${
-                          i === 0 ? 'bg-[#1a56db] text-white' : 'bg-white border border-black/10 text-[#1d1d1f]'
+                          i === 0 ? 'bg-[var(--color-brand)] text-white' : 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
                         }`}>
                           {s.name.charAt(0)}
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="text-[14px] font-medium truncate">{s.name}</div>
-                          <div className="text-[11px] text-[#86868b]">{s.cls}</div>
+                          <div className="text-[11px] text-[var(--color-text-tertiary)]">{s.cls}</div>
                         </div>
-                        {i === 0 && <div className="text-[11px] text-[#1a56db] font-medium">Выбрано</div>}
+                        {i === 0 && <div className="text-[11px] text-[var(--color-brand)] font-medium">Выбрано</div>}
                       </div>
                     ))}
                   </div>
@@ -369,10 +369,10 @@ export default function LandingPage() {
             viewport={{ once: true }}
             className="text-center mb-14"
           >
-            <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.025em] mb-3 text-[#1d1d1f]">
+            <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.025em] mb-3 text-[var(--color-text-primary)]">
               Что внутри
             </h2>
-            <p className="text-[18px] text-[#6e6e73] max-w-md mx-auto">Несколько фишек, которые мы сделали для удобства</p>
+            <p className="text-[18px] text-[var(--color-text-secondary)] max-w-md mx-auto">Несколько фишек, которые мы сделали для удобства</p>
           </motion.div>
 
           <motion.div
@@ -395,11 +395,11 @@ export default function LandingPage() {
                 <motion.div
                   key={i}
                   variants={fadeIn}
-                  className="p-5 bg-white border border-black/8 rounded-2xl hover:border-[#1a56db]/30 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all"
+                  className="p-5 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl hover:border-[var(--color-brand)]/30 hover:shadow-[0_4px_16px_rgba(0,0,0,0.06)] transition-all"
                 >
-                  <Icon className="text-[#1a56db] mb-3" size={20} />
+                  <Icon className="text-[var(--color-brand)] mb-3" size={20} />
                   <div className="font-semibold mb-1 text-[15px]">{feat.label}</div>
-                  <div className="text-[13px] text-[#86868b] leading-relaxed">{feat.desc}</div>
+                  <div className="text-[13px] text-[var(--color-text-tertiary)] leading-relaxed">{feat.desc}</div>
                 </motion.div>
               )
             })}
@@ -415,7 +415,7 @@ export default function LandingPage() {
           viewport={{ once: true }}
           className="max-w-[800px] mx-auto bg-[#1d1d1f] text-white p-12 md:p-20 rounded-[32px] text-center relative overflow-hidden"
         >
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#1a56db]/30 rounded-full blur-3xl" />
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-[var(--color-brand)]/30 rounded-full blur-3xl" />
           <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#3b82f6]/20 rounded-full blur-3xl" />
 
           <motion.div
@@ -429,13 +429,13 @@ export default function LandingPage() {
           <h2 className="relative z-10 text-3xl md:text-5xl font-semibold tracking-[-0.025em] mb-4">
             Готов начать читать?
           </h2>
-          <p className="relative z-10 text-[#86868b] mb-10 max-w-md mx-auto text-[17px]">
+          <p className="relative z-10 text-[var(--color-text-tertiary)] mb-10 max-w-md mx-auto text-[17px]">
             Регистрация занимает 30 секунд. Первая книга — бесплатно.
           </p>
 
           <Link
             href="/register"
-            className="relative z-10 inline-flex items-center gap-2 px-9 py-3.5 bg-white text-[#1d1d1f] text-[16px] font-medium rounded-xl hover:bg-[#f5f5f7] transition-colors"
+            className="relative z-10 inline-flex items-center gap-2 px-9 py-3.5 bg-[var(--color-bg-card)] text-[var(--color-text-primary)] text-[16px] font-medium rounded-xl hover:bg-[var(--color-bg-soft)] transition-colors"
           >
             Создать аккаунт <ArrowRight size={16} />
           </Link>
@@ -443,15 +443,15 @@ export default function LandingPage() {
       </section>
 
       {/* === FOOTER === */}
-      <footer className="border-t border-black/5 bg-[#fafafa] py-10">
+      <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-elevated)] py-10">
         <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             <Image src="/lb_logo.png" width={28} height={28} alt="DLS" className="opacity-70" />
-            <div className="text-[13px] text-[#6e6e73]">
-              © 2026 <span className="text-[#1d1d1f] font-medium">Bookify</span> · Divergents Leadership School
+            <div className="text-[13px] text-[var(--color-text-secondary)]">
+              © 2026 <span className="text-[var(--color-text-primary)] font-medium">Bookify</span> · Divergents Leadership School
             </div>
           </div>
-          <div className="text-[13px] text-[#86868b]">
+          <div className="text-[13px] text-[var(--color-text-tertiary)]">
             Сделано <Heart className="inline w-3.5 h-3.5 text-[#ff2d55]" /> для настоящих читателей
           </div>
         </div>
