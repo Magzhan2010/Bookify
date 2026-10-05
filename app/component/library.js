@@ -1,15 +1,17 @@
 'use client'
 
-import { useRouter, useSearchParams } from "next/navigation"
+import { useRouter } from "next/navigation"
 import { useEffect, useState, useRef } from 'react'
-import { motion } from 'framer-motion'
-import { BookOpen, CheckCircle, Filter, Search } from 'lucide-react'
+import { motion, AnimatePresence } from 'framer-motion'
+import {
+  BookOpen, CheckCircle, Sparkles, ChevronRight, Home, Filter
+} from 'lucide-react'
 
-import Navbar from "../component/NavBar"
-import Books from "../component/books"
-import SkeletonGrid from "../component/skeleton"
+import Navbar from "./NavBar"
+import Books from "./books"
+import SkeletonGrid from "./skeleton"
 
-const Library = () => {
+export default function Library() {
   const router = useRouter()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
@@ -17,13 +19,17 @@ const Library = () => {
   const [myFinishedId, setMyFinishedId] = useState([])
   const [myReadingId, setMyReadingId] = useState([])
   const [myShelf, setMyShelf] = useState(0)
-  const [allGenres, setAllGenres] = useState(['Все'])
+
+  // Wizard state: массив сегментов пути. [] = корень
+  const [path, setPath] = useState([])
+  const [pathBooks, setPathBooks] = useState([])
+  const [pathTotal, setPathTotal] = useState(0)
+  const [pathLoading, setPathLoading] = useState(false)
+  const [mode, setMode] = useState('wizard') // 'wizard' | 'books'
 
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const observerRef = useRef(null)
-  const searchParams = useSearchParams()
-  const genreFromUrl = searchParams.get('genre') || 'Все'
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -31,48 +37,11 @@ const Library = () => {
       router.push('/login')
       return
     }
-    try {
-      JSON.parse(atob(token.split('.')[1]))
-    } catch (e) {
+    try { JSON.parse(atob(token.split('.')[1])) } catch (e) {
       localStorage.removeItem('token')
       router.push('/')
     }
   }, [router])
-
-  const fetchBooks = async (pageNum, isNewSearch = false) => {
-    try {
-      if (isNewSearch) setLoading(true)
-      const res = await fetch(`/api/books?page=${pageNum}&genre=${encodeURIComponent(genreFromUrl)}`)
-      const data = await res.json()
-
-      if (isNewSearch) {
-        setBooks(data)
-      } else {
-        setBooks(prev => {
-          const existingIds = new Set(prev.map(b => b.id))
-          const newOnly = data.filter(b => !existingIds.has(b.id))
-          return [...prev, ...newOnly]
-        })
-      }
-
-      if (data.length < 12) setHasMore(false)
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
-  }
-
-  useEffect(() => {
-    const fetchTotal = async () => {
-      try {
-        const res = await fetch(`/api/books?countOnly=true&genre=${encodeURIComponent(genreFromUrl)}`)
-        const data = await res.json()
-        setTotalBooks(parseInt(data.total) || 0)
-      } catch (err) { console.error(err) }
-    }
-    fetchTotal()
-  }, [genreFromUrl])
 
   useEffect(() => {
     const fetchProfile = async () => {
@@ -88,62 +57,135 @@ const Library = () => {
         setMyShelf(data.finished?.length || 0)
       } catch (err) { console.error(err) }
     }
-
-    const fetchGenres = async () => {
-      try {
-        const res = await fetch('/api/books?allGenres=true')
-        const data = await res.json()
-        const raw = data.map(g => typeof g === 'object' ? g.genre : g)
-        const uniqueGenres = [...new Set(raw.filter(Boolean))]
-        setAllGenres(['Все', ...uniqueGenres])
-      } catch (err) { console.error(err) }
-    }
-
     fetchProfile()
-    fetchGenres()
   }, [])
 
+  // Загружаем общую статистику для hero
   useEffect(() => {
+    fetch('/api/books?countOnly=true')
+      .then(r => r.json())
+      .then(d => setTotalBooks(parseInt(d.total) || 0))
+      .catch(() => {})
+  }, [])
+
+  // Загружаем категории для текущего уровня wizard
+  useEffect(() => {
+    const pathStr = path.join(' / ')
+    setPathLoading(true)
+    fetch(`/api/genres/sub?path=${encodeURIComponent(pathStr)}`)
+      .then(r => r.json())
+      .then(d => {
+        setPathBooks(d.categories || [])
+        setPathTotal((d.categories || []).reduce((s, c) => s + c.totalCount, 0))
+        setPathLoading(false)
+      })
+      .catch(() => setPathLoading(false))
+  }, [path])
+
+  // Загружаем книги для выбранной ветки (нижний уровень)
+  const fetchBooksForPath = async (currentPage, isNewPath) => {
+    const pathSegments = path.map(encodeURIComponent)
+    const url = `/api/genres/${pathSegments.join('/')}/books?page=${currentPage}&limit=12`
+    setLoading(true)
+    try {
+      const res = await fetch(url)
+      const data = await res.json()
+      const newBooks = data.books || []
+
+      if (isNewPath) {
+        setBooks(newBooks)
+      } else {
+        setBooks(prev => {
+          const existingIds = new Set(prev.map(b => b.id))
+          return [...prev, ...newBooks.filter(b => !existingIds.has(b.id))]
+        })
+      }
+
+      if (newBooks.length < 12) setHasMore(false)
+      setTotalBooks(data.total || 0)
+    } catch (err) {
+      console.error(err)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  // Если mode = 'books', грузим книги
+  useEffect(() => {
+    if (mode !== 'books') return
     setPage(1)
     setHasMore(true)
-    setBooks([])
-    fetchBooks(1, true)
-  }, [genreFromUrl])
+    fetchBooksForPath(1, true)
+  }, [mode, path])
 
+  // Infinite scroll для книг
   useEffect(() => {
-    if (loading || !hasMore) return
+    if (mode !== 'books' || loading || !hasMore) return
     const currentRef = observerRef.current
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) {
-          setPage(prev => prev + 1)
-        }
-      },
-      { threshold: 1.0 }
-    )
+    const observer = new IntersectionObserver(entries => {
+      if (entries[0].isIntersecting) {
+        setPage(p => p + 1)
+      }
+    }, { threshold: 1.0 })
     if (currentRef) observer.observe(currentRef)
-    return () => {
-      if (currentRef) observer.unobserve(currentRef)
-    }
-  }, [loading, hasMore])
+    return () => { if (currentRef) observer.unobserve(currentRef) }
+  }, [mode, loading, hasMore])
 
   useEffect(() => {
-    if (page > 1) fetchBooks(page)
+    if (mode === 'books' && page > 1) fetchBooksForPath(page)
   }, [page])
 
+  // Клик по категории — спускаемся глубже или показываем книги
+  const handleCategoryClick = (cat) => {
+    if (cat.hasChildren && cat.totalCount > 0) {
+      // Спускаемся глубже
+      setPath([...path, cat.name])
+      setMode('wizard')
+    } else {
+      // Если нет подкатегорий — показать книги
+      setPath(path.length ? [...path, cat.name] : [cat.name])
+      setMode('books')
+    }
+  }
+
+  const handleBack = () => {
+    if (mode === 'books') {
+      // Возвращаемся к wizard на текущем пути
+      setMode('wizard')
+      return
+    }
+    if (path.length > 0) {
+      setPath(path.slice(0, -1))
+    }
+  }
+
+  const handleCrumbClick = (index) => {
+    if (mode === 'books') {
+      // Возвращаемся к wizard
+      setMode('wizard')
+    }
+    if (index === -1) {
+      setPath([])
+    } else {
+      setPath(path.slice(0, index + 1))
+      setMode('wizard')
+    }
+  }
+
+  const stats = [
+    { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: 'var(--color-brand)' },
+    { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: 'var(--color-warning)' },
+    { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: 'var(--color-success)' }
+  ]
+
   return (
-    <main className="min-h-screen bg-[var(--color-bg-card)] text-[var(--color-text-primary)] pb-20">
+    <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] pb-20">
       <Navbar />
 
       <div className="max-w-[1300px] mx-auto px-4 sm:px-6 md:px-8">
-
         {/* Hero */}
         <section className="pt-10 md:pt-14 pb-8">
-          <motion.div
-            initial={{ opacity: 0, y: 12 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
+          <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em] mb-3">
               {totalBooks} книг в каталоге
             </div>
@@ -151,18 +193,14 @@ const Library = () => {
               Каталог DLS
             </h1>
             <p className="text-[18px] text-[var(--color-text-secondary)] max-w-xl leading-[1.5]">
-              Найди книгу, которая изменит твою жизнь. Бронируй в один клик.
+              Выбери категорию по цепочке — от общего к частному
             </p>
           </motion.div>
         </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-10">
-          {[
-            { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: '#1a56db' },
-            { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: '#ff9500' },
-            { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: '#34c759' }
-          ].map((stat, i) => {
+        <div className="grid grid-cols-3 gap-3 mb-8">
+          {stats.map((stat, i) => {
             const Icon = stat.icon
             return (
               <motion.div
@@ -172,88 +210,167 @@ const Library = () => {
                 transition={{ delay: i * 0.08 }}
                 className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5"
               >
-                <div
-                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
-                  style={{ background: `${stat.color}12`, color: stat.color }}
-                >
+                <div className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                     style={{ background: stat.color + '15', color: stat.color }}>
                   <Icon size={16} />
                 </div>
-                <div className="text-3xl sm:text-4xl font-semibold tracking-tight">{stat.value}</div>
+                <div className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text-primary)]">{stat.value}</div>
                 <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mt-1">{stat.label}</div>
               </motion.div>
             )
           })}
         </div>
 
-        {/* Genre filter */}
-        <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-[14px] font-semibold flex items-center gap-2 text-[var(--color-text-primary)]">
-              <Filter size={14} className="text-[var(--color-brand)]" /> Жанры
-            </h2>
-            <span className="text-[13px] text-[var(--color-text-tertiary)]">
-              {genreFromUrl === 'Все' ? `${totalBooks} книг` : `${totalBooks} в жанре`}
-            </span>
-          </div>
-
-          <div className="flex flex-wrap gap-2">
-            {allGenres.map(genre => (
+        {/* Breadcrumbs */}
+        <div className="mb-5 flex items-center gap-2 flex-wrap">
+          <button
+            onClick={() => handleCrumbClick(-1)}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+              path.length === 0 && mode === 'wizard'
+                ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]'
+                : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+            }`}
+          >
+            <Home size={13} /> Все жанры
+          </button>
+          {path.map((segment, i) => (
+            <div key={i} className="flex items-center gap-2">
+              <ChevronRight size={13} className="text-[var(--color-text-tertiary)]" />
               <button
-                key={genre}
-                onClick={() => router.push("/library?genre=" + encodeURIComponent(genre))}
-                className={`whitespace-nowrap px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                  genreFromUrl === genre
-                    ? 'bg-[var(--color-brand)] text-white'
-                    : 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
+                onClick={() => handleCrumbClick(i)}
+                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
+                  i === path.length - 1 && mode === 'wizard'
+                    ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]'
+                    : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
                 }`}
               >
-                {genre}
+                {segment}
               </button>
-            ))}
-          </div>
-        </div>
-
-        <div className="relative">
-          {books.length === 0 && loading ? (
-            <SkeletonGrid />
-          ) : (
+            </div>
+          ))}
+          {mode === 'books' && (
             <>
-              <Books
-                books={books}
-                myFinishedId={myFinishedId}
-                myReadingId={myReadingId}
-                genreKey={genreFromUrl}
-              />
-
-              <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
-                {hasMore && (
-                  <div className="w-7 h-7 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
-                )}
-              </div>
-
-              {!hasMore && books.length > 0 && (
-                <div className="flex items-center justify-center gap-4 py-14">
-                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-black/10" />
-                  <p className="text-[var(--color-text-tertiary)] text-[13px] font-medium tracking-wider uppercase">
-                    Конец каталога
-                  </p>
-                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-black/10" />
-                </div>
-              )}
+              <ChevronRight size={13} className="text-[var(--color-text-tertiary)]" />
+              <span className="px-3 py-1.5 rounded-lg text-[13px] font-semibold bg-[var(--color-brand)] text-[var(--color-text-on-brand)]">
+                Книги
+              </span>
             </>
           )}
-
-          {!loading && books.length === 0 && (
-            <div className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
-              <Search size={28} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
-              <p className="text-[var(--color-text-primary)] font-semibold mb-1">Книг не найдено</p>
-              <p className="text-[13px] text-[var(--color-text-tertiary)]">Попробуй другой жанр</p>
-            </div>
-          )}
         </div>
+
+        <AnimatePresence mode="wait">
+          {/* WIZARD MODE: показываем категории */}
+          {mode === 'wizard' && (
+            <motion.div
+              key={'wizard-' + path.join('/')}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+            >
+              {pathLoading ? (
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                  {Array.from({ length: 8 }).map((_, i) => (
+                    <div key={i} className="h-24 bg-[var(--color-bg-soft)] rounded-2xl animate-pulse" />
+                  ))}
+                </div>
+              ) : pathBooks.length === 0 ? (
+                <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+                  <p className="text-[var(--color-text-secondary)] text-[14px]">Нет категорий</p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between mb-2">
+                    <h3 className="text-[13px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">
+                      {path.length === 0 ? 'Выбери тему' : `Подкатегории — ${path[path.length - 1]}`}
+                    </h3>
+                    <span className="text-[12px] text-[var(--color-text-tertiary)]">
+                      {pathBooks.length} {pathBooks.length === 1 ? 'категория' : 'категорий'}
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
+                    {pathBooks.map((cat, i) => (
+                      <motion.button
+                        key={cat.fullPath}
+                        initial={{ opacity: 0, y: 8 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.03 }}
+                        whileHover={{ y: -2 }}
+                        onClick={() => handleCategoryClick(cat)}
+                        className="group bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 text-left hover:border-[var(--color-brand)]/40 hover:shadow-[var(--shadow-elevated)] transition-all"
+                      >
+                        <div className="flex items-start justify-between mb-3">
+                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[15px] font-bold transition-all ${
+                            cat.hasChildren ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]' : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)]'
+                          }`}>
+                            {cat.name.charAt(0)}
+                          </div>
+                          {cat.hasChildren && (
+                            <ChevronRight size={16} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-brand)] group-hover:translate-x-0.5 transition-all" />
+                          )}
+                        </div>
+                        <div className="font-semibold text-[14px] mb-1 text-[var(--color-text-primary)] truncate">{cat.name}</div>
+                        <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-tertiary)]">
+                          <span className="text-[var(--color-brand)] font-bold">{cat.totalCount}</span>
+                          <span>{cat.totalCount === 1 ? 'книга' : 'книг'}</span>
+                          {cat.hasChildren && (
+                            <>
+                              <span>•</span>
+                              <span>{cat.bookCount} напрямую</span>
+                            </>
+                          )}
+                        </div>
+                      </motion.button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </motion.div>
+          )}
+
+          {/* BOOKS MODE: показываем книги */}
+          {mode === 'books' && (
+            <motion.div
+              key={'books-' + path.join('/')}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.25 }}
+            >
+              {loading && books.length === 0 ? (
+                <SkeletonGrid />
+              ) : books.length === 0 ? (
+                <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+                  <p className="text-[var(--color-text-secondary)] text-[14px]">Книг пока нет</p>
+                </div>
+              ) : (
+                <>
+                  <Books
+                    books={books}
+                    myFinishedId={myFinishedId}
+                    myReadingId={myReadingId}
+                  />
+                  <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
+                    {hasMore && (
+                      <div className="w-7 h-7 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
+                    )}
+                  </div>
+                  {!hasMore && books.length > 0 && (
+                    <div className="flex items-center justify-center gap-4 py-14">
+                      <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--color-border)]" />
+                      <p className="text-[var(--color-text-tertiary)] text-[12px] font-medium tracking-wider uppercase">
+                        Конец каталога
+                      </p>
+                      <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--color-border)]" />
+                    </div>
+                  )}
+                </>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
       </div>
     </main>
   )
 }
-
-export default Library
