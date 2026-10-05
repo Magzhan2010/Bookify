@@ -21,12 +21,9 @@ if (!DATABASE_URL) {
 }
 
 const DEMO_USERS = [
-  { name: 'Библиотекарь Айгерим', email: 'aigerim@librarian.school.com', password: 'library123', role: 'librarian' },
+  { name: 'Малика апай', email: 'malika@librarian.school.com', password: 'library123', role: 'librarian' },
   { name: 'Айдана Сатпаева', email: 'aidana@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
-  { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' },
-  { name: 'Алия Молдабекова', email: 'aliya@student.school.com', password: 'student123', role: 'student', class_name: '9-А' },
-  { name: 'Дария Жумабаева', email: 'daria@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
-  { name: 'Нурлан Бекжанов', email: 'nurlan@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' }
+  { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' }
 ]
 
 const DEMO_BOOKS = [
@@ -214,6 +211,18 @@ async function run() {
   )
   if (oldDeleted.rows.length > 0) {
     console.log(`  🗑 Удалены пользователи с устаревшими ролями: ${oldDeleted.rows.map(r => r.email).join(', ')}`)
+  }
+
+  // Удаляем мусорных юзеров (битые имена, magzhan и т.д.)
+  const junkDeleted = await client.query(
+    `DELETE FROM users
+     WHERE name ~ '[^\x20-\x7E\u0400-\u04FF]'
+        OR name ILIKE '%magzhan%'
+        OR email NOT LIKE '%@%.%'
+     RETURNING email, name`
+  )
+  if (junkDeleted.rows.length > 0) {
+    console.log(`  🗑 Удалены мусорные юзеры: ${junkDeleted.rows.map(r => `${r.email} (${r.name})`).join(', ')}`)
   }
 
   // Демо-пользователи

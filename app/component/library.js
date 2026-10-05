@@ -1,7 +1,7 @@
 'use client'
 
-import { useRouter } from "next/navigation"
-import { useEffect, useState, useRef } from 'react'
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   BookOpen, CheckCircle, Sparkles, ChevronRight, Home, Filter
@@ -13,6 +13,7 @@ import SkeletonGrid from "./skeleton"
 
 export default function Library() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalBooks, setTotalBooks] = useState(0)
@@ -20,12 +21,18 @@ export default function Library() {
   const [myReadingId, setMyReadingId] = useState([])
   const [myShelf, setMyShelf] = useState(0)
 
-  // Wizard state: массив сегментов пути. [] = корень
-  const [path, setPath] = useState([])
+  // Wizard state — инициализируется из URL (?genre=Психология/Саморазвитие)
+  const initialPath = useMemo(() => {
+    const g = searchParams.get('genre')
+    if (!g || g === 'Все') return []
+    return g.split('/').map(s => s.trim()).filter(Boolean)
+  }, [searchParams])
+
+  const [path, setPath] = useState(initialPath)
   const [pathBooks, setPathBooks] = useState([])
   const [pathTotal, setPathTotal] = useState(0)
   const [pathLoading, setPathLoading] = useState(false)
-  const [mode, setMode] = useState('wizard') // 'wizard' | 'books'
+  const [mode, setMode] = useState(initialPath.length > 0 ? 'books' : 'wizard')
 
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
@@ -137,39 +144,54 @@ export default function Library() {
 
   // Клик по категории — спускаемся глубже или показываем книги
   const handleCategoryClick = (cat) => {
-    if (cat.hasChildren && cat.totalCount > 0) {
-      // Спускаемся глубже
-      setPath([...path, cat.name])
-      setMode('wizard')
+    const newPath = path.length ? [...path, cat.name] : [cat.name]
+    const newMode = (cat.hasChildren && cat.totalCount > 0) ? 'wizard' : 'books'
+
+    // Обновляем URL для сохранения состояния при router.back()
+    const params = new URLSearchParams(searchParams.toString())
+    if (newPath.length > 0) {
+      params.set('genre', newPath.join(' / '))
     } else {
-      // Если нет подкатегорий — показать книги
-      setPath(path.length ? [...path, cat.name] : [cat.name])
-      setMode('books')
+      params.delete('genre')
     }
+    router.replace(`/library?${params.toString()}`, { scroll: false })
+
+    setPath(newPath)
+    setMode(newMode)
   }
 
   const handleBack = () => {
     if (mode === 'books') {
-      // Возвращаемся к wizard на текущем пути
       setMode('wizard')
       return
     }
     if (path.length > 0) {
-      setPath(path.slice(0, -1))
+      const newPath = path.slice(0, -1)
+      const params = new URLSearchParams(searchParams.toString())
+      if (newPath.length > 0) {
+        params.set('genre', newPath.join(' / '))
+      } else {
+        params.delete('genre')
+      }
+      router.replace(`/library?${params.toString()}`, { scroll: false })
+      setPath(newPath)
     }
   }
 
   const handleCrumbClick = (index) => {
-    if (mode === 'books') {
-      // Возвращаемся к wizard
-      setMode('wizard')
-    }
-    if (index === -1) {
-      setPath([])
+    const newMode = mode === 'books' ? 'wizard' : mode
+    const newPath = index === -1 ? [] : path.slice(0, index + 1)
+
+    const params = new URLSearchParams(searchParams.toString())
+    if (newPath.length > 0) {
+      params.set('genre', newPath.join(' / '))
     } else {
-      setPath(path.slice(0, index + 1))
-      setMode('wizard')
+      params.delete('genre')
     }
+    router.replace(`/library?${params.toString()}`, { scroll: false })
+
+    setPath(newPath)
+    setMode(newMode)
   }
 
   const stats = [

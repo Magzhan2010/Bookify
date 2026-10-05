@@ -4,15 +4,17 @@ import { requireAuth } from '../../../../lib/auth'
 
 /**
  * GET /api/librarian/history
- * Полный журнал выдач и возвратов с фильтрами.
+ *
+ * Возвращает ОБЪЕДИНЁННЫЙ список:
+ * - book_requests (заявки учеников) — когда кто-то запросил книгу
+ * - borrows (выдачи и возвраты) — когда библиотекарь выдал/принял книгу
  *
  * Query:
- *   from=YYYY-MM-DD        — от даты
- *   to=YYYY-MM-DD          — до даты
- *   student=id|name        — конкретный ученик
- *   book=id|title          — конкретная книга
- *   status=active|returned|...
- *   limit=100 (default)
+ *   from ?    YYYY-MM-DD
+ *   to ?      YYYY-MM-DD
+ *   student ? id|name
+ *   book ?    id|title
+ *   status ?  pending|approved|rejected|fulfilled|active|returned
  */
 export async function GET(req) {
   const guard = requireAuth(req, ['librarian'])
@@ -24,63 +26,82 @@ export async function GET(req) {
   const student = searchParams.get('student')
   const book = searchParams.get('book')
   const status = searchParams.get('status')
-  const limit = parseInt(searchParams.get('limit')) || 200
-
-  const conditions = []
-  const params = []
-  let i = 1
-
-  if (from) {
-    conditions.push(`b.borrowed_at >= $${i++}`)
-    params.push(from)
-  }
-  if (to) {
-    conditions.push(`b.borrowed_at <= $${i++}`)
-    params.push(to + ' 23:59:59')
-  }
-  if (student) {
-    if (/^\d+$/.test(student)) {
-      conditions.push(`u.id = $${i++}`)
-      params.push(parseInt(student))
-    } else {
-      conditions.push(`LOWER(u.name) LIKE LOWER($${i++})`)
-      params.push(`%${student}%`)
-    }
-  }
-  if (book) {
-    if (/^\d+$/.test(book)) {
-      conditions.push(`bk.id = $${i++}`)
-      params.push(parseInt(book))
-    } else {
-      conditions.push(`LOWER(bk.title) LIKE LOWER($${i++})`)
-      params.push(`%${book}%`)
-    }
-  }
-  if (status) {
-    conditions.push(`b.status = $${i++}`)
-    params.push(status)
-  }
-
-  const where = conditions.length > 0 ? 'WHERE ' + conditions.join(' AND ') : ''
 
   try {
-    const query = `
-      SELECT
-        b.id, b.status, b.borrowed_at, b.due_date, b.returned_at, b.notes,
-        u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-        bk.id AS book_id, bk.title, bk.author, bk.cover_url,
-        lib.name AS issued_by_name,
-        EXTRACT(DAY FROM (b.returned_at - b.borrowed_at))::INT AS days_held
-      FROM borrows b
-      JOIN users u ON u.id = b.user_id
-      JOIN books bk ON bk.id = b.book_id
-      LEFT JOIN users lib ON lib.id = b.issued_by
+    const filters = []
+    const params = []
+    let i = 1
+
+    if (from) { filters.push(`event_at >= $${i++}`); params.push(from) }
+    if (to) { filters.push(`event_at <= $${i++}`); params.push(to + ' 23:59:59') }
+    if (student) {
+      if (/^\d+$/.test(student)) { filters.push(`user_id = $${i++}`); params.push(parseInt(student)) }
+      else { filters.push(`LOWER(student_name) LIKE $${i++}`); params.push(`%${student}%`) }
+    }
+    if (book) {
+      if (/^\d+$/.test(book)) { filters.push(`book_id = $${i++}`); params.push(parseInt(book)) }
+      else { filters.push(`LOWER(book_title) LIKE $${i++}`); params.push(`%${book}%`) }
+    }
+    if (status) { filters.push(`status = $${i++}`); params.push(status) }
+
+    const where = filters.length > 0 ? 'WHERE ' + filters.join(' AND ') : ''
+
+    // Объединённый список: заявки + выдачи/возвраты
+    const sql = `
+      SELECT * FROM (
+        -- Заявки учеников
+        SELECT
+          'request' AS kind,
+          r.id AS event_id,
+          r.user_id, u.name AS student_name, u.class_name AS student_class,
+          r.book_id, b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
+          r.status,
+          NULL::int AS days_held,
+          r.requested_at AS event_at,
+          NULL::timestamp AS due_at,
+          NULL::timestamp AS returned_at,
+          NULL::timestamp AS borrowed_at,
+          NULL::int AS rating,
+          NULL::text AS notes,
+          NULL::int AS issued_by_id,
+          NULL::text AS issued_by_name
+        FROM book_requests r
+        JOIN users u ON u.id = r.user_id
+        JOIN books b ON b.id = r.book_id
+
+        UNION ALL
+
+        -- Выдачи и возвраты
+        SELECT
+          'borrow' AS kind,
+          br.id AS event_id,
+          br.user_id, u.name AS student_name, u.class_name AS student_class,
+          br.book_id, b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
+          br.status,
+          CASE
+            WHEN br.returned_at IS NOT NULL THEN EXTRACT(DAY FROM (br.returned_at - br.borrowed_at))::INT
+            ELSE NULL
+          END AS days_held,
+          br.borrowed_at AS event_at,
+          br.due_date AS due_at,
+          br.returned_at,
+          br.borrowed_at,
+          br.rating,
+          br.notes,
+          br.issued_by AS issued_by_id,
+          lib.name AS issued_by_name
+        FROM borrows br
+        JOIN users u ON u.id = br.user_id
+        JOIN books b ON b.id = br.book_id
+        LEFT JOIN users lib ON lib.id = br.issued_by
+      ) AS events
       ${where}
-      ORDER BY b.borrowed_at DESC
-      LIMIT ${limit}
+      ORDER BY event_at DESC
+      LIMIT 200
     `
-    const res = await pool.query(query, params)
-    return NextResponse.json(res.rows)
+
+    const result = await pool.query(sql, params)
+    return NextResponse.json(result.rows)
   } catch (err) {
     console.error('History error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })
