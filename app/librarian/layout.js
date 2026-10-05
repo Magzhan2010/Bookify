@@ -36,7 +36,7 @@ export default function LibrarianLayout({ children }) {
     }
     try {
       const payload = JSON.parse(atob(token.split('.')[1]))
-      if (!['librarian', 'admin'].includes(payload.role)) {
+      if (!['librarian'].includes(payload.role)) {
         router.push('/login')
         return
       }

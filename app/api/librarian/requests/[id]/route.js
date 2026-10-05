@@ -11,7 +11,7 @@ import { requireAuth } from '../../../../../lib/auth'
  * issue   → book_requests.status = 'fulfilled' + создать borrows (active)
  */
 export async function POST(req, { params }) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params

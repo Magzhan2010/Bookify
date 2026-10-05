@@ -10,7 +10,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Также: GET /api/librarian/lookup?overdue=true  → список должников
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

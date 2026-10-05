@@ -7,7 +7,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Комплексная аналитика для дашборда библиотекаря.
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   try {

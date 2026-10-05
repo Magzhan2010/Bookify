@@ -10,7 +10,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Только librarian или admin могут выдавать книги.
  */
 export async function POST(req) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { studentIdentifier, bookId, dueDate, notes } = await req.json()

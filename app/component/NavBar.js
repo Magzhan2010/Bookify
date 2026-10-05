@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, X, LogOut, BookMarked, Shield, BarChart3 } from 'lucide-react'
+import { Search, X, LogOut, BookMarked } from 'lucide-react'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
@@ -77,7 +77,7 @@ const Navbar = () => {
     router.push('/profile')
   }
 
-  const isStaff = user?.role === 'admin' || user?.role === 'teacher' || user?.role === 'librarian'
+  const isStaff = user?.role === 'librarian'
 
   return (
     <header
@@ -106,22 +106,6 @@ const Navbar = () => {
               icon={<BookMarked size={15} />}
               label="Библиотека"
               active={pathname.startsWith('/librarian')}
-            />
-          )}
-          {user?.role === 'admin' && (
-            <NavLink
-              href="/admin"
-              icon={<Shield size={15} />}
-              label="Админ"
-              active={pathname.startsWith('/admin')}
-            />
-          )}
-          {user?.role === 'teacher' && (
-            <NavLink
-              href="/teacher"
-              icon={<BarChart3 size={15} />}
-              label="Аналитика"
-              active={pathname.startsWith('/teacher')}
             />
           )}
 
@@ -203,12 +187,6 @@ const Navbar = () => {
 
             {isStaff && (
               <MobileLink href="/librarian" icon={<BookMarked size={18} />} router={router} label="Библиотека" />
-            )}
-            {user?.role === 'admin' && (
-              <MobileLink href="/admin" icon={<Shield size={18} />} router={router} label="Админ-панель" />
-            )}
-            {user?.role === 'teacher' && (
-              <MobileLink href="/teacher" icon={<BarChart3 size={18} />} router={router} label="Аналитика" />
             )}
 
             {user && (

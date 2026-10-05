@@ -40,11 +40,10 @@ export async function POST() {
 
     // Демо-аккаунты
     const demo = [
-      { name: 'Администратор', email: 'admin@dls.school.com', password: 'admin123', role: 'admin' },
       { name: 'Библиотекарь Айгерим', email: 'aigerim@librarian.school.com', password: 'library123', role: 'librarian' },
-      { name: 'Учитель Ержан', email: 'yerzhan@teacher.school.com', password: 'teacher123', role: 'teacher' },
       { name: 'Айдана Сатпаева', email: 'aidana@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
-      { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' }
+      { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' },
+      { name: 'Алия Молдабекова', email: 'aliya@student.school.com', password: 'student123', role: 'student', class_name: '9-А' }
     ]
 
     let created = 0

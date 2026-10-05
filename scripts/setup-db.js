@@ -21,9 +21,7 @@ if (!DATABASE_URL) {
 }
 
 const DEMO_USERS = [
-  { name: 'Администратор', email: 'admin@dls.school.com', password: 'admin123', role: 'admin' },
   { name: 'Библиотекарь Айгерим', email: 'aigerim@librarian.school.com', password: 'library123', role: 'librarian' },
-  { name: 'Учитель Ержан', email: 'yerzhan@teacher.school.com', password: 'teacher123', role: 'teacher' },
   { name: 'Айдана Сатпаева', email: 'aidana@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
   { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' },
   { name: 'Алия Молдабекова', email: 'aliya@student.school.com', password: 'student123', role: 'student', class_name: '9-А' },
@@ -167,7 +165,21 @@ async function run() {
     `)
     console.log('  ✓ Старые таблицы удалены')
   } else {
-    // На случай если views устарели, дропаем только их (CREATE OR REPLACE не работает при изменении колонок)
+    // Миграция отдельных колонок если их нет
+    const checks = await client.query(`
+      SELECT
+        (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='borrows' AND column_name='rating') AS has_rating,
+        (SELECT COUNT(*) FROM information_schema.columns WHERE table_schema='public' AND table_name='users' AND column_name='class_name') AS has_class_name
+    `)
+    if (checks.rows[0].has_rating === '0') {
+      await client.query('ALTER TABLE borrows ADD COLUMN rating INT CHECK (rating BETWEEN 0 AND 5)')
+      console.log('  ✓ Добавлена колонка borrows.rating')
+    }
+    if (checks.rows[0].has_class_name === '0') {
+      await client.query('ALTER TABLE users ADD COLUMN class_name TEXT')
+      console.log('  ✓ Добавлена колонка users.class_name')
+    }
+    // Всегда дропаем views — CREATE OR REPLACE не работает при изменении referenced колонок
     await client.query(`
       DROP VIEW IF EXISTS v_active_loans, v_student_stats CASCADE;
     `)
@@ -195,6 +207,14 @@ async function run() {
     }
   }
   console.log('✅ Схема применена')
+
+  // Удаляем старых пользователей с устаревшими ролями (admin, teacher)
+  const oldDeleted = await client.query(
+    `DELETE FROM users WHERE role NOT IN ('student', 'librarian') RETURNING email`
+  )
+  if (oldDeleted.rows.length > 0) {
+    console.log(`  🗑 Удалены пользователи с устаревшими ролями: ${oldDeleted.rows.map(r => r.email).join(', ')}`)
+  }
 
   // Демо-пользователи
   for (const u of DEMO_USERS) {
@@ -231,7 +251,6 @@ async function run() {
 
   await client.end()
   console.log('\n🎉 Готово! Залогинься одним из:')
-  console.log('   👑 admin@dls.school.com / admin123')
   console.log('   📚 aigerim@librarian.school.com / library123')
   console.log('   👤 aidana@student.school.com / student123')
 }

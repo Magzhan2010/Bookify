@@ -15,7 +15,7 @@ import { requireAuth } from '../../../../lib/auth'
  *   limit=100 (default)
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

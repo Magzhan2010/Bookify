@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
   name TEXT NOT NULL,
   email TEXT UNIQUE NOT NULL,
   password TEXT NOT NULL,
-  role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student','teacher','librarian','admin')),
+  role TEXT NOT NULL DEFAULT 'student' CHECK (role IN ('student','librarian')),
   class_name TEXT,
   phone TEXT,
   avatar_url TEXT,

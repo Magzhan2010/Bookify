@@ -8,7 +8,7 @@ import { requireAuth } from '../../../../../lib/auth'
  * Полная информация об ученике + вся история займов.
  */
 export async function GET(req, { params }) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -77,7 +77,7 @@ export async function GET(req, { params }) {
  * Обновить данные ученика: имя, класс, телефон, пароль.
  */
 export async function PATCH(req, { params }) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -134,7 +134,7 @@ export async function PATCH(req, { params }) {
  * Удалить ученика. Только если у него нет активных займов.
  */
 export async function DELETE(req, { params }) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params

@@ -12,7 +12,7 @@ import { fetchBooksFromSheet, upsertBooksFromSheet } from '../../../../lib/googl
  *   replace          — удаляет все и заливает заново (ОСТОРОЖНО)
  */
 export async function POST(req) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   try {
@@ -63,7 +63,7 @@ export async function POST(req) {
  * Тест подключения к Google Sheets + превью данных.
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   try {

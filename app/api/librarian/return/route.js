@@ -9,7 +9,7 @@ import { NextResponse } from 'next/server'
  *   rating: 1-5 (опционально) — ученик сам поставил оценку, библиотекарь передаёт
  */
 export async function POST(req) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { borrowId, rating, notes } = await req.json()

@@ -13,7 +13,7 @@ import { requireAuth, detectRoleFromEmail } from '../../../../lib/auth'
  *   active=true  — только с активными займами
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian', 'admin', 'teacher'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)
@@ -72,7 +72,7 @@ export async function GET(req) {
  * Body: { name, email, password, className?, phone? }
  */
 export async function POST(req) {
-  const guard = requireAuth(req, ['librarian', 'admin'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { name, email, password, className, phone } = await req.json()

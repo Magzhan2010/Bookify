@@ -56,7 +56,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  const guard = requireAuth(req, ['admin', 'librarian'])
+  const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const {
