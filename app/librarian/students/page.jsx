@@ -2,11 +2,8 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import { toast } from 'sonner'
-import {
-  Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check
-} from 'lucide-react'
+import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check } from 'lucide-react'
 
 export default function StudentsPage() {
   const [students, setStudents] = useState([])
@@ -26,17 +23,11 @@ export default function StudentsPage() {
         headers: { Authorization: `Bearer ${token}` }
       })
       setStudents(await res.json())
-    } catch (err) {
-      console.error(err)
-    } finally {
-      setLoading(false)
-    }
+    } catch (err) { console.error(err) }
+    finally { setLoading(false) }
   }
 
-  useEffect(() => {
-    fetchStudents()
-  }, [classFilter])
-
+  useEffect(() => { fetchStudents() }, [classFilter])
   useEffect(() => {
     const t = setTimeout(fetchStudents, 300)
     return () => clearTimeout(t)
@@ -45,40 +36,37 @@ export default function StudentsPage() {
   const classes = [...new Set(students.map(s => s.class_name).filter(Boolean))].sort()
 
   return (
-    <div className="max-w-[1400px] mx-auto">
-
-      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-8">
+    <div className="max-w-[1300px] mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-7">
         <div>
-          <h1 className="font-display text-3xl sm:text-4xl font-black tracking-tight mb-2">
-            <span className="text-gradient-gold">Ученики</span>
+          <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-1 text-[#1d1d1f]">
+            Ученики
           </h1>
-          <p className="text-[#94a3b8]">{students.length} зарегистрировано в библиотеке</p>
+          <p className="text-[15px] text-[#6e6e73]">{students.length} зарегистрировано</p>
         </div>
         <button
           onClick={() => setShowAddModal(true)}
-          className="px-4 py-2.5 rounded-xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold text-sm flex items-center gap-2 hover:shadow-lg hover:shadow-[#e8b94e]/30 transition-all"
+          className="px-4 py-2.5 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium transition-colors flex items-center gap-2"
         >
-          <UserPlus size={16} /> Добавить ученика
+          <UserPlus size={14} /> Добавить ученика
         </button>
       </div>
 
-      {/* Search + class filter */}
-      <div className="flex flex-col md:flex-row gap-3 mb-6">
+      <div className="flex flex-col md:flex-row gap-3 mb-5">
         <div className="relative flex-1">
-          <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5a6383]" />
+          <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
           <input
             type="text"
-            placeholder="Поиск по имени, email или классу..."
             value={search}
             onChange={e => setSearch(e.target.value)}
-            className="w-full bg-[#11141f] border border-white/10 pl-12 pr-4 py-3 rounded-xl text-white placeholder-[#5a6383] outline-none focus:border-[#e8b94e]/40"
+            className="w-full bg-white border border-black/10 pl-11 pr-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db] focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[14px]"
           />
         </div>
         {classes.length > 0 && (
           <select
             value={classFilter}
             onChange={e => setClassFilter(e.target.value)}
-            className="bg-[#11141f] border border-white/10 px-4 py-3 rounded-xl text-white outline-none cursor-pointer"
+            className="bg-white border border-black/10 px-4 py-3 rounded-xl text-[#1d1d1f] outline-none cursor-pointer text-[14px]"
           >
             <option value="">Все классы</option>
             {classes.map(c => <option key={c} value={c}>{c}</option>)}
@@ -88,42 +76,38 @@ export default function StudentsPage() {
 
       {loading ? (
         <div className="flex justify-center py-20">
-          <div className="w-10 h-10 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
+          <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
         </div>
       ) : students.length === 0 ? (
-        <div className="text-center py-20 bg-[#11141f] border border-dashed border-white/10 rounded-2xl">
-          <p className="text-[#5a6383]">Нет учеников</p>
+        <div className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl">
+          <p className="text-[#86868b] text-[14px]">Нет учеников</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
           {students.map((s, i) => (
             <motion.div
               key={s.id}
-              initial={{ opacity: 0, y: 10 }}
+              initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
-              className="bg-[#11141f] border border-white/5 rounded-2xl p-4 hover:border-[#e8b94e]/30 transition-all group"
+              className="bg-white border border-black/8 rounded-2xl p-4 hover:border-black/12 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#60a5fa] to-[#1a56db] flex items-center justify-center font-bold text-white shrink-0">
+                <div className="w-11 h-11 rounded-xl bg-[#1a56db] flex items-center justify-center font-semibold text-white shrink-0">
                   {s.name.charAt(0).toUpperCase()}
                 </div>
                 <div className="flex-1 min-w-0">
-                  <div className="font-bold truncate">{s.name}</div>
-                  <div className="text-xs text-[#5a6383] truncate">{s.class_name || '—'}</div>
+                  <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{s.name}</div>
+                  <div className="text-[11px] text-[#86868b] truncate">{s.class_name || '—'}</div>
                 </div>
               </div>
 
-              <div className="text-xs text-[#5a6383] mb-3 truncate">{s.email}</div>
+              <div className="text-[11px] text-[#86868b] mb-3 truncate">{s.email}</div>
 
-              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-white/5">
-                <Stat label="Всего" value={s.total_borrows} color="#e8b94e" />
-                <Stat label="Сейчас" value={s.currently_holding} color="#4ecdc4" />
-                <Stat
-                  label="Долги"
-                  value={s.overdue_count}
-                  color={s.overdue_count > 0 ? '#ff5d8f' : '#5a6383'}
-                />
+              <div className="grid grid-cols-3 gap-2 pt-3 border-t border-black/5">
+                <Stat label="Всего" value={s.total_borrows} color="#1a56db" />
+                <Stat label="Сейчас" value={s.currently_holding} color="#ff9500" />
+                <Stat label="Долги" value={s.overdue_count} color={s.overdue_count > 0 ? '#ff3b30' : '#86868b'} />
               </div>
             </motion.div>
           ))}
@@ -141,8 +125,8 @@ export default function StudentsPage() {
 
 const Stat = ({ label, value, color }) => (
   <div className="text-center">
-    <div className="text-lg font-bold" style={{ color }}>{value}</div>
-    <div className="text-[10px] uppercase tracking-wider text-[#5a6383] font-bold">{label}</div>
+    <div className="text-[16px] font-semibold" style={{ color }}>{value}</div>
+    <div className="text-[9px] uppercase tracking-wider text-[#86868b] font-medium mt-0.5">{label}</div>
   </div>
 )
 
@@ -151,22 +135,15 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
   const [submitting, setSubmitting] = useState(false)
 
   const handleSubmit = async () => {
-    if (!form.name || !form.email || !form.password) {
-      return toast.error('Заполни имя, email и пароль')
-    }
-    if (form.password.length < 6) {
-      return toast.error('Пароль минимум 6 символов')
-    }
+    if (!form.name || !form.email || !form.password) return toast.error('Заполни имя, email и пароль')
+    if (form.password.length < 6) return toast.error('Пароль минимум 6 символов')
 
     setSubmitting(true)
     try {
       const token = localStorage.getItem('token')
       const res = await fetch('/api/librarian/students', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify(form)
       })
       const data = await res.json()
@@ -191,37 +168,37 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           exit={{ opacity: 0 }}
-          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
           onClick={onClose}
         >
           <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 20 }}
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
             animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 20 }}
+            exit={{ opacity: 0, scale: 0.95, y: 16 }}
             onClick={e => e.stopPropagation()}
-            className="bg-[#11141f] border border-white/10 rounded-2xl w-full max-w-md p-6 shadow-2xl"
+            className="bg-white border border-black/10 rounded-2xl w-full max-w-md p-6 shadow-[0_20px_60px_rgba(0,0,0,0.15)]"
           >
-            <div className="flex items-center justify-between mb-6">
-              <h2 className="font-display font-bold text-xl">Новый ученик</h2>
-              <button onClick={onClose} className="text-[#5a6383] hover:text-white">
-                <X size={20} />
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-[18px] font-semibold text-[#1d1d1f]">Новый ученик</h2>
+              <button onClick={onClose} className="text-[#86868b] hover:text-[#1d1d1f]">
+                <X size={18} />
               </button>
             </div>
 
             <div className="space-y-3">
-              <Field label="Имя *" value={form.name} onChange={v => setForm({...form, name: v})} placeholder="Айдана Сатпаева" />
-              <Field label="Email *" value={form.email} onChange={v => setForm({...form, email: v})} placeholder="student@school.kz" />
-              <Field label="Пароль *" type="password" value={form.password} onChange={v => setForm({...form, password: v})} placeholder="Минимум 6 символов" />
-              <Field label="Класс" value={form.className} onChange={v => setForm({...form, className: v})} placeholder="10-А" />
-              <Field label="Телефон" value={form.phone} onChange={v => setForm({...form, phone: v})} placeholder="+7 (___) ___ ____" />
+              <Field label="Имя *" value={form.name} onChange={v => setForm({...form, name: v})} />
+              <Field label="Email *" value={form.email} onChange={v => setForm({...form, email: v})} />
+              <Field label="Пароль *" type="password" value={form.password} onChange={v => setForm({...form, password: v})} />
+              <Field label="Класс" value={form.className} onChange={v => setForm({...form, className: v})} />
+              <Field label="Телефон" value={form.phone} onChange={v => setForm({...form, phone: v})} />
             </div>
 
             <button
               onClick={handleSubmit}
               disabled={submitting}
-              className="w-full mt-6 py-3 rounded-xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold disabled:opacity-50"
+              className="w-full mt-6 py-3 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[14px] font-medium disabled:opacity-50 transition-colors"
             >
-              {submitting ? 'Создаю...' : 'Создать ученика'}
+              {submitting ? 'Создаю...' : 'Создать'}
             </button>
           </motion.div>
         </motion.div>
@@ -230,15 +207,14 @@ const AddStudentModal = ({ open, onClose, onAdded }) => {
   )
 }
 
-const Field = ({ label, value, onChange, placeholder, type = 'text' }) => (
+const Field = ({ label, value, onChange, type = 'text' }) => (
   <div>
-    <label className="block text-xs text-[#5a6383] uppercase tracking-wider font-bold mb-1.5">{label}</label>
+    <label className="block text-[12px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">{label}</label>
     <input
       type={type}
       value={value}
       onChange={e => onChange(e.target.value)}
-      placeholder={placeholder}
-      className="w-full bg-[#0a0c17] border border-white/10 px-4 py-2.5 rounded-xl text-white placeholder-[#5a6383] outline-none focus:border-[#e8b94e]/40"
+      className="w-full bg-[#f5f5f7] border border-transparent px-4 py-2.5 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all text-[14px]"
     />
   </div>
 )

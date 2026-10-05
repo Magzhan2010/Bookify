@@ -53,36 +53,34 @@ export default function LibrarianLayout({ children }) {
 
   if (!ready) {
     return (
-      <div className="min-h-screen bg-[#06070d] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-[#06070d] text-white flex">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] flex">
       {/* Sidebar */}
       <aside
-        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-[#0a0c17]/80 backdrop-blur-2xl border-r border-[#1a1f30] z-50 transition-transform duration-300 ${
+        className={`fixed lg:sticky top-0 left-0 h-screen w-64 bg-white border-r border-black/8 z-50 transition-transform duration-300 ${
           sidebarOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
         }`}
       >
         <div className="flex flex-col h-full">
-          {/* Logo */}
-          <div className="px-6 py-6 border-b border-white/5">
-            <Link href="/librarian" className="flex items-center gap-3 group">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#e8b94e] to-[#9c6f25] flex items-center justify-center shadow-lg shadow-[#e8b94e]/20">
-                <BookOpen size={20} className="text-[#06070d]" />
+          <div className="px-6 py-5 border-b border-black/5">
+            <Link href="/librarian" className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-[#1a56db] flex items-center justify-center">
+                <BookOpen size={17} className="text-white" />
               </div>
               <div>
-                <div className="font-display font-bold leading-tight">Bookify</div>
-                <div className="text-[10px] uppercase tracking-[0.2em] text-[#e8b94e] font-bold">Библиотека</div>
+                <div className="font-semibold text-[15px] text-[#1d1d1f]">Bookify</div>
+                <div className="text-[10px] uppercase tracking-wider text-[#1a56db] font-medium">Библиотека</div>
               </div>
             </Link>
           </div>
 
-          {/* Nav */}
-          <nav className="flex-1 overflow-y-auto px-3 py-5 space-y-1">
+          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
             {navItems.map(item => {
               const Icon = item.icon
               const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
@@ -91,47 +89,39 @@ export default function LibrarianLayout({ children }) {
                   key={item.href}
                   href={item.href}
                   onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all group ${
+                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-all ${
                     active
-                      ? 'bg-gradient-to-r from-[#e8b94e]/15 to-transparent text-[#e8b94e]'
-                      : 'text-[#94a3b8] hover:bg-white/5 hover:text-white'
+                      ? 'bg-[#1a56db] text-white'
+                      : 'text-[#6e6e73] hover:bg-black/[0.04] hover:text-[#1d1d1f]'
                   }`}
                 >
-                  <Icon size={18} className={active ? 'text-[#e8b94e]' : ''} />
-                  <span className="font-semibold">{item.label}</span>
-                  {active && (
-                    <motion.div
-                      layoutId="active-pill"
-                      className="ml-auto w-1.5 h-1.5 rounded-full bg-[#e8b94e] shadow-lg shadow-[#e8b94e]/50"
-                    />
-                  )}
+                  <Icon size={16} />
+                  {item.label}
                 </Link>
               )
             })}
           </nav>
 
-          {/* User card */}
-          <div className="p-4 border-t border-white/5">
-            <div className="bg-white/5 rounded-2xl p-3 flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#e8b94e] to-[#9c6f25] flex items-center justify-center font-bold text-[#06070d] shrink-0">
+          <div className="p-3 border-t border-black/5">
+            <div className="bg-[#f5f5f7] rounded-xl p-3 flex items-center gap-3 mb-2">
+              <div className="w-9 h-9 rounded-full bg-[#1a56db] flex items-center justify-center font-semibold text-white text-[13px] shrink-0">
                 {user?.name?.charAt(0).toUpperCase()}
               </div>
               <div className="flex-1 min-w-0">
-                <div className="font-bold text-sm truncate">{user?.name}</div>
-                <div className="text-xs text-[#5a6383] truncate">{user?.role === 'admin' ? 'Администратор' : 'Библиотекарь'}</div>
+                <div className="font-semibold text-[13px] truncate text-[#1d1d1f]">{user?.name}</div>
+                <div className="text-[11px] text-[#86868b] truncate">{user?.role === 'admin' ? 'Администратор' : 'Библиотекарь'}</div>
               </div>
             </div>
             <button
               onClick={handleLogout}
-              className="w-full flex items-center justify-center gap-2 py-2.5 rounded-xl bg-red-500/10 text-red-400 hover:bg-red-500/20 transition-colors text-sm font-semibold"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[#ff3b30]/10 text-[#ff3b30] hover:bg-[#ff3b30]/15 transition-colors text-[13px] font-medium"
             >
-              <LogOut size={16} /> Выйти
+              <LogOut size={14} /> Выйти
             </button>
           </div>
         </div>
       </aside>
 
-      {/* Backdrop for mobile */}
       <AnimatePresence>
         {sidebarOpen && (
           <motion.div
@@ -139,29 +129,27 @@ export default function LibrarianLayout({ children }) {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={() => setSidebarOpen(false)}
-            className="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden"
+            className="fixed inset-0 bg-black/30 backdrop-blur-sm z-40 lg:hidden"
           />
         )}
       </AnimatePresence>
 
-      {/* Main content */}
       <main className="flex-1 min-w-0 lg:ml-0">
-        {/* Mobile top bar */}
-        <div className="lg:hidden sticky top-0 z-30 bg-[#06070d]/85 backdrop-blur-xl border-b border-[#1a1f30] px-4 py-3 flex items-center gap-3">
+        <div className="lg:hidden sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-black/5 px-4 py-3 flex items-center gap-3">
           <button
             onClick={() => setSidebarOpen(true)}
-            className="p-2 rounded-lg bg-white/5"
+            className="p-2 rounded-lg bg-[#f5f5f7]"
           >
             <div className="flex flex-col gap-1">
-              <span className="w-4 h-0.5 bg-white rounded-full" />
-              <span className="w-4 h-0.5 bg-white rounded-full" />
-              <span className="w-4 h-0.5 bg-white rounded-full" />
+              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
+              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
+              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
             </div>
           </button>
-          <span className="font-display font-bold">Bookify <span className="text-[#e8b94e]">Librarian</span></span>
+          <span className="text-[14px] font-semibold text-[#1d1d1f]">Bookify · Библиотека</span>
         </div>
 
-        <div className="p-4 sm:p-6 lg:p-10">
+        <div className="p-4 sm:p-6 lg:p-8">
           {children}
         </div>
       </main>

@@ -7,12 +7,8 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
   ArrowLeft, Heart, BookOpen, Download, MessageSquare,
-  Send, Loader2, Clock, User as UserIcon, Pin
+  Send, Loader2, Clock, Pin as PinIcon
 } from 'lucide-react'
-
-const Spinner = () => (
-  <Loader2 size={16} className="animate-spin" />
-)
 
 const Book = () => {
   const [book, setBook] = useState(null)
@@ -56,20 +52,15 @@ const Book = () => {
           token ? fetch('/api/favorites', { headers: { Authorization: `Bearer ${token}` } }) : null
         ])
 
-        const bookData = await bookRes.json()
-        setBook(bookData)
-
-        const commentsData = await commentsRes.json()
-        setComment(commentsData)
+        setBook(await bookRes.json())
+        setComment(await commentsRes.json())
 
         if (favRes) {
           const favData = await favRes.json()
           const favs = Array.isArray(favData) ? favData : (favData.favorites || [])
           setIsFavorite(favs.some(f => Number(f.book_id) === Number(id) || Number(f.id) === Number(id)))
         }
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err) { console.error(err) }
     }
 
     fetchAll()
@@ -91,10 +82,9 @@ const Book = () => {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success('Чтение начато!', { description: 'У тебя 14 дней на отчёт' })
+        toast.success('Чтение начато', { description: 'У тебя 14 дней на отчёт' })
         setMyBorrowId(data.borrowId)
         setMyDueDate(data.due_date || data.deadline)
-        // Refetch book to update availability
         const r = await fetch(`/api/books/${id}`)
         setBook(await r.json())
       } else {
@@ -159,7 +149,7 @@ const Book = () => {
         })
         if (res.ok) {
           setIsFavorite(true)
-          toast.success('Добавлено в избранное ❤️')
+          toast.success('Добавлено в избранное')
         } else {
           const data = await res.json()
           toast.error(data.error || 'Ошибка')
@@ -185,15 +175,13 @@ const Book = () => {
       if (data.updatedComment) {
         setComment(prev => prev.map(c => c.id === data.updatedComment.id ? data.updatedComment : c))
       }
-    } catch (err) {
-      toast.error('Ошибка')
-    }
+    } catch (err) { toast.error('Ошибка') }
   }
 
   if (!book) {
     return (
-      <div className="min-h-screen bg-[#06070d] flex items-center justify-center">
-        <div className="w-10 h-10 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
       </div>
     )
   }
@@ -201,79 +189,76 @@ const Book = () => {
   const isUnavailable = book.available_copies !== undefined && book.available_copies <= 0 && !myBorrowId
 
   return (
-    <div className="min-h-screen bg-[#06070d] text-white pb-20">
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#06070d]/85 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-[1300px] mx-auto px-4 sm:px-6 h-16 flex items-center">
+    <div className="min-h-screen bg-white text-[#1d1d1f] pb-20">
+      <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-black/5">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm font-semibold text-[#94a3b8] hover:text-white transition-colors"
+            className="flex items-center gap-2 text-[14px] font-medium text-[#6e6e73] hover:text-[#1a56db] transition-colors"
           >
-            <ArrowLeft size={16} /> Назад
+            <ArrowLeft size={15} /> Назад
           </button>
         </div>
       </div>
 
-      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 pt-8">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
           className="flex flex-col lg:flex-row gap-8 lg:gap-12"
         >
-          {/* Cover */}
           <div className="shrink-0 mx-auto lg:mx-0">
-            <div className="relative w-64 aspect-[2/3] rounded-2xl overflow-hidden shadow-2xl shadow-black/50 ring-1 ring-white/10">
+            <div className="relative w-64 aspect-[2/3] rounded-2xl overflow-hidden bg-[#f5f5f7] shadow-[0_8px_32px_rgba(0,0,0,0.08)] ring-1 ring-black/5">
               {book.cover_url ? (
                 <Image src={book.cover_url} alt={book.title} fill className="object-cover" priority sizes="256px" />
               ) : (
-                <div className="w-full h-full bg-gradient-to-br from-[#1a1f30] to-[#0a0c17] flex items-center justify-center">
-                  <BookOpen size={48} className="text-[#5a6383]" />
+                <div className="w-full h-full flex items-center justify-center">
+                  <BookOpen size={48} className="text-[#86868b]" />
                 </div>
               )}
             </div>
             {book.genre && (
               <div className="mt-4 text-center">
-                <span className="inline-block px-3 py-1 rounded-full bg-[#e8b94e]/10 border border-[#e8b94e]/20 text-[#e8b94e] text-xs font-bold uppercase tracking-wider">
+                <span className="inline-block px-3 py-1 rounded-full bg-[#1a56db]/10 text-[#1a56db] text-[12px] font-medium">
                   {book.genre}
                 </span>
               </div>
             )}
           </div>
 
-          {/* Info */}
           <div className="flex-1 min-w-0">
-            <h1 className="font-display text-3xl sm:text-5xl font-black tracking-tighter leading-tight mb-2">
+            <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.025em] leading-[1.05] mb-2 text-[#1d1d1f]">
               {book.title}
             </h1>
-            <p className="text-xl text-[#e8b94e] font-semibold mb-6">{book.author}</p>
+            <p className="text-[19px] text-[#1a56db] font-medium mb-6">{book.author}</p>
 
             {book.description && (
-              <p className="text-[#94a3b8] leading-relaxed mb-8 max-w-3xl">
+              <p className="text-[16px] text-[#6e6e73] leading-[1.55] mb-8 max-w-3xl">
                 {book.description}
               </p>
             )}
 
-            {/* Actions */}
-            <div className="flex flex-wrap gap-3 mb-8">
+            <div className="flex flex-wrap gap-2.5 mb-8">
               {myBorrowId ? (
                 <button
                   onClick={() => router.push(`/report/${myBorrowId}`)}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#4ecdc4] to-[#2d9b94] text-[#06070d] font-bold flex items-center gap-2 hover:shadow-lg hover:shadow-[#4ecdc4]/30 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-[#34c759] hover:bg-[#2da847] text-white text-[15px] font-medium flex items-center gap-2 transition-colors"
                 >
-                  <BookOpen size={16} /> Сдать отчёт
+                  <BookOpen size={15} /> Сдать отчёт
                 </button>
               ) : (
                 <button
                   onClick={handleBorrow}
                   disabled={borrowLoading || isUnavailable}
-                  className="px-6 py-3 rounded-xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold flex items-center gap-2 disabled:opacity-50 hover:shadow-lg hover:shadow-[#e8b94e]/30 transition-all"
+                  className="px-5 py-2.5 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[15px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
                 >
                   {borrowLoading ? (
-                    <Spinner />
+                    <Loader2 size={15} className="animate-spin" />
                   ) : isUnavailable ? (
-                    <>Нет в наличии</>
+                    'Нет в наличии'
                   ) : (
-                    <><BookOpen size={16} /> Взять книгу</>
+                    <><BookOpen size={15} /> Взять книгу</>
                   )}
                 </button>
               )}
@@ -281,13 +266,13 @@ const Book = () => {
               <button
                 onClick={handleFavorite}
                 disabled={favLoading}
-                className={`px-5 py-3 rounded-xl border font-bold flex items-center gap-2 transition-all ${
+                className={`px-4 py-2.5 rounded-xl border text-[14px] font-medium flex items-center gap-2 transition-all ${
                   isFavorite
-                    ? 'bg-[#ff5d8f]/10 border-[#ff5d8f]/30 text-[#ff5d8f]'
-                    : 'bg-white/5 border-white/10 text-[#94a3b8] hover:text-white'
+                    ? 'bg-[#ff2d55]/10 border-[#ff2d55]/30 text-[#ff2d55]'
+                    : 'bg-white border-black/10 text-[#6e6e73] hover:text-[#1d1d1f] hover:border-black/20'
                 }`}
               >
-                {favLoading ? <Spinner /> : <Heart size={16} fill={isFavorite ? 'currentColor' : 'none'} />}
+                {favLoading ? <Loader2 size={14} className="animate-spin" /> : <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />}
                 {isFavorite ? 'В избранном' : 'В избранное'}
               </button>
 
@@ -296,93 +281,90 @@ const Book = () => {
                   href={book.file_url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="px-5 py-3 rounded-xl bg-white/5 border border-white/10 text-[#94a3b8] hover:text-white font-bold flex items-center gap-2 transition-all"
+                  className="px-4 py-2.5 rounded-xl bg-white border border-black/10 text-[#6e6e73] hover:text-[#1d1d1f] hover:border-black/20 text-[14px] font-medium flex items-center gap-2 transition-all"
                 >
-                  <Download size={16} /> PDF
+                  <Download size={14} /> PDF
                 </a>
               )}
             </div>
 
-            {/* Stats grid */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-white/5 pt-6">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-5 border-t border-black/8 pt-6">
               {[
                 { label: 'Год', value: book.year || '—' },
-                { label: 'Доступно', value: `${book.available_copies ?? '?'}/${book.total_copies ?? '?'}`, color: (book.available_copies ?? 0) > 0 ? '#4ecdc4' : '#ff5d8f' },
+                { label: 'Доступно', value: `${book.available_copies ?? '?'}/${book.total_copies ?? '?'}`, color: (book.available_copies ?? 0) > 0 ? '#34c759' : '#ff3b30' },
                 { label: 'Жанр', value: book.genre || '—' },
-                { label: 'Статус', value: myBorrowId ? 'Читаешь' : (isUnavailable ? 'На руках' : 'Доступна'), color: myBorrowId ? '#e8b94e' : (isUnavailable ? '#ff5d8f' : '#4ecdc4') }
+                { label: 'Статус', value: myBorrowId ? 'Читаешь' : (isUnavailable ? 'На руках' : 'Доступна'), color: myBorrowId ? '#1a56db' : (isUnavailable ? '#ff3b30' : '#34c759') }
               ].map((s, i) => (
                 <div key={i}>
-                  <div className="text-[10px] text-[#5a6383] uppercase tracking-wider font-bold mb-1">{s.label}</div>
-                  <div className="font-bold" style={{ color: s.color || '#fff' }}>{s.value}</div>
+                  <div className="text-[10px] text-[#86868b] uppercase tracking-wider font-medium mb-1">{s.label}</div>
+                  <div className="font-semibold text-[15px]" style={{ color: s.color || '#1d1d1f' }}>{s.value}</div>
                 </div>
               ))}
             </div>
 
             {myDueDate && (
-              <div className="mt-6 p-4 rounded-xl bg-[#e8b94e]/10 border border-[#e8b94e]/20 flex items-center gap-3">
-                <Clock size={18} className="text-[#e8b94e]" />
-                <div className="text-sm">
-                  <span className="text-[#94a3b8]">Вернуть до: </span>
-                  <strong className="text-white">{new Date(myDueDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</strong>
+              <div className="mt-6 p-4 rounded-xl bg-[#1a56db]/8 border border-[#1a56db]/20 flex items-center gap-3">
+                <Clock size={16} className="text-[#1a56db]" />
+                <div className="text-[14px] text-[#1d1d1f]">
+                  <span className="text-[#6e6e73]">Вернуть до: </span>
+                  <strong>{new Date(myDueDate).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</strong>
                 </div>
               </div>
             )}
           </div>
         </motion.div>
 
-        {/* Comments */}
-        <div className="mt-16 max-w-3xl">
-          <h2 className="font-display text-2xl font-black mb-6 flex items-center gap-2">
-            <MessageSquare size={20} className="text-[#e8b94e]" />
+        <div className="mt-14 max-w-3xl">
+          <h2 className="text-2xl font-semibold tracking-[-0.02em] mb-5 flex items-center gap-2">
+            <MessageSquare size={18} className="text-[#1a56db]" />
             Комментарии ({comment.length})
           </h2>
 
-          <div className="mb-6 bg-[#11141f] border border-white/5 rounded-2xl p-4">
+          <div className="mb-6 bg-white border border-black/8 rounded-2xl p-4">
             <textarea
-              placeholder="Поделитесь мыслями о книге..."
               value={content}
               onChange={e => setContent(e.target.value)}
               rows={3}
-              className="w-full bg-[#0a0c17] border border-white/5 rounded-xl p-3 text-white placeholder-[#3a4565] focus:outline-none focus:border-[#e8b94e]/30 transition-all resize-none text-sm"
+              className="w-full bg-[#f5f5f7] border border-transparent rounded-xl p-3 text-[#1d1d1f] placeholder-[#86868b] focus:outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all resize-none text-[14px]"
             />
             <div className="flex justify-end mt-3">
               <button
                 onClick={handleComment}
                 disabled={commentLoading || !content.trim()}
-                className="px-5 py-2 rounded-xl bg-[#e8b94e] text-[#06070d] font-bold text-sm flex items-center gap-2 disabled:opacity-50 hover:bg-[#e8b94e]/90 transition-all"
+                className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[13px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
               >
-                {commentLoading ? <Spinner /> : <><Send size={14} /> Отправить</>}
+                {commentLoading ? <Loader2 size={13} className="animate-spin" /> : <><Send size={13} /> Отправить</>}
               </button>
             </div>
           </div>
 
           <div className="space-y-3">
             {comment.length === 0 ? (
-              <div className="text-center py-12 text-[#5a6383] text-sm">
-                Пока никто не оставил отзыв. Будь первым!
+              <div className="text-center py-12 text-[#86868b] text-[14px]">
+                Пока никто не оставил отзыв
               </div>
             ) : comment.map(item => (
               <motion.div
                 key={item.id}
                 layout
-                initial={{ opacity: 0, y: 10 }}
+                initial={{ opacity: 0, y: 8 }}
                 animate={{ opacity: 1, y: 0 }}
                 className={`p-4 rounded-2xl border transition-all ${
                   item.is_pinned
-                    ? 'bg-[#e8b94e]/5 border-[#e8b94e]/30'
-                    : 'bg-[#11141f] border-white/5 hover:border-white/10'
+                    ? 'bg-[#1a56db]/5 border-[#1a56db]/30'
+                    : 'bg-white border-black/8 hover:border-black/12'
                 }`}
               >
                 <div className="flex items-start gap-3 mb-2">
-                  <div className="w-9 h-9 rounded-lg bg-gradient-to-br from-[#60a5fa] to-[#1a56db] flex items-center justify-center font-bold text-sm shrink-0">
+                  <div className="w-9 h-9 rounded-full bg-gradient-to-br from-[#1a56db] to-[#3b82f6] flex items-center justify-center font-semibold text-white text-[13px] shrink-0">
                     {item.user_name?.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1 min-w-0">
-                    <div className="font-bold text-sm flex items-center gap-2">
+                    <div className="font-semibold text-[14px] flex items-center gap-2 text-[#1d1d1f]">
                       {item.user_name}
                       {item.is_pinned && (
-                        <span className="text-[10px] bg-[#e8b94e]/20 text-[#e8b94e] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider flex items-center gap-1">
-                          <Pin size={10} /> Закреплено
+                        <span className="text-[10px] bg-[#1a56db]/15 text-[#1a56db] px-2 py-0.5 rounded-full font-medium flex items-center gap-1">
+                          <PinIcon size={9} /> Закреплено
                         </span>
                       )}
                     </div>
@@ -390,13 +372,13 @@ const Book = () => {
                   {userRole === 'admin' && (
                     <button
                       onClick={() => handlePin(item.id)}
-                      className="text-[#5a6383] hover:text-[#e8b94e] p-1.5 rounded-lg hover:bg-[#e8b94e]/10 transition-colors"
+                      className="text-[#86868b] hover:text-[#1a56db] p-1.5 rounded-lg hover:bg-[#1a56db]/10 transition-colors"
                     >
-                      <Pin size={14} />
+                      <PinIcon size={13} />
                     </button>
                   )}
                 </div>
-                <p className="text-[#94a3b8] text-sm leading-relaxed pl-12">{item.content}</p>
+                <p className="text-[#6e6e73] text-[14px] leading-relaxed pl-12">{item.content}</p>
               </motion.div>
             ))}
           </div>

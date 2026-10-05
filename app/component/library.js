@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useRef } from 'react'
 import { motion } from 'framer-motion'
-import { BookOpen, CheckCircle, Filter, Sparkles, Search } from 'lucide-react'
+import { BookOpen, CheckCircle, Filter, Search } from 'lucide-react'
 
 import Navbar from "../component/NavBar"
 import Books from "../component/books"
@@ -25,7 +25,6 @@ const Library = () => {
   const searchParams = useSearchParams()
   const genreFromUrl = searchParams.get('genre') || 'Все'
 
-  // Auth check
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) {
@@ -40,7 +39,6 @@ const Library = () => {
     }
   }, [router])
 
-  // Fetch books
   const fetchBooks = async (pageNum, isNewSearch = false) => {
     try {
       if (isNewSearch) setLoading(true)
@@ -65,7 +63,6 @@ const Library = () => {
     }
   }
 
-  // Total count
   useEffect(() => {
     const fetchTotal = async () => {
       try {
@@ -77,7 +74,6 @@ const Library = () => {
     fetchTotal()
   }, [genreFromUrl])
 
-  // Profile + genres
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token')
@@ -107,7 +103,6 @@ const Library = () => {
     fetchGenres()
   }, [])
 
-  // Reset on genre change
   useEffect(() => {
     setPage(1)
     setHasMore(true)
@@ -115,7 +110,6 @@ const Library = () => {
     fetchBooks(1, true)
   }, [genreFromUrl])
 
-  // Infinite scroll
   useEffect(() => {
     if (loading || !hasMore) return
     const currentRef = observerRef.current
@@ -138,58 +132,54 @@ const Library = () => {
   }, [page])
 
   return (
-    <main className="min-h-screen text-white pb-20">
+    <main className="min-h-screen bg-white text-[#1d1d1f] pb-20">
       <Navbar />
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10">
+      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 md:px-8">
 
         {/* Hero */}
-        <section className="pt-12 md:pt-16 pb-8 md:pb-10">
+        <section className="pt-10 md:pt-14 pb-8">
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
+            transition={{ duration: 0.5 }}
           >
-            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-[#e8b94e]/10 border border-[#e8b94e]/20 rounded-full text-[10px] font-bold text-[#e8b94e] uppercase tracking-widest">
-              <Sparkles size={10} /> {totalBooks} книг в каталоге
+            <div className="text-[12px] font-medium text-[#1a56db] uppercase tracking-[0.15em] mb-3">
+              {totalBooks} книг в каталоге
             </div>
-            <h1 className="font-display text-4xl md:text-7xl font-black tracking-tighter leading-[0.95] mb-4">
-              Каталог <span className="text-gradient-gold">DLS</span>
+            <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-3 text-[#1d1d1f]">
+              Каталог DLS
             </h1>
-            <p className="text-[#94a3b8] text-lg max-w-xl leading-relaxed">
-              Найди книгу, которая изменит твою жизнь. Бронируй в один клик, читай с удовольствием.
+            <p className="text-[18px] text-[#6e6e73] max-w-xl leading-[1.5]">
+              Найди книгу, которая изменит твою жизнь. Бронируй в один клик.
             </p>
           </motion.div>
         </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-8">
+        <div className="grid grid-cols-3 gap-3 mb-10">
           {[
-            { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: '#e8b94e' },
-            { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: '#4ecdc4' },
-            { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: '#60a5fa' }
+            { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: '#1a56db' },
+            { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: '#ff9500' },
+            { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: '#34c759' }
           ].map((stat, i) => {
             const Icon = stat.icon
             return (
               <motion.div
                 key={i}
-                initial={{ opacity: 0, y: 20 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.1 }}
-                className="bg-[#11141f] border border-white/5 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-[#e8b94e]/20 transition-all"
+                transition={{ delay: i * 0.08 }}
+                className="bg-white border border-black/8 rounded-2xl p-4 sm:p-5"
               >
                 <div
-                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity"
-                  style={{ background: stat.color }}
-                />
-                <div
-                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
-                  style={{ background: `${stat.color}15`, color: stat.color }}
+                  className="w-9 h-9 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: `${stat.color}12`, color: stat.color }}
                 >
-                  <Icon size={18} />
+                  <Icon size={16} />
                 </div>
-                <div className="text-3xl sm:text-4xl font-display font-black">{stat.value}</div>
-                <div className="text-xs uppercase tracking-wider text-[#5a6383] font-semibold mt-1">{stat.label}</div>
+                <div className="text-3xl sm:text-4xl font-semibold tracking-tight">{stat.value}</div>
+                <div className="text-[11px] uppercase tracking-wider text-[#86868b] font-medium mt-1">{stat.label}</div>
               </motion.div>
             )
           })}
@@ -197,24 +187,24 @@ const Library = () => {
 
         {/* Genre filter */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display font-bold text-lg flex items-center gap-2">
-              <Filter size={16} className="text-[#e8b94e]" /> Жанры
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-[14px] font-semibold flex items-center gap-2 text-[#1d1d1f]">
+              <Filter size={14} className="text-[#1a56db]" /> Жанры
             </h2>
-            <span className="text-sm text-[#5a6383]">
+            <span className="text-[13px] text-[#86868b]">
               {genreFromUrl === 'Все' ? `${totalBooks} книг` : `${totalBooks} в жанре`}
             </span>
           </div>
 
-          <div className="flex flex-wrap gap-2 pb-2">
+          <div className="flex flex-wrap gap-2">
             {allGenres.map(genre => (
               <button
                 key={genre}
                 onClick={() => router.push("/library?genre=" + encodeURIComponent(genre))}
-                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
+                className={`whitespace-nowrap px-3.5 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
                   genreFromUrl === genre
-                    ? 'bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] shadow-lg shadow-[#e8b94e]/20'
-                    : 'bg-white/5 text-[#94a3b8] hover:bg-white/10 hover:text-white border border-white/5'
+                    ? 'bg-[#1a56db] text-white'
+                    : 'bg-[#f5f5f7] text-[#1d1d1f] hover:bg-[#ececec]'
                 }`}
               >
                 {genre}
@@ -223,7 +213,6 @@ const Library = () => {
           </div>
         </div>
 
-        {/* Books */}
         <div className="relative">
           {books.length === 0 && loading ? (
             <SkeletonGrid />
@@ -238,27 +227,27 @@ const Library = () => {
 
               <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
                 {hasMore && (
-                  <div className="w-8 h-8 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
+                  <div className="w-7 h-7 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
                 )}
               </div>
 
               {!hasMore && books.length > 0 && (
-                <div className="flex items-center justify-center gap-4 py-16">
-                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#5a6383]/30" />
-                  <p className="text-[#5a6383] text-sm font-medium tracking-widest uppercase">
-                    Конец каталога 📚
+                <div className="flex items-center justify-center gap-4 py-14">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-black/10" />
+                  <p className="text-[#86868b] text-[13px] font-medium tracking-wider uppercase">
+                    Конец каталога
                   </p>
-                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#5a6383]/30" />
+                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-black/10" />
                 </div>
               )}
             </>
           )}
 
           {!loading && books.length === 0 && (
-            <div className="text-center py-20 bg-[#11141f] border border-dashed border-white/10 rounded-2xl">
-              <Search size={32} className="text-[#5a6383] mx-auto mb-3" />
-              <p className="text-[#94a3b8] font-semibold mb-1">Книг не найдено</p>
-              <p className="text-sm text-[#5a6383]">Попробуй другой жанр</p>
+            <div className="text-center py-20 bg-white border border-dashed border-black/10 rounded-2xl">
+              <Search size={28} className="text-[#86868b] mx-auto mb-3" />
+              <p className="text-[#1d1d1f] font-semibold mb-1">Книг не найдено</p>
+              <p className="text-[13px] text-[#86868b]">Попробуй другой жанр</p>
             </div>
           )}
         </div>

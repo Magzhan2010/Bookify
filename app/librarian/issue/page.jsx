@@ -2,12 +2,11 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useRef, useState } from 'react'
-import Link from 'next/link'
 import { toast } from 'sonner'
 import { Search, BookMarked, Check, User, Calendar, X, BookOpen } from 'lucide-react'
 
 export default function IssuePage() {
-  const [step, setStep] = useState(1) // 1: студент, 2: книга, 3: подтверждение
+  const [step, setStep] = useState(1)
   const [studentQuery, setStudentQuery] = useState('')
   const [studentResults, setStudentResults] = useState([])
   const [selectedStudent, setSelectedStudent] = useState(null)
@@ -23,7 +22,6 @@ export default function IssuePage() {
   const [success, setSuccess] = useState(null)
   const searchRef = useRef(null)
 
-  // Student search with debounce
   useEffect(() => {
     if (!studentQuery.trim()) {
       setStudentResults([])
@@ -36,7 +34,6 @@ export default function IssuePage() {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
-        // Если ничего не нашлось — попробуем без фильтра active
         if (data.length === 0) {
           const r2 = await fetch(`/api/librarian/students?q=${encodeURIComponent(studentQuery)}`, {
             headers: { Authorization: `Bearer ${token}` }
@@ -45,14 +42,11 @@ export default function IssuePage() {
         } else {
           setStudentResults(data)
         }
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err) { console.error(err) }
     }, 250)
     return () => clearTimeout(t)
   }, [studentQuery])
 
-  // Book search
   useEffect(() => {
     if (!bookQuery.trim()) {
       setBookResults([])
@@ -62,9 +56,7 @@ export default function IssuePage() {
       try {
         const res = await fetch(`/api/books/search?q=${encodeURIComponent(bookQuery)}`)
         setBookResults(await res.json())
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err) { console.error(err) }
     }, 250)
     return () => clearTimeout(t)
   }, [bookQuery])
@@ -75,10 +67,7 @@ export default function IssuePage() {
       const token = localStorage.getItem('token')
       const res = await fetch('/api/librarian/issue', {
         method: 'POST',
-        headers: {
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json'
-        },
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({
           studentIdentifier: selectedStudent.id,
           bookId: selectedBook.id,
@@ -89,15 +78,10 @@ export default function IssuePage() {
       const data = await res.json()
       if (data.success) {
         setSuccess(data)
-        toast.success(`Книга выдана: ${data.book.title}`, {
-          description: `${data.student.name} должна вернуть до ${new Date(data.due_date).toLocaleDateString('ru-RU')}`
-        })
-        // Reset
-        setTimeout(() => {
-          resetForm()
-        }, 2500)
+        toast.success(`Книга выдана: ${data.book.title}`)
+        setTimeout(() => resetForm(), 2500)
       } else {
-        toast.error(data.error || 'Не удалось выдать книгу')
+        toast.error(data.error || 'Не удалось выдать')
       }
     } catch (err) {
       toast.error('Ошибка сети')
@@ -122,30 +106,25 @@ export default function IssuePage() {
 
   return (
     <div className="max-w-3xl mx-auto">
-
-      {/* Header */}
       <div className="mb-8">
-        <h1 className="font-display text-3xl sm:text-4xl font-black tracking-tight mb-2">
-          Выдать <span className="text-gradient-gold">книгу</span>
+        <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] mb-2 text-[#1d1d1f]">
+          Выдать книгу
         </h1>
-        <p className="text-[#94a3b8]">Три простых шага: ученик → книга → подтверждение</p>
+        <p className="text-[15px] text-[#6e6e73]">Три шага: ученик → книга → подтверждение</p>
       </div>
 
-      {/* Steps */}
       <div className="flex items-center gap-2 mb-8">
         {[1, 2, 3].map(s => (
           <div key={s} className="flex items-center gap-2 flex-1">
             <div
-              className={`w-8 h-8 rounded-xl flex items-center justify-center font-bold text-sm transition-all ${
-                step >= s
-                  ? 'bg-gradient-to-br from-[#e8b94e] to-[#c89538] text-[#06070d] shadow-lg shadow-[#e8b94e]/20'
-                  : 'bg-white/5 text-[#5a6383]'
+              className={`w-9 h-9 rounded-xl flex items-center justify-center font-semibold text-[14px] transition-all ${
+                step >= s ? 'bg-[#1a56db] text-white' : 'bg-white border border-black/10 text-[#86868b]'
               }`}
             >
               {step > s ? <Check size={14} /> : s}
             </div>
             {s < 3 && (
-              <div className={`flex-1 h-1 rounded-full transition-all ${step > s ? 'bg-[#e8b94e]' : 'bg-white/5'}`} />
+              <div className={`flex-1 h-0.5 rounded-full transition-all ${step > s ? 'bg-[#1a56db]' : 'bg-[#e5e7eb]'}`} />
             )}
           </div>
         ))}
@@ -155,90 +134,83 @@ export default function IssuePage() {
         {success ? (
           <motion.div
             key="success"
-            initial={{ opacity: 0, scale: 0.9 }}
+            initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#11141f] border border-[#4ecdc4]/30 rounded-2xl p-8 text-center"
+            className="bg-white border border-[#34c759]/30 rounded-2xl p-10 text-center"
           >
             <motion.div
               initial={{ scale: 0 }}
               animate={{ scale: 1 }}
               transition={{ type: 'spring', delay: 0.2 }}
-              className="w-20 h-20 rounded-full bg-gradient-to-br from-[#4ecdc4] to-[#2d9b94] mx-auto mb-4 flex items-center justify-center"
+              className="w-20 h-20 rounded-full bg-[#34c759] mx-auto mb-4 flex items-center justify-center"
             >
-              <Check size={36} className="text-[#06070d]" strokeWidth={3} />
+              <Check size={36} className="text-white" strokeWidth={3} />
             </motion.div>
-            <h2 className="font-display font-bold text-2xl mb-2">Книга выдана!</h2>
-            <p className="text-[#94a3b8] mb-1">
-              <span className="text-white font-semibold">{success.student.name}</span> взял(а)
+            <h2 className="text-2xl font-semibold mb-2 text-[#1d1d1f]">Книга выдана</h2>
+            <p className="text-[#6e6e73] mb-1">
+              <span className="text-[#1d1d1f] font-medium">{success.student.name}</span> взял
             </p>
-            <p className="text-lg font-bold text-gradient-gold mb-4">«{success.book.title}»</p>
-            <p className="text-sm text-[#5a6383]">
+            <p className="text-[18px] font-semibold text-[#1a56db] mb-4">«{success.book.title}»</p>
+            <p className="text-[13px] text-[#86868b]">
               Вернуть до {new Date(success.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}
             </p>
           </motion.div>
         ) : (
           <motion.div
             key={step}
-            initial={{ opacity: 0, x: 20 }}
+            initial={{ opacity: 0, x: 16 }}
             animate={{ opacity: 1, x: 0 }}
-            exit={{ opacity: 0, x: -20 }}
-            className="bg-[#11141f] border border-white/5 rounded-2xl p-6 sm:p-8"
+            exit={{ opacity: 0, x: -16 }}
+            transition={{ duration: 0.3 }}
+            className="bg-white border border-black/8 rounded-2xl p-6 sm:p-8"
           >
-            {/* STEP 1: STUDENT */}
             {step === 1 && (
               <div>
                 <div className="flex items-center gap-3 mb-6">
-                  <div className="w-10 h-10 rounded-xl bg-[#60a5fa]/10 text-[#60a5fa] flex items-center justify-center">
-                    <User size={20} />
+                  <div className="w-10 h-10 rounded-xl bg-[#1a56db]/10 text-[#1a56db] flex items-center justify-center">
+                    <User size={18} />
                   </div>
                   <div>
-                    <h2 className="font-display font-bold text-xl">Кому выдаём?</h2>
-                    <p className="text-sm text-[#5a6383]">Найди ученика по имени, email или классу</p>
+                    <h2 className="text-[18px] font-semibold text-[#1d1d1f]">Кому выдаём?</h2>
+                    <p className="text-[13px] text-[#86868b]">Найди ученика</p>
                   </div>
                 </div>
 
                 <div className="relative mb-4">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5a6383]" />
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
                   <input
                     ref={searchRef}
                     type="text"
                     autoFocus
-                    placeholder="Например: Айдана или 10-А"
                     value={studentQuery}
                     onChange={e => setStudentQuery(e.target.value)}
-                    className="w-full bg-[#0a0c17] border border-white/10 pl-12 pr-4 py-4 rounded-xl text-white placeholder-[#5a6383] outline-none focus:border-[#e8b94e]/40 focus:bg-[#11141f] transition-all"
+                    className="w-full bg-[#f5f5f7] border border-transparent pl-11 pr-4 py-3.5 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[15px]"
                   />
                 </div>
 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-1.5 max-h-96 overflow-y-auto">
                   {studentResults.length === 0 && studentQuery.length > 0 && (
-                    <div className="text-center py-8 text-[#5a6383] text-sm">
-                      Никого не нашли. Попробуй другое имя или email.
-                    </div>
+                    <div className="text-center py-8 text-[#86868b] text-[13px]">Никого не нашли</div>
                   )}
                   {studentQuery.length === 0 && (
-                    <div className="text-center py-12 text-[#5a6383] text-sm">
-                      👆 Начни вводить имя ученика
-                    </div>
+                    <div className="text-center py-12 text-[#86868b] text-[13px]">Начни вводить имя</div>
                   )}
                   {studentResults.map(s => (
                     <button
                       key={s.id}
                       onClick={() => { setSelectedStudent(s); setStep(2) }}
-                      className="w-full flex items-center gap-4 p-4 rounded-xl bg-white/5 hover:bg-[#e8b94e]/10 hover:border-[#e8b94e]/30 border border-white/5 transition-all text-left"
+                      className="w-full flex items-center gap-4 p-4 rounded-xl bg-[#f5f5f7] hover:bg-white hover:border-[#1a56db]/30 border border-transparent transition-all text-left"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-gradient-to-br from-[#60a5fa] to-[#1a56db] flex items-center justify-center font-bold text-white shrink-0">
+                      <div className="w-12 h-12 rounded-xl bg-[#1a56db] flex items-center justify-center font-semibold text-white shrink-0">
                         {s.name.charAt(0).toUpperCase()}
                       </div>
                       <div className="flex-1 min-w-0">
-                        <div className="font-bold">{s.name}</div>
-                        <div className="text-xs text-[#5a6383]">
-                          {s.class_name || '—'} · {s.email}
-                        </div>
+                        <div className="font-semibold text-[14px] text-[#1d1d1f]">{s.name}</div>
+                        <div className="text-[12px] text-[#86868b]">{s.class_name || '—'} · {s.email}</div>
                       </div>
                       {s.currently_holding > 0 && (
                         <div className="text-right shrink-0">
-                          <div className="text-xs text-[#4ecdc4] font-bold">{s.currently_holding} на руках</div>
+                          <div className="text-[11px] text-[#ff9500] font-semibold">{s.currently_holding} на руках</div>
                         </div>
                       )}
                     </button>
@@ -247,54 +219,48 @@ export default function IssuePage() {
               </div>
             )}
 
-            {/* STEP 2: BOOK */}
             {step === 2 && selectedStudent && (
               <div>
-                <div className="flex items-center gap-3 mb-4 p-3 rounded-xl bg-white/5">
-                  <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-[#60a5fa] to-[#1a56db] flex items-center justify-center font-bold text-white text-sm">
+                <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-[#f5f5f7]">
+                  <div className="w-10 h-10 rounded-xl bg-[#1a56db] flex items-center justify-center font-semibold text-white text-[14px]">
                     {selectedStudent.name.charAt(0).toUpperCase()}
                   </div>
                   <div className="flex-1">
-                    <div className="font-bold">{selectedStudent.name}</div>
-                    <div className="text-xs text-[#5a6383]">{selectedStudent.class_name || '—'}</div>
+                    <div className="font-semibold text-[14px] text-[#1d1d1f]">{selectedStudent.name}</div>
+                    <div className="text-[12px] text-[#86868b]">{selectedStudent.class_name || '—'}</div>
                   </div>
-                  <button onClick={() => { setSelectedStudent(null); setStep(1) }} className="text-[#5a6383] hover:text-[#ff5d8f]">
-                    <X size={18} />
+                  <button onClick={() => { setSelectedStudent(null); setStep(1) }} className="text-[#86868b] hover:text-[#1d1d1f]">
+                    <X size={16} />
                   </button>
                 </div>
 
-                <div className="flex items-center gap-3 mb-4 mt-6">
-                  <div className="w-10 h-10 rounded-xl bg-[#e8b94e]/10 text-[#e8b94e] flex items-center justify-center">
-                    <BookOpen size={20} />
+                <div className="flex items-center gap-3 mb-5 mt-6">
+                  <div className="w-10 h-10 rounded-xl bg-[#1a56db]/10 text-[#1a56db] flex items-center justify-center">
+                    <BookOpen size={18} />
                   </div>
                   <div>
-                    <h2 className="font-display font-bold text-xl">Какую книгу?</h2>
-                    <p className="text-sm text-[#5a6383]">Найди книгу в каталоге</p>
+                    <h2 className="text-[18px] font-semibold text-[#1d1d1f]">Какую книгу?</h2>
+                    <p className="text-[13px] text-[#86868b]">Найди в каталоге</p>
                   </div>
                 </div>
 
                 <div className="relative mb-4">
-                  <Search size={18} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#5a6383]" />
+                  <Search size={16} className="absolute left-4 top-1/2 -translate-y-1/2 text-[#86868b]" />
                   <input
                     type="text"
                     autoFocus
-                    placeholder="Название или автор"
                     value={bookQuery}
                     onChange={e => setBookQuery(e.target.value)}
-                    className="w-full bg-[#0a0c17] border border-white/10 pl-12 pr-4 py-4 rounded-xl text-white placeholder-[#5a6383] outline-none focus:border-[#e8b94e]/40 focus:bg-[#11141f] transition-all"
+                    className="w-full bg-[#f5f5f7] border border-transparent pl-11 pr-4 py-3.5 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white focus:ring-4 focus:ring-[#1a56db]/10 transition-all text-[15px]"
                   />
                 </div>
 
-                <div className="space-y-2 max-h-96 overflow-y-auto">
+                <div className="space-y-1.5 max-h-96 overflow-y-auto">
                   {bookResults.length === 0 && bookQuery.length > 0 && (
-                    <div className="text-center py-8 text-[#5a6383] text-sm">
-                      Книга не найдена
-                    </div>
+                    <div className="text-center py-8 text-[#86868b] text-[13px]">Не нашли</div>
                   )}
                   {bookQuery.length === 0 && (
-                    <div className="text-center py-12 text-[#5a6383] text-sm">
-                      👆 Начни вводить название книги
-                    </div>
+                    <div className="text-center py-12 text-[#86868b] text-[13px]">Начни вводить название</div>
                   )}
                   {bookResults.map(b => {
                     const available = (b.available_copies ?? 1) > 0
@@ -305,21 +271,19 @@ export default function IssuePage() {
                         disabled={!available}
                         className={`w-full flex items-center gap-4 p-3 rounded-xl border transition-all text-left ${
                           available
-                            ? 'bg-white/5 hover:bg-[#e8b94e]/10 hover:border-[#e8b94e]/30 border-white/5'
-                            : 'bg-white/5 border-white/5 opacity-40 cursor-not-allowed'
+                            ? 'bg-[#f5f5f7] hover:bg-white hover:border-[#1a56db]/30 border-transparent'
+                            : 'bg-[#f5f5f7] border-transparent opacity-40 cursor-not-allowed'
                         }`}
                       >
-                        <div className="w-10 h-14 rounded bg-[#0a0c17] overflow-hidden shrink-0">
+                        <div className="w-10 h-14 rounded bg-white overflow-hidden shrink-0">
                           {b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover" />}
                         </div>
                         <div className="flex-1 min-w-0">
-                          <div className="font-bold truncate">{b.title}</div>
-                          <div className="text-xs text-[#5a6383] truncate">{b.author}</div>
-                          {b.genre && <div className="text-xs text-[#e8b94e] mt-1">{b.genre}</div>}
+                          <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{b.title}</div>
+                          <div className="text-[12px] text-[#86868b] truncate">{b.author}</div>
+                          {b.genre && <div className="text-[11px] text-[#1a56db] mt-0.5">{b.genre}</div>}
                         </div>
-                        {!available && (
-                          <div className="text-xs font-bold text-[#ff5d8f] shrink-0">НЕТ</div>
-                        )}
+                        {!available && <div className="text-[11px] font-semibold text-[#ff3b30] shrink-0">НЕТ</div>}
                       </button>
                     )
                   })}
@@ -327,60 +291,58 @@ export default function IssuePage() {
               </div>
             )}
 
-            {/* STEP 3: CONFIRM */}
             {step === 3 && selectedStudent && selectedBook && (
               <div>
-                <h2 className="font-display font-bold text-xl mb-6">Подтверди выдачу</h2>
+                <h2 className="text-[18px] font-semibold mb-5 text-[#1d1d1f]">Подтверди выдачу</h2>
 
-                <div className="space-y-4 mb-6">
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5">
-                    <User size={18} className="text-[#60a5fa]" />
+                <div className="space-y-3 mb-6">
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-[#f5f5f7]">
+                    <User size={16} className="text-[#1a56db]" />
                     <div className="flex-1">
-                      <div className="text-xs text-[#5a6383] uppercase tracking-wider font-bold">Ученик</div>
-                      <div className="font-bold">{selectedStudent.name}</div>
-                      <div className="text-xs text-[#5a6383]">{selectedStudent.class_name} · {selectedStudent.email}</div>
+                      <div className="text-[10px] text-[#86868b] uppercase tracking-wider font-medium">Ученик</div>
+                      <div className="font-semibold text-[14px] text-[#1d1d1f]">{selectedStudent.name}</div>
+                      <div className="text-[12px] text-[#86868b]">{selectedStudent.class_name} · {selectedStudent.email}</div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 p-4 rounded-xl bg-white/5">
-                    <BookOpen size={18} className="text-[#e8b94e]" />
+                  <div className="flex items-center gap-3 p-4 rounded-xl bg-[#f5f5f7]">
+                    <BookOpen size={16} className="text-[#1a56db]" />
                     <div className="flex-1">
-                      <div className="text-xs text-[#5a6383] uppercase tracking-wider font-bold">Книга</div>
-                      <div className="font-bold">{selectedBook.title}</div>
-                      <div className="text-xs text-[#5a6383]">{selectedBook.author}</div>
+                      <div className="text-[10px] text-[#86868b] uppercase tracking-wider font-medium">Книга</div>
+                      <div className="font-semibold text-[14px] text-[#1d1d1f]">{selectedBook.title}</div>
+                      <div className="text-[12px] text-[#86868b]">{selectedBook.author}</div>
                     </div>
                   </div>
 
                   <div>
-                    <label className="block text-xs text-[#5a6383] uppercase tracking-wider font-bold mb-2">
-                      <Calendar size={12} className="inline mr-1" /> Вернуть до
+                    <label className="block text-[12px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">
+                      <Calendar size={11} className="inline mr-1" /> Вернуть до
                     </label>
                     <input
                       type="date"
                       value={dueDate}
                       onChange={e => setDueDate(e.target.value)}
-                      className="w-full bg-[#0a0c17] border border-white/10 px-4 py-3 rounded-xl text-white outline-none focus:border-[#e8b94e]/40"
+                      className="w-full bg-[#f5f5f7] border border-transparent px-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs text-[#5a6383] uppercase tracking-wider font-bold mb-2">
+                    <label className="block text-[12px] text-[#86868b] uppercase tracking-wider font-medium mb-1.5">
                       Заметка (опционально)
                     </label>
                     <textarea
                       rows={2}
                       value={notes}
                       onChange={e => setNotes(e.target.value)}
-                      placeholder="Например: для урока литературы"
-                      className="w-full bg-[#0a0c17] border border-white/10 px-4 py-3 rounded-xl text-white placeholder-[#5a6383] outline-none focus:border-[#e8b94e]/40 resize-none"
+                      className="w-full bg-[#f5f5f7] border border-transparent px-4 py-3 rounded-xl text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all resize-none"
                     />
                   </div>
                 </div>
 
-                <div className="flex gap-3">
+                <div className="flex gap-2.5">
                   <button
                     onClick={() => setStep(2)}
-                    className="px-5 py-3 rounded-xl bg-white/5 hover:bg-white/10 font-semibold text-sm"
+                    className="px-5 py-3 rounded-xl bg-[#f5f5f7] hover:bg-[#ececec] text-[#1d1d1f] font-medium text-[14px]"
                   >
                     Назад
                   </button>
@@ -388,12 +350,12 @@ export default function IssuePage() {
                     whileTap={{ scale: 0.98 }}
                     onClick={handleIssue}
                     disabled={submitting}
-                    className="flex-1 py-3 rounded-xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold flex items-center justify-center gap-2 disabled:opacity-50"
+                    className="flex-1 py-3 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[15px] font-medium flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
                   >
                     {submitting ? (
-                      <div className="w-5 h-5 border-2 border-[#06070d]/30 border-t-[#06070d] rounded-full animate-spin" />
+                      <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" />
                     ) : (
-                      <><BookMarked size={18} /> Выдать</>
+                      <><BookMarked size={16} /> Выдать</>
                     )}
                   </motion.button>
                 </div>

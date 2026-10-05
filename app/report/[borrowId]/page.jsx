@@ -9,41 +9,11 @@ import {
 } from 'lucide-react'
 
 const questions = [
-  {
-    n: 1,
-    field: 'quote1',
-    title: 'Две важные цитаты',
-    desc: 'Выпиши 2 ключевые мысли автора и объясни своими словами, почему они важны',
-    icon: Quote
-  },
-  {
-    n: 2,
-    field: 'quote2',
-    title: 'Что удивило',
-    desc: 'Какие идеи или концепции заставили задуматься?',
-    icon: HelpCircle
-  },
-  {
-    n: 3,
-    field: 'life_example',
-    title: 'Как это в твоей жизни',
-    desc: 'Свяжи прочитанное со своим опытом или ситуациями в школе',
-    icon: Lightbulb
-  },
-  {
-    n: 4,
-    field: 'apply_today',
-    title: 'Что применишь уже сегодня',
-    desc: 'Конкретный измеримый план на ближайшие дни',
-    icon: Calendar
-  },
-  {
-    n: 5,
-    field: 'confusing',
-    title: 'Новые факты',
-    desc: 'Выпиши новую информацию или факты, о которых не знал',
-    icon: FileText
-  }
+  { n: 1, field: 'quote1', title: 'Две важные цитаты', desc: 'Выпиши 2 ключевые мысли автора и объясни своими словами, почему они важны', icon: Quote },
+  { n: 2, field: 'quote2', title: 'Что удивило', desc: 'Какие идеи или концепции заставили задуматься?', icon: HelpCircle },
+  { n: 3, field: 'life_example', title: 'Как это в твоей жизни', desc: 'Свяжи прочитанное со своим опытом или ситуациями в школе', icon: Lightbulb },
+  { n: 4, field: 'apply_today', title: 'Что применишь уже сегодня', desc: 'Конкретный измеримый план на ближайшие дни', icon: Calendar },
+  { n: 5, field: 'confusing', title: 'Новые факты', desc: 'Выпиши новую информацию или факты, о которых не знал', icon: FileText }
 ]
 
 export default function ReportPage() {
@@ -73,10 +43,9 @@ export default function ReportPage() {
 
   const update = (field, value) => setAnswers(prev => ({ ...prev, [field]: value }))
 
-  const canSubmit =
-    Object.entries(answers).every(([k, v]) =>
-      k === 'rating' ? v > 0 : (v?.trim()?.length >= 20)
-    )
+  const canSubmit = Object.entries(answers).every(([k, v]) =>
+    k === 'rating' ? v > 0 : (v?.trim()?.length >= 20)
+  )
 
   const handleSubmit = async () => {
     if (!canSubmit) return
@@ -106,77 +75,72 @@ export default function ReportPage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#06070d] text-white pb-20">
-      {/* Top bar */}
-      <div className="sticky top-0 z-30 bg-[#06070d]/85 backdrop-blur-xl border-b border-white/5">
-        <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-16 flex items-center">
+    <div className="min-h-screen bg-[#f5f5f7] text-[#1d1d1f] pb-20">
+      <div className="sticky top-0 z-30 bg-white/85 backdrop-blur-xl border-b border-black/5">
+        <div className="max-w-[820px] mx-auto px-4 sm:px-6 h-14 flex items-center">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-sm font-semibold text-[#94a3b8] hover:text-white transition-colors"
+            className="flex items-center gap-2 text-[14px] font-medium text-[#6e6e73] hover:text-[#1a56db] transition-colors"
           >
-            <ArrowLeft size={16} /> Назад
+            <ArrowLeft size={15} /> Назад
           </button>
         </div>
       </div>
 
-      <div className="max-w-[900px] mx-auto px-4 sm:px-6 pt-8">
-        {/* Header */}
+      <div className="max-w-[820px] mx-auto px-4 sm:px-6 pt-8">
         <motion.div
-          initial={{ opacity: 0, y: 20 }}
+          initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
           className="text-center mb-8"
         >
-          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-[#e8b94e]/10 border border-[#e8b94e]/20 rounded-full text-[10px] font-bold text-[#e8b94e] uppercase tracking-widest">
-            <Sparkles size={10} /> Отчёт о прочитанном
+          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-[#1a56db]/10 rounded-full text-[11px] font-medium text-[#1a56db]">
+            <Sparkles size={11} /> Отчёт о прочитанном
           </div>
-          <h1 className="font-display text-3xl sm:text-5xl font-black tracking-tighter mb-3 leading-tight">
-            Книга — для <span className="text-gradient-gold">изменения мышления</span>
+          <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.025em] mb-3 leading-tight text-[#1d1d1f]">
+            Книга — для <span className="text-[#1a56db]">изменения мышления</span>
           </h1>
-          <p className="text-[#94a3b8] max-w-md mx-auto">
+          <p className="text-[15px] text-[#6e6e73] max-w-md mx-auto leading-[1.5]">
             5 вопросов, чтобы перевести мысли из кратковременной в долговременную память
           </p>
         </motion.div>
 
-        {/* Book card */}
         {book && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.1 }}
-            className="bg-[#11141f] border border-white/5 rounded-2xl p-5 flex gap-4 items-center mb-8"
+            className="bg-white border border-black/8 rounded-2xl p-5 flex gap-4 items-center mb-8"
           >
-            <div className="w-20 h-28 rounded-lg overflow-hidden bg-[#0a0c17] shrink-0">
+            <div className="w-20 h-28 rounded-xl overflow-hidden bg-[#f5f5f7] shrink-0">
               {book.cover_url && <img src={book.cover_url} className="w-full h-full object-cover" />}
             </div>
             <div className="flex-1 min-w-0">
-              <div className="text-[10px] uppercase tracking-wider font-bold text-[#5a6383] mb-1">
+              <div className="text-[10px] uppercase tracking-wider font-medium text-[#86868b] mb-1">
                 Отчёт по книге
               </div>
-              <h3 className="font-display text-xl font-bold truncate">{book.title}</h3>
-              <p className="text-sm text-[#94a3b8] mb-2">{book.author}</p>
-              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#e8b94e]/15 border border-[#e8b94e]/30 text-[#e8b94e] text-[10px] font-bold uppercase tracking-wider">
+              <h3 className="text-[19px] font-semibold truncate text-[#1d1d1f]">{book.title}</h3>
+              <p className="text-[14px] text-[#6e6e73] mb-2">{book.author}</p>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#1a56db]/10 text-[#1a56db] text-[11px] font-medium">
                 <BookOpen size={10} /> Читаю сейчас
               </span>
             </div>
           </motion.div>
         )}
 
-        {/* Success */}
         {result?.success && (
           <motion.div
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
-            className="bg-[#4ecdc4]/10 border border-[#4ecdc4]/30 rounded-2xl p-8 text-center mb-6"
+            className="bg-[#34c759]/10 border border-[#34c759]/30 rounded-2xl p-8 text-center mb-6"
           >
-            <div className="w-16 h-16 rounded-2xl bg-[#4ecdc4] mx-auto mb-3 flex items-center justify-center">
-              <CheckCircle size={32} className="text-[#06070d]" />
+            <div className="w-16 h-16 rounded-2xl bg-[#34c759] mx-auto mb-3 flex items-center justify-center">
+              <CheckCircle size={32} className="text-white" strokeWidth={2.5} />
             </div>
-            <h3 className="font-display font-bold text-2xl mb-2">Отчёт отправлен!</h3>
-            <p className="text-[#94a3b8] text-sm">Учитель проверит и зачтёт книгу. Возвращаемся в профиль...</p>
+            <h3 className="text-[22px] font-semibold mb-2">Отчёт отправлен</h3>
+            <p className="text-[14px] text-[#6e6e73]">Учитель проверит и зачтёт книгу</p>
           </motion.div>
         )}
 
-        {/* Questions */}
         {!result?.success && questions.map((q, i) => {
           const Icon = q.icon
           const value = answers[q.field] || ''
@@ -186,26 +150,24 @@ export default function ReportPage() {
           return (
             <motion.div
               key={q.n}
-              initial={{ opacity: 0, y: 20 }}
+              initial={{ opacity: 0, y: 12 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: 0.15 + i * 0.05 }}
-              className="bg-[#11141f] border border-white/5 rounded-2xl p-5 sm:p-6 mb-4"
+              className="bg-white border border-black/8 rounded-2xl p-5 sm:p-6 mb-4"
             >
-              <div className="flex items-start gap-3 mb-3">
-                <div className="w-10 h-10 rounded-xl bg-[#e8b94e]/10 border border-[#e8b94e]/20 text-[#e8b94e] flex items-center justify-center shrink-0">
-                  <Icon size={18} />
+              <div className="flex items-start gap-3 mb-4">
+                <div className="w-10 h-10 rounded-xl bg-[#1a56db]/10 text-[#1a56db] flex items-center justify-center shrink-0">
+                  <Icon size={17} />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#5a6383]">
+                    <span className="text-[10px] uppercase tracking-wider font-medium text-[#86868b]">
                       Вопрос {q.n}
                     </span>
-                    {isValid && (
-                      <CheckCircle size={12} className="text-[#4ecdc4]" />
-                    )}
+                    {isValid && <CheckCircle size={12} className="text-[#34c759]" />}
                   </div>
-                  <h3 className="font-display font-bold text-lg mb-1">{q.title}</h3>
-                  <p className="text-sm text-[#5a6383]">{q.desc}</p>
+                  <h3 className="text-[16px] font-semibold mb-1 text-[#1d1d1f]">{q.title}</h3>
+                  <p className="text-[13px] text-[#86868b]">{q.desc}</p>
                 </div>
               </div>
 
@@ -213,12 +175,11 @@ export default function ReportPage() {
                 value={value}
                 onChange={e => update(q.field, e.target.value)}
                 rows={4}
-                placeholder="Минимум 20 символов..."
-                className="w-full bg-[#0a0c17] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-[#3a4565] outline-none focus:border-[#e8b94e]/30 transition-all resize-none text-sm"
+                className="w-full bg-[#f5f5f7] border border-transparent rounded-xl px-4 py-3 text-[#1d1d1f] outline-none focus:border-[#1a56db]/30 focus:bg-white transition-all resize-none text-[14px]"
               />
 
               <div className="text-right mt-2">
-                <span className={`text-xs ${isValid ? 'text-[#4ecdc4]' : 'text-[#5a6383]'}`}>
+                <span className={`text-[11px] ${isValid ? 'text-[#34c759]' : 'text-[#86868b]'}`}>
                   {charCount} символов {isValid && '✓'}
                 </span>
               </div>
@@ -226,15 +187,14 @@ export default function ReportPage() {
           )
         })}
 
-        {/* Rating */}
         {!result?.success && (
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ delay: 0.4 }}
-            className="bg-[#11141f] border border-white/5 rounded-2xl p-6 text-center mb-6"
+            className="bg-white border border-black/8 rounded-2xl p-6 text-center mb-6"
           >
-            <p className="text-xs uppercase tracking-widest font-bold text-[#5a6383] mb-4">
+            <p className="text-[11px] uppercase tracking-wider font-medium text-[#86868b] mb-4">
               Твоя оценка книги
             </p>
             <div className="flex justify-center gap-2">
@@ -244,8 +204,8 @@ export default function ReportPage() {
                   whileHover={{ scale: 1.2 }}
                   whileTap={{ scale: 0.9 }}
                   onClick={() => update('rating', star)}
-                  className={`text-4xl transition-colors ${
-                    star <= answers.rating ? 'text-[#e8b94e]' : 'text-[#252a3d]'
+                  className={`text-3xl transition-colors ${
+                    star <= answers.rating ? 'text-[#ff9500]' : 'text-[#d2d2d7]'
                   }`}
                 >
                   {star <= answers.rating ? '★' : '☆'}
@@ -255,23 +215,22 @@ export default function ReportPage() {
           </motion.div>
         )}
 
-        {/* Submit */}
         {!result?.success && (
           <>
             <button
               onClick={handleSubmit}
               disabled={!canSubmit || loading}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[#e8b94e]/30 transition-all"
+              className="w-full py-3.5 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[16px] font-medium flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed transition-colors"
             >
               {loading ? (
-                <Loader2 size={20} className="animate-spin" />
+                <Loader2 size={18} className="animate-spin" />
               ) : (
-                <>Сдать отчёт <CheckCircle size={18} /></>
+                <>Сдать отчёт <CheckCircle size={16} /></>
               )}
             </button>
 
             {result?.error && (
-              <div className="text-center mt-3 p-3 rounded-xl bg-[#ff5d8f]/10 border border-[#ff5d8f]/30 text-[#ff5d8f] text-sm">
+              <div className="text-center mt-3 p-3 rounded-xl bg-[#ff3b30]/10 border border-[#ff3b30]/20 text-[#ff3b30] text-[13px]">
                 {result.error}
               </div>
             )}

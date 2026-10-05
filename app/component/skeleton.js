@@ -1,21 +1,16 @@
+const SkeletonGrid = () => (
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-5">
+    {[...Array(10)].map((_, i) => (
+      <div key={i} className="bg-white border border-black/8 rounded-2xl overflow-hidden">
+        <div className="aspect-[2/3] bg-[#f5f5f7] animate-pulse" />
+        <div className="p-4 space-y-2">
+          <div className="bg-[#f5f5f7] h-4 w-3/4 rounded animate-pulse" />
+          <div className="bg-[#f5f5f7] h-3 w-1/2 rounded animate-pulse" />
+          <div className="bg-[#f5f5f7] h-4 w-14 rounded animate-pulse" />
+        </div>
+      </div>
+    ))}
+  </div>
+)
 
-
-const SkeletonGrid = () => {
-	return(
-		<div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 mt-15">
-			{[...Array(8)].map((_, i) => (
-				<div key={i} className="bg-[#0d1a2e] rounded-2xl overflow-hidden border border-[#162236]">
-					<div className="h-56 bg-[#162236] animate-pulse"/>
-          <div className="p-4 flex flex-col gap-3">
-            <div className="bg-[#162236] h-5 w-3/4 rounded-lg animate-pulse"/>
-            <div className="bg-[#162236] h-4 w-1/2 rounded-lg animate-pulse"/>
-            <div className="bg-[#162236] h-4 w-1/3 rounded-lg animate-pulse"/>
-          </div>	
-
-				</div>
-					
-			))}
-		</div>
-	)
-}
 export default SkeletonGrid

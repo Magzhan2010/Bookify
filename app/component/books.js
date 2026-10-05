@@ -2,27 +2,16 @@
 
 import { useRouter } from "next/navigation"
 import { motion } from 'framer-motion'
-import { BookOpen, CheckCircle, Bookmark, Plus } from 'lucide-react'
+import { BookOpen, CheckCircle } from 'lucide-react'
 
 const containerVariants = {
   hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.06,
-      delayChildren: 0.05
-    }
-  }
+  show: { opacity: 1, transition: { staggerChildren: 0.04, delayChildren: 0.05 } }
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  show: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.4, ease: [0.23, 1, 0.32, 1] }
-  },
-  exit: { opacity: 0, scale: 0.9, transition: { duration: 0.2 } }
+  hidden: { opacity: 0, y: 16 },
+  show: { opacity: 1, y: 0, transition: { duration: 0.35, ease: [0.23, 1, 0.32, 1] } }
 }
 
 const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
@@ -47,56 +36,52 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
             key={book.id}
             layout
             variants={cardVariants}
-            whileHover={{ y: -6, transition: { duration: 0.2 } }}
+            whileHover={{ y: -4, transition: { duration: 0.18 } }}
             whileTap={{ scale: 0.98 }}
-            className="group relative bg-[#11141f] rounded-2xl overflow-hidden cursor-pointer border border-white/5 hover:border-[#e8b94e]/30 transition-all"
+            className="group bg-white border border-black/8 rounded-2xl overflow-hidden cursor-pointer hover:shadow-[0_8px_24px_rgba(0,0,0,0.08)] hover:border-black/12 transition-all"
             onClick={() => router.push(`/books/${book.id}`)}
           >
-            {/* Status badge */}
-            {(isFinished || isReading) && (
-              <div className={`absolute top-2 left-2 z-10 px-2 py-1 rounded-full text-[10px] font-bold flex items-center gap-1 backdrop-blur-sm ${
-                isFinished
-                  ? 'bg-[#60a5fa]/90 text-white'
-                  : 'bg-[#4ecdc4]/90 text-[#06070d]'
-              }`}>
-                {isFinished ? <><CheckCircle size={10} /> Прочитано</> : <><BookOpen size={10} /> Читаю</>}
-              </div>
-            )}
+            <div className="absolute z-10 top-2 left-2 flex flex-col items-start gap-1">
+              {isFinished && (
+                <span className="px-2 py-0.5 rounded-full bg-[#34c759]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
+                  <CheckCircle size={10} /> Прочитано
+                </span>
+              )}
+              {isReading && (
+                <span className="px-2 py-0.5 rounded-full bg-[#1a56db]/90 backdrop-blur-sm text-white text-[10px] font-semibold flex items-center gap-1">
+                  <BookOpen size={10} /> Читаю
+                </span>
+              )}
+              {unavailable && !isReading && (
+                <span className="px-2 py-0.5 rounded-full bg-black/80 backdrop-blur-sm text-white text-[10px] font-semibold">
+                  На руках
+                </span>
+              )}
+            </div>
 
-            {/* Unavailable */}
-            {unavailable && !isReading && (
-              <div className="absolute top-2 right-2 z-10 px-2 py-1 rounded-full bg-black/80 backdrop-blur-sm text-[10px] text-white font-bold">
-                На руках
-              </div>
-            )}
-
-            {/* Cover */}
-            <div className="relative aspect-[2/3] bg-gradient-to-br from-[#1a1f30] to-[#0a0c17] overflow-hidden">
+            <div className="relative aspect-[2/3] bg-[#f5f5f7] overflow-hidden">
               {book.cover_url ? (
                 <img
                   src={book.cover_url}
                   alt={book.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                  className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                   loading="lazy"
                 />
               ) : (
                 <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen size={32} className="text-[#5a6383]" />
+                  <BookOpen size={32} className="text-[#86868b]" />
                 </div>
               )}
-              {/* Bottom shadow gradient for legibility */}
-              <div className="absolute inset-x-0 bottom-0 h-20 bg-gradient-to-t from-black/60 to-transparent pointer-events-none" />
             </div>
 
-            {/* Content */}
             <div className="p-3 sm:p-4">
-              <h3 className="font-bold text-sm sm:text-base leading-tight line-clamp-2 mb-1 group-hover:text-[#e8b94e] transition-colors">
+              <h3 className="font-semibold text-[14px] sm:text-[15px] leading-tight line-clamp-2 mb-1 group-hover:text-[#1a56db] transition-colors text-[#1d1d1f]">
                 {book.title}
               </h3>
-              <p className="text-xs text-[#94a3b8] line-clamp-1 mb-2">{book.author}</p>
+              <p className="text-[12px] text-[#86868b] line-clamp-1 mb-2">{book.author}</p>
 
               {book.genre && (
-                <span className="inline-block px-2 py-0.5 rounded-md bg-white/5 text-[10px] font-bold text-[#e8b94e] uppercase tracking-wider">
+                <span className="inline-block px-2 py-0.5 rounded-md bg-[#f5f5f7] text-[10px] font-medium text-[#1a56db]">
                   {book.genre}
                 </span>
               )}

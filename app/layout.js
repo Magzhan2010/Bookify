@@ -1,24 +1,12 @@
-import { Fraunces, Montserrat, Poppins } from "next/font/google";
+import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 
-const fraunces = Fraunces({
-  variable: "--font-display",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "900"],
-  style: ["normal"],
-});
-
-const montserrat = Montserrat({
-  variable: "--font-montserrat",
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800", "900"],
-});
-
-const poppins = Poppins({
-  variable: "--font-poppins",
-  subsets: ["latin"],
-  weight: ["300", "400", "500", "600", "700"],
+const inter = Inter({
+  variable: "--font-inter",
+  subsets: ["latin", "cyrillic"],
+  weight: ["300", "400", "500", "600", "700", "800"],
+  display: "swap"
 });
 
 export const metadata = {
@@ -35,22 +23,22 @@ export default function RootLayout({ children }) {
   return (
     <html
       lang="ru"
-      className={`${fraunces.variable} ${montserrat.variable} ${poppins.variable}`}
+      className={inter.variable}
       suppressHydrationWarning
     >
-      <body className="min-h-screen flex flex-col antialiased">
+      <body className="min-h-screen flex flex-col bg-white text-[#1d1d1f] antialiased">
         {children}
         <Toaster
           position="top-center"
-          richColors
           closeButton
-          theme="dark"
           toastOptions={{
             style: {
-              background: '#11141f',
-              border: '1px solid rgba(232, 185, 78, 0.2)',
+              background: '#1d1d1f',
+              border: 'none',
               color: '#fff',
-              fontFamily: 'var(--font-poppins)',
+              borderRadius: 14,
+              fontFamily: 'var(--font-inter)',
+              boxShadow: '0 10px 40px rgba(0,0,0,0.15)'
             }
           }}
         />
