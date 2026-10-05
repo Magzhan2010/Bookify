@@ -34,7 +34,12 @@ const Register = () => {
         toast.success('Аккаунт создан')
         setTimeout(() => router.push('/login'), 800)
       } else {
-        toast.error(data.error || 'Не удалось зарегистрироваться')
+        toast.error(data.error || 'Не удалось зарегистрироваться', {
+          duration: 6000
+        })
+        if (data.hint || data.error?.includes('БД') || data.error?.includes('/setup')) {
+          setTimeout(() => router.push('/setup'), 1500)
+        }
       }
     } catch (err) {
       toast.error('Ошибка сети')

@@ -2,184 +2,139 @@
 
 Платформа библиотеки Divergents Leadership School. Вместо бумажных журналов и Google Sheets — красивая, анимированная система выдачи книг с полной статистикой.
 
-![Stack](https://img.shields.io/badge/Next.js-15-black)
-![DB](https://img.shields.io/badge/PostgreSQL-Neon-blue)
-![Stack](https://img.shields.io/badge/TailwindCSS-v4-38bdf8)
-![Stack](https://img.shields.io/badge/Framer_Motion-11-ff69b4)
-
 ---
 
-## 🎯 Что внутри
+## ⚡ Быстрый старт
 
-### Для учеников
-- 📚 **Каталог 250+ книг** с фильтром по жанру, мгновенным поиском, бесконечным скроллом
-- 🔖 **Бронирование в 1 клик** — книга у тебя на 14 дней
-- ✍️ **Отчёт о прочитанном** — 5 вопросов для глубокого усвоения
-- 📊 **Личный профиль** — статистика, цель на год, графики по месяцам и жанрам
-- ❤️ **Избранное** — сохраняй книги, которые хочешь прочитать
-- 💬 **Комментарии** — делись мнением с подписчиками
+### 1. Установи зависимости
+```bash
+npm install --legacy-peer-deps
+```
 
-### Для библиотекаря
-- 🎫 **Выдать книгу** — поиск ученика → выбор книги → подтверждение (30 сек)
-- 📥 **Принять возврат** — список активных выдач → 1 клик
-- 🔍 **"У кого сейчас книга?"** — мгновенный поиск по названию или ученику
-- 👥 **Управление учениками** — CRUD, фильтры по классам, статистика по каждому
-- 📈 **Аналитика** — топ читатели, должники, графики активности, распределение по жанрам
-- 📜 **История операций** — полный audit log с фильтрами по датам/ученикам/книгам
-- 🔄 **Импорт из Google Sheets** — синхронизация каталога в 1 клик
+### 2. Создай `.env.local`
+```env
+DATABASE_URL=postgresql://user:password@host/db?sslmode=require
+JWT_SECRET=любая-длинная-строка
+```
+> 💡 **Нет Postgres?** Зарегистрируйся бесплатно на [neon.tech](https://neon.tech) и создай БД. Скопируй Connection String.
 
-### Для админа
-- Все права библиотекаря
-- ➕ **Добавление книг** через форму или импорт из Google Sheets
-- 📑 **Управление отчётами** — одобрять/отклонять работы учеников
+### 3. Примени схему + добавь демо-данные
+```bash
+node scripts/setup-db.js
+```
+Это создаст таблицы + добавит:
+- 👤 8 пользователей (admin / librarian / teacher / 5 студентов)
+- 📚 15 книг разных жанров
 
----
-
-## 🛠 Технологии
-
-- **Frontend:** Next.js 15 (App Router), React 19, Tailwind CSS v4
-- **Анимации:** Framer Motion 11, кастомные keyframes
-- **Графики:** Recharts
-- **Backend:** Next.js API Routes (serverless)
-- **БД:** PostgreSQL (Neon)
-- **Auth:** JWT + bcryptjs
-- **Иконки:** Lucide React
-- **Тосты:** Sonner
-- **Интеграция:** Google Sheets API (googleapis)
-
----
-
-## 🚀 Запуск
-
-1. Установи зависимости:
-   ```bash
-   npm install --legacy-peer-deps
-   ```
-
-2. Скопируй `.env.example` в `.env.local` и заполни:
-   - `DATABASE_URL` — connection string Postgres
-   - `JWT_SECRET` — случайная строка для токенов
-   - `GOOGLE_SHEETS_ID` — ID таблицы (для импорта книг)
-   - `GOOGLE_SERVICE_ACCOUNT_EMAIL`, `GOOGLE_PRIVATE_KEY` — для Google Sheets API
-
-3. Примени схему БД (`db/schema.sql`) к своей Postgres-базе.
-
-4. Запусти:
-   ```bash
-   npm run dev
-   ```
+### 4. Запусти
+```bash
+npm run dev
+```
 
 Открой http://localhost:3000
 
----
+### 5. Готовые аккаунты
+| Email | Пароль | Роль |
+|---|---|---|
+| admin@dls.school.com | admin123 | admin |
+| aigerim@librarian.school.com | library123 | librarian (библиотекарь) |
+| yerzhan@teacher.school.com | teacher123 | teacher |
+| aidana@student.school.com | student123 | student (10-А) |
 
-## 🔐 Роли пользователей
-
-Роль определяется по email-паттерну при регистрации:
-
-| Email содержит              | Роль          |
-|----------------------------|---------------|
-| `@admin.school`            | admin         |
-| `@librarian.school` или `@lib.school` | librarian     |
-| `@teacher.school`           | teacher       |
-| всё остальное              | student       |
+> Авторизация определяется по email: `@admin.school`, `@librarian.school`/`@lib.school`, `@teacher.school` — иначе student.
 
 ---
 
-## 🔄 Импорт книг из Google Sheets
+## 🔄 Импорт из Google Sheets
 
 Подготовь таблицу с такой структурой (лист `books`):
 
-| title | author | genre | year | description | cover_url | file_url | total_copies |
-|-------|--------|-------|------|-------------|-----------|----------|--------------|
-| Мастер и Маргарита | Булгаков | Классика | 1967 | Философский роман... | https://... | https://... | 2 |
+| A: title | B: author | C: genre | D: year | E: description | F: cover_url | G: file_url | H: total_copies |
+|---|---|---|---|---|---|---|---|
+| Мастер и Маргарита | Булгаков | Классика | 1967 | Философский роман... | https:// | https:// | 2 |
 
-1. Зайди в Google Cloud Console → создай Service Account
-2. Дай ему доступ к таблице (email как Editor)
-3. Скачай JSON-ключ
-4. Вставь `client_email` в `GOOGLE_SERVICE_ACCOUNT_EMAIL`
-5. Вставь `private_key` в `GOOGLE_PRIVATE_KEY` (с переносами `\n`)
-6. В навбаре → Библиотека → Импорт из Sheets → жми "Синхронизировать"
+1. Открой [console.cloud.google.com](https://console.cloud.google.com/)
+2. Создай проект → Service Account → скачай ключ
+3. Дай доступ к таблице (email как Editor)
+4. Заполни в `.env.local`:
+   ```env
+   GOOGLE_SHEETS_ID=1AbCdEf...
+   GOOGLE_SERVICE_ACCOUNT_EMAIL=xxx@project.iam.gserviceaccount.com
+   GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
+   ```
+5. Зайди как librarian → `http://localhost:3000/librarian/sync` → жми «Синхронизировать»
 
 ---
 
-## 📁 Структура проекта
+## 📁 Структура
 
 ```
 app/
-├── page.js                       # Лендинг
-├── login/, register/             # Авторизация
-├── library/                      # Каталог (ученик)
-├── books/[id]/                   # Карточка книги + комментарии + взять
-├── profile/                      # Профиль ученика + статистика + графики
-├── report/[borrowId]/            # Сдача отчёта о прочитанном
-├── librarian/                    # Панель библиотекаря
-│   ├── page.jsx                  # Дашборд (аналитика + недавние + должники)
-│   ├── issue/                    # Выдать книгу (3-шаговый wizard)
-│   ├── returns/                  # Принять возврат (список + 1 клик)
-│   ├── lookup/                   # Поиск "у кого книга"
-│   ├── students/                 # Управление учениками
-│   ├── history/                  # История операций (audit log)
-│   ├── analytics/                # Полная аналитика + графики
-│   └── sync/                     # Синхронизация с Google Sheets
-├── admin/                        # Панель админа
-│   ├── page.jsx                  # Управление книгами
-│   └── dashboard/                # Проверка отчётов учеников
-├── donate/                       # Страница доната (Kaspi)
-└── api/                          # Backend (Next.js API Routes)
-    ├── auth/                     # Login + Register
-    ├── books/                    # CRUD + search + borrow + return
-    ├── librarian/                # Issue + return + lookup + history + analytics + students + sync
-    ├── reports/                  # POST (ученик) + PATCH (одобрение)
-    ├── profile/                  # GET профиль + POST цель чтения
-    ├── comments/                 # GET + POST + PATCH (pin)
-    └── favorites/, user/tracker/
+├── page.js                  # Лендинг
+├── login/, register/        # Авторизация
+├── library/                 # Каталог (ученик)
+├── books/[id]/              # Карточка книги + комментарии
+├── profile/                  # Профиль + графики
+├── report/[borrowId]/       # Сдача отчёта
+├── librarian/               # Панель библиотекаря
+│   ├── page.jsx             # Аналитика + KPI
+│   ├── issue/               # Выдать книгу (wizard)
+│   ├── returns/             # Принять возврат
+│   ├── lookup/              # Поиск "у кого книга"
+│   ├── students/            # Управление учениками
+│   ├── history/             # История операций
+│   ├── analytics/           # Графики
+│   └── sync/                # Google Sheets sync
+├── admin/                   # Админ-панель
+│   ├── page.jsx             # CRUD книг
+│   └── dashboard/           # Проверка отчётов
+└── api/                     # Backend
+    ├── auth/                # Login + Register
+    ├── books/               # CRUD + borrow/return
+    ├── librarian/           # Issue + return + lookup + history + analytics + students + sync-sheets
+    ├── reports/             # POST (ученик) + PATCH (одобрение)
+    ├── profile/             # Профиль + goal
+    └── comments/, favorites/, user/tracker/
 
 lib/
-├── db.js                         # Подключение к Postgres
-├── auth.js                       # JWT helpers + role detection
-└── google-sheets.js              # Импорт книг из Sheets
+├── db.js                    # Postgres pool
+├── auth.js                  # JWT helpers + role detection
+└── google-sheets.js         # Google Sheets API
 
-db/
-└── schema.sql                    # Схема БД (применить к Postgres)
-
-.env.example                      # Шаблон переменных окружения
+db/schema.sql                 # Схема БД
+scripts/setup-db.js           # Скрипт настройки
 ```
 
 ---
 
-## 📊 Схема базы данных
+## 🆘 Troubleshooting
 
-**Основные таблицы:**
-- `users` — ученики, библиотекари, учителя, админы
-- `books` — каталог (с total_copies и available_copies для нескольких экземпляров)
-- `borrows` — каждый заём (active / submitted / returned / approved / overdue / lost)
-- `reports` — отчёты о прочитанном
-- `comments` — комментарии к книгам
-- `favorites` — избранное
-- `book_tracker` — личный трекер чтения
-- `reading_goals` — цель на год
+**Не могу зарегистрироваться**
+→ Скорее всего не применена схема БД. Запусти `node scripts/setup-db.js`
 
-**Views:**
-- `v_active_loans` — все активные выдачи с данными ученика и книги
-- `v_student_stats` — статистика по каждому ученику
+**Ошибка `connection refused`**
+→ Проверь DATABASE_URL в `.env.local`. Neon DB может быть приостановлен — зайди на [neon.tech](https://neon.tech) и разбуди его.
 
-Полная схема в `db/schema.sql`.
+**Google Sheets не подключается**
+→ Убедись что Service Account добавлен как Editor таблицы. PRIVATE_KEY должен быть в кавычках с `\n`.
+
+**Сборка падает**
+→ Используй `npm install --legacy-peer-deps` (конфликт recharts и React 19).
 
 ---
 
-## ✨ Дизайн-фишки
+## 🛠 Стек
 
-- 🎨 Тёплая библиотечная палитра: золотой акцент, бирюза, коралл
-- 🌊 Mesh-gradient blur-фоны с анимацией
-- 🎭 Framer Motion: появления stagger, layout-анимации карточек, spring-кнопки
-- 🔥 Recharts: красивые графики активности, жанров, прогресса
-- 📱 Mobile-first: sidebar в drawer на мобильных
-- 🦴 Skeleton-loaders, плавные переходы между страницами
-- ⚡ Без TL;DR — премиальный feel через детали
+- Next.js 15 (App Router) + React 19
+- Tailwind CSS v4 — Apple-style дизайн (Inter / SF Pro stack)
+- Framer Motion — анимации
+- Recharts — графики
+- PostgreSQL (Neon) — БД
+- JWT + bcryptjs — авторизация
+- googleapis — Google Sheets sync
+- Sonner — тосты
+- Lucide — иконки
 
 ---
 
-## 📜 Лицензия
-
-Proprietary — для Divergents Leadership School
+📐 Лицензия: Proprietary — для Divergents Leadership School

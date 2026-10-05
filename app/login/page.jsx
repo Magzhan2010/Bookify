@@ -37,7 +37,10 @@ const Login = () => {
           else router.push('/library')
         }, 400)
       } else {
-        toast.error(data.error || 'Не удалось войти')
+        toast.error(data.error || 'Не удалось войти', { duration: 6000 })
+        if (data.hint || data.error?.includes('БД') || data.error?.includes('/setup')) {
+          setTimeout(() => router.push('/setup'), 1500)
+        }
       }
     } catch (err) {
       toast.error('Ошибка сети')

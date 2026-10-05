@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import pool from '../../../../lib/db'
+import pool, { ensureSchema } from '../../../../lib/db'
 import bcrypt from 'bcryptjs'
 import { detectRoleFromEmail } from '../../../../lib/auth'
 
@@ -20,6 +20,8 @@ export async function POST(req) {
   }
 
   try {
+    await ensureSchema()
+
     const exists = await pool.query(
       'SELECT id FROM users WHERE LOWER(email) = LOWER($1)',
       [email]
@@ -43,6 +45,21 @@ export async function POST(req) {
     return NextResponse.json({ success: true, role })
   } catch (err) {
     console.error('Register error:', err)
+
+    if (err.message?.includes('ECONNREFUSED') || err.message?.includes('connect')) {
+      return NextResponse.json({
+        error: 'БД недоступна. Зайди на /setup или добавь его в .env.local',
+        hint: 'DATABASE_URL не задан или БД не запущена'
+      }, { status: 500 })
+    }
+
+    if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
+      return NextResponse.json({
+        error: 'Таблицы в БД не созданы. Зайди на /setup чтобы создать',
+        hint: 'Запусти scripts/setup-db.js'
+      }, { status: 500 })
+    }
+
     return NextResponse.json({ error: 'Ошибка регистрации' }, { status: 500 })
   }
 }
