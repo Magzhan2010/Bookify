@@ -161,11 +161,16 @@ async function run() {
   if (needsMigration) {
     console.log('⚠️  Обнаружена старая структура таблиц. Пересоздаю...')
     await client.query(`
-      DROP TABLE IF EXISTS book_tracker, reading_goals, favorites, comment, borrows, reports CASCADE;
-      DROP TABLE IF EXISTS books, users CASCADE;
       DROP VIEW IF EXISTS v_active_loans, v_student_stats CASCADE;
+      DROP TABLE IF EXISTS book_tracker, reading_goals, favorites, borrows, book_requests CASCADE;
+      DROP TABLE IF EXISTS comment, reports, books, users CASCADE;
     `)
     console.log('  ✓ Старые таблицы удалены')
+  } else {
+    // На случай если views устарели, дропаем только их (CREATE OR REPLACE не работает при изменении колонок)
+    await client.query(`
+      DROP VIEW IF EXISTS v_active_loans, v_student_stats CASCADE;
+    `)
   }
 
   // Читаем и парсим schema.sql

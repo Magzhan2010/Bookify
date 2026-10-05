@@ -5,7 +5,7 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Search, X, Heart, LogOut, BookMarked, Shield, BarChart3 } from 'lucide-react'
+import { Search, X, LogOut, BookMarked, Shield, BarChart3 } from 'lucide-react'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
@@ -118,19 +118,12 @@ const Navbar = () => {
           )}
           {user?.role === 'teacher' && (
             <NavLink
-              href="/admin/dashboard"
+              href="/teacher"
               icon={<BarChart3 size={15} />}
-              label="Отчёты"
-              active={pathname.startsWith('/admin/dashboard')}
+              label="Аналитика"
+              active={pathname.startsWith('/teacher')}
             />
           )}
-
-          <Link
-            href="/donate"
-            className="px-3 py-2 text-[14px] font-medium text-[#6e6e73] hover:text-[#1d1d1f] transition-colors flex items-center gap-1.5"
-          >
-            <Heart size={13} className="text-[#ff2d55]" /> Поддержать
-          </Link>
 
           {user ? (
             <div className="flex items-center gap-1 ml-2">
@@ -215,9 +208,8 @@ const Navbar = () => {
               <MobileLink href="/admin" icon={<Shield size={18} />} router={router} label="Админ-панель" />
             )}
             {user?.role === 'teacher' && (
-              <MobileLink href="/admin/dashboard" icon={<BarChart3 size={18} />} router={router} label="Отчёты" />
+              <MobileLink href="/teacher" icon={<BarChart3 size={18} />} router={router} label="Аналитика" />
             )}
-            <MobileLink href="/donate" icon={<Heart size={18} />} router={router} label="Поддержать проект" />
 
             {user && (
               <button

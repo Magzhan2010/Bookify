@@ -5,8 +5,8 @@ import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
-  BookOpen, Heart, CheckCircle, Clock, Star, Target,
-  Trophy, Library, Plus, X, ChevronRight, Sparkles
+  BookOpen, Heart, CheckCircle, Clock, Target,
+  Trophy, Library, X, Sparkles, BellOff
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -14,18 +14,19 @@ import {
 } from 'recharts'
 
 const TABS = [
-  { key: 'reading', label: 'Читаю', icon: BookOpen },
+  { key: 'reading', label: 'На руках', icon: BookOpen },
+  { key: 'requests', label: 'Заявки', icon: Library },
   { key: 'finished', label: 'Прочитано', icon: CheckCircle },
   { key: 'favorites', label: 'Избранное', icon: Heart }
 ]
 
-const COLORS = ['#1a56db', '#34c759', '#ff9500', '#ff2d55', '#af52de', '#5856d6', '#ff3b30', '#5ac8fa']
+const COLORS = ['#1a56db', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5856d6', '#ff2d55', '#5ac8fa']
 
 export default function ProfilePage() {
   const router = useRouter()
   const [userData, setUserData] = useState(null)
   const [active, setActive] = useState([])
-  const [submitted, setSubmitted] = useState([])
+  const [requests, setRequests] = useState([])
   const [finished, setFinished] = useState([])
   const [favorites, setFavorites] = useState([])
   const [stats, setStats] = useState(null)
@@ -40,9 +41,10 @@ export default function ProfilePage() {
     if (!t) return router.push('/login')
 
     try {
-      const [profile, fav] = await Promise.all([
+      const [profile, fav, req] = await Promise.all([
         fetch('/api/profile', { headers: { Authorization: `Bearer ${t}` } }),
-        fetch('/api/favorites', { headers: { Authorization: `Bearer ${t}` } })
+        fetch('/api/favorites', { headers: { Authorization: `Bearer ${t}` } }),
+        fetch('/api/books/request', { headers: { Authorization: `Bearer ${t}` } })
       ])
 
       if (!profile.ok) throw new Error('Не удалось загрузить профиль')
@@ -50,7 +52,6 @@ export default function ProfilePage() {
       const p = await profile.json()
       setUserData(p.user)
       setActive(p.active || [])
-      setSubmitted(p.submitted || [])
       setFinished(p.finished || [])
       setStats(p.stats)
       setReadingGoal(p.reading_goal || 12)
@@ -58,6 +59,9 @@ export default function ProfilePage() {
       if (fav.ok) {
         const f = await fav.json()
         setFavorites(Array.isArray(f) ? f : (f.favorites || []))
+      }
+      if (req.ok) {
+        setRequests(await req.json())
       }
     } catch (err) {
       console.error(err)
@@ -68,6 +72,21 @@ export default function ProfilePage() {
   }
 
   useEffect(() => { fetchAll() }, [])
+
+  const cancelRequest = async (requestId) => {
+    const t = localStorage.getItem('token')
+    try {
+      await fetch('/api/books/request', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ requestId })
+      })
+      setRequests(prev => prev.filter(r => r.id !== requestId))
+      toast.success('Заявка отменена')
+    } catch (err) {
+      toast.error('Ошибка')
+    }
+  }
 
   const updateGoal = async () => {
     const t = localStorage.getItem('token')
@@ -124,7 +143,6 @@ export default function ProfilePage() {
 
       <main className="max-w-[1100px] mx-auto px-4 sm:px-6 pt-8 pb-20">
 
-        {/* Header card */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -155,14 +173,13 @@ export default function ProfilePage() {
               <div className="flex flex-wrap gap-2">
                 <Badge icon={Trophy} label={`${finishedCount} прочитано`} color="#1a56db" />
                 <Badge icon={Library} label={`${genresCount} жанров`} color="#34c759" />
-                <Badge icon={BookOpen} label={`${active.length} сейчас читаю`} color="#ff9500" />
+                <Badge icon={BookOpen} label={`${active.length} сейчас`} color="#ff9500" />
                 <Badge icon={Heart} label={`${favorites.length} в избранном`} color="#ff2d55" />
               </div>
             </div>
           </div>
         </motion.div>
 
-        {/* Goal */}
         <motion.div
           initial={{ opacity: 0, y: 12 }}
           animate={{ opacity: 1, y: 0 }}
@@ -211,7 +228,6 @@ export default function ProfilePage() {
           )}
         </motion.div>
 
-        {/* Charts */}
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
           <motion.div
             initial={{ opacity: 0, y: 12 }}
@@ -276,19 +292,19 @@ export default function ProfilePage() {
           </motion.div>
         </div>
 
-        {/* Tabs */}
-        <div className="flex gap-1 mb-5 p-1 bg-[#f5f5f7] rounded-xl w-fit">
+        <div className="flex gap-1 mb-5 p-1 bg-[#f5f5f7] rounded-xl w-fit overflow-x-auto">
           {TABS.map(tab => {
             const Icon = tab.icon
             const count =
               tab.key === 'reading' ? active.length :
+              tab.key === 'requests' ? requests.length :
               tab.key === 'finished' ? finished.length :
               favorites.length
             return (
               <button
                 key={tab.key}
                 onClick={() => setActiveTab(tab.key)}
-                className={`px-4 py-2 rounded-lg text-[13px] font-medium flex items-center gap-2 transition-all ${
+                className={`px-4 py-2 rounded-lg text-[13px] font-medium flex items-center gap-2 transition-all whitespace-nowrap ${
                   activeTab === tab.key
                     ? 'bg-white text-[#1d1d1f] shadow-[0_1px_3px_rgba(0,0,0,0.06)]'
                     : 'text-[#6e6e73] hover:text-[#1d1d1f]'
@@ -296,7 +312,7 @@ export default function ProfilePage() {
               >
                 <Icon size={14} />
                 {tab.label}
-                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${activeTab === tab.key ? 'bg-[#f5f5f7] text-[#6e6e73]' : 'bg-white/0 text-[#86868b]'}`}>
+                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${activeTab === tab.key ? 'bg-[#f5f5f7] text-[#6e6e73]' : 'text-[#86868b]'}`}>
                   {count}
                 </span>
               </button>
@@ -314,20 +330,49 @@ export default function ProfilePage() {
             <BookGrid
               books={active}
               emptyText="Сейчас ничего не читаешь"
-              action={(book) => (
-                <button
-                  onClick={() => router.push(`/report/${book.borrow_id}`)}
-                  className="w-full px-3 py-2 rounded-xl bg-[#1a56db] text-white text-[12px] font-medium hover:bg-[#1849b8] transition-colors"
-                >
-                  Сдать отчёт
-                </button>
-              )}
               extra={(book) => book.due_date && (
                 <div className="text-[11px] text-[#86868b] flex items-center gap-1">
                   <Clock size={10} /> до {new Date(book.due_date).toLocaleDateString('ru-RU')}
                 </div>
               )}
             />
+          )}
+
+          {activeTab === 'requests' && (
+            requests.length === 0 ? (
+              <div className="text-center py-16 bg-white border border-dashed border-black/10 rounded-2xl">
+                <p className="text-[#86868b] text-[14px]">Нет активных заявок</p>
+              </div>
+            ) : (
+              <div className="space-y-2">
+                {requests.map(r => (
+                  <div key={r.id} className="flex items-center gap-4 p-4 bg-white border border-black/8 rounded-2xl">
+                    <div className="w-11 h-15 rounded-lg bg-[#f5f5f7] overflow-hidden shrink-0">
+                      {r.book_cover && <img src={r.book_cover} className="w-full h-full object-cover" />}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[14px] truncate text-[#1d1d1f]">{r.book_title}</div>
+                      <div className="text-[12px] text-[#86868b]">
+                        Статус:{' '}
+                        <span className={
+                          r.status === 'approved' ? 'text-[#34c759] font-semibold' : 'text-[#ff9500] font-semibold'
+                        }>
+                          {r.status === 'approved' ? 'Одобрено — можешь забрать' : 'Ждёт библиотекаря'}
+                        </span>
+                      </div>
+                    </div>
+                    {r.status === 'pending' && (
+                      <button
+                        onClick={() => cancelRequest(r.id)}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-black/10 text-[#6e6e73] hover:text-[#1d1d1f] text-[12px] font-medium transition-colors flex items-center gap-1"
+                      >
+                        <BellOff size={12} /> Отменить
+                      </button>
+                    )}
+                  </div>
+                ))}
+              </div>
+            )
           )}
 
           {activeTab === 'finished' && (
@@ -394,7 +439,7 @@ const Badge = ({ icon: Icon, label, color }) => (
   </span>
 )
 
-const BookGrid = ({ books, emptyText, action, extra, onRemove }) => {
+const BookGrid = ({ books, emptyText, extra, onRemove }) => {
   const router = useRouter()
 
   if (!books || books.length === 0) {
@@ -433,9 +478,13 @@ const BookGrid = ({ books, emptyText, action, extra, onRemove }) => {
           </div>
           <div className="p-3">
             <div className="font-semibold text-[13px] line-clamp-1 text-[#1d1d1f]">{book.title}</div>
-            <div className="text-[11px] text-[#86868b] line-clamp-1 mb-2">{book.author}</div>
+            <div className="text-[11px] text-[#86868b] line-clamp-1 mb-1">{book.author}</div>
             {extra && extra(book)}
-            {action && action(book)}
+            {book.rating && (
+              <div className="text-[11px] text-[#ff9500] mt-1">
+                {'★'.repeat(book.rating)}{'☆'.repeat(5 - book.rating)}
+              </div>
+            )}
           </div>
         </motion.div>
       ))}

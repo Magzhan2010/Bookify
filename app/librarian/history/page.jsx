@@ -30,10 +30,7 @@ export default function HistoryPage() {
   const statusBadge = (status) => {
     const map = {
       active: { label: 'Активна', bg: '#1a56db', color: '#fff' },
-      overdue: { label: 'Просрочка', bg: '#ff3b30', color: '#fff' },
-      submitted: { label: 'Отчёт сдан', bg: '#ff9500', color: '#fff' },
-      returned: { label: 'Возвращена', bg: '#e5e7eb', color: '#1d1d1f' },
-      approved: { label: 'Зачтено', bg: '#34c759', color: '#fff' }
+      returned: { label: 'Возвращена', bg: '#34c759', color: '#fff' }
     }
     return map[status] || { label: status, bg: '#e5e7eb', color: '#1d1d1f' }
   }
@@ -63,8 +60,6 @@ export default function HistoryPage() {
               <option value="">Любой</option>
               <option value="active">Активна</option>
               <option value="returned">Возвращена</option>
-              <option value="overdue">Просрочка</option>
-              <option value="submitted">Отчёт сдан</option>
             </select>
           </div>
         </div>

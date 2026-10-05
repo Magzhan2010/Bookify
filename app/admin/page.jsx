@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import {
-  Shield, Plus, Trash2, BookOpen, BarChart3, LogOut, Search,
+  Shield, Plus, Trash2, BookOpen, LogOut, Search,
   Loader2, RefreshCw
 } from 'lucide-react'
 
@@ -113,12 +113,6 @@ const Admin = () => {
               className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-[#1a56db]/10 text-[#1a56db] hover:bg-[#1a56db]/15 text-[13px] font-medium transition-colors"
             >
               <BookOpen size={13} /> Библиотека
-            </button>
-            <button
-              onClick={() => router.push('/admin/dashboard')}
-              className="hidden sm:flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-white border border-black/10 text-[#1d1d1f] hover:bg-[#f5f5f7] text-[13px] font-medium transition-colors"
-            >
-              <BarChart3 size={13} /> Отчёты
             </button>
             <button
               onClick={handleLogout}

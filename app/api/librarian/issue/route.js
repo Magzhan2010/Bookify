@@ -81,7 +81,7 @@ export async function POST(req) {
     // Проверяем нет ли уже этой книги у ученика
     const dup = await client.query(
       `SELECT id FROM borrows
-       WHERE user_id = $1 AND book_id = $2 AND status IN ('active','submitted','overdue')`,
+       WHERE user_id = $1 AND book_id = $2 AND status = 'active'`,
       [student.id, bookId]
     )
     if (dup.rows[0]) {

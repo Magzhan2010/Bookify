@@ -33,7 +33,7 @@ export async function POST(req) {
 
     // Лимит: максимум 3 книги одновременно
     const userLoans = await client.query(
-      "SELECT COUNT(*) as count FROM borrows WHERE user_id = $1 AND status IN ('active','overdue','submitted')",
+      "SELECT COUNT(*) as count FROM borrows WHERE user_id = $1 AND status = 'active'",
       [userId]
     )
     const count = parseInt(userLoans.rows[0].count)
@@ -58,7 +58,7 @@ export async function POST(req) {
 
     // Не дать взять одну книгу дважды
     const alreadyBorrowed = await client.query(
-      "SELECT id FROM borrows WHERE user_id = $1 AND book_id = $2 AND status IN ('active','overdue','submitted')",
+      "SELECT id FROM borrows WHERE user_id = $1 AND book_id = $2 AND status = 'active'",
       [userId, bookId]
     )
     if (alreadyBorrowed.rows[0]) {
@@ -86,7 +86,7 @@ export async function POST(req) {
       success: true,
       borrowId: result.rows[0].id,
       due_date: result.rows[0].due_date,
-      message: 'Книга у тебя. У тебя 14 дней на отчёт.'
+      message: 'Книга у тебя. Верни в библиотеку до ' + due_date.toLocaleDateString('ru-RU') + '.'
     })
   } catch (err) {
     await client.query('ROLLBACK')

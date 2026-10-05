@@ -6,11 +6,12 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, RefreshCw, LogOut, BookOpen
+  Users, History, BarChart3, RefreshCw, LogOut, BookOpen, Bell
 } from 'lucide-react'
 
 const navItems = [
   { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
+  { href: '/librarian/requests', label: 'Заявки учеников', icon: Bell },
   { href: '/librarian/issue', label: 'Выдать книгу', icon: BookMarked },
   { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
   { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
