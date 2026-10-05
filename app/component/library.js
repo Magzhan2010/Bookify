@@ -1,11 +1,13 @@
 'use client'
 
-import { useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation"
+import { useEffect, useState, useRef } from 'react'
+import { motion } from 'framer-motion'
+import { BookOpen, CheckCircle, Filter, Sparkles, Search } from 'lucide-react'
 
-import Navbar from "../component/NavBar";
-import { useEffect, useState, useRef } from "react";
-import Books from "../component/books";
-import SkeletonGrid from "../component/skeleton";
+import Navbar from "../component/NavBar"
+import Books from "../component/books"
+import SkeletonGrid from "../component/skeleton"
 
 const Library = () => {
   const router = useRouter()
@@ -26,89 +28,81 @@ const Library = () => {
   // Auth check
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token) { router.push('/login'); return }
-    try { JSON.parse(atob(token.split('.')[1])) }
-    catch (e) { localStorage.removeItem('token'); router.push('/') }
+    if (!token) {
+      router.push('/login')
+      return
+    }
+    try {
+      JSON.parse(atob(token.split('.')[1]))
+    } catch (e) {
+      localStorage.removeItem('token')
+      router.push('/')
+    }
   }, [router])
 
-  // Fetch books with deduplication
+  // Fetch books
   const fetchBooks = async (pageNum, isNewSearch = false) => {
     try {
       if (isNewSearch) setLoading(true)
-
-      const res = await fetch(`/api/books?page=${pageNum}&genre=${genreFromUrl}`)
+      const res = await fetch(`/api/books?page=${pageNum}&genre=${encodeURIComponent(genreFromUrl)}`)
       const data = await res.json()
 
-      const sanitized = data.map(book => ({
-        ...book,
-        genre: typeof book.genre === 'object' ? book.genre.genre : book.genre
-      }))
-
       if (isNewSearch) {
-        setBooks(sanitized)
+        setBooks(data)
       } else {
         setBooks(prev => {
           const existingIds = new Set(prev.map(b => b.id))
-          const newOnly = sanitized.filter(b => !existingIds.has(b.id))
+          const newOnly = data.filter(b => !existingIds.has(b.id))
           return [...prev, ...newOnly]
         })
       }
 
       if (data.length < 12) setHasMore(false)
-
     } catch (err) {
-      console.error("Fetch error:", err)
+      console.error(err)
     } finally {
       setLoading(false)
     }
   }
 
-  // Fetch total count
+  // Total count
   useEffect(() => {
-    const fetchTotalBooks = async () => {
-      const res = await fetch(`/api/books?countOnly=true&genre=${genreFromUrl}`)
-      const data = await res.json()
-      setTotalBooks(Number(data.total))
+    const fetchTotal = async () => {
+      try {
+        const res = await fetch(`/api/books?countOnly=true&genre=${encodeURIComponent(genreFromUrl)}`)
+        const data = await res.json()
+        setTotalBooks(parseInt(data.total) || 0)
+      } catch (err) { console.error(err) }
     }
-    fetchTotalBooks()
+    fetchTotal()
   }, [genreFromUrl])
 
-  // Fetch profile & genres
+  // Profile + genres
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token')
       if (!token) return
-
       try {
         const res = await fetch('/api/profile', {
-          headers: { "Authorization": `Bearer ${token}` }
+          headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
         setMyFinishedId((data.finished || []).map(b => Number(b.book_id)))
         setMyReadingId((data.active || []).map(b => Number(b.book_id)))
         setMyShelf(data.finished?.length || 0)
-      } catch (err) {
-        console.error(err)
-      }
+      } catch (err) { console.error(err) }
     }
 
     const fetchGenres = async () => {
-    try {
-      const res = await fetch('/api/books?allGenres=true'); // Запрос уходит
-      const data = await res.json();
-      
-      // Раньше тут приходили 12 книг, а теперь придет массив всех жанров из БД!
-      const raw = data.map(g => {
-        if (typeof g === 'object' && g !== null) return g.genre;
-        return g;
-      });
-
-      const uniqueGenres = [...new Set(raw.filter(Boolean))];
-      setAllGenres(["Все", ...uniqueGenres]); // Сразу все 5 жанров появятся
-    } catch (err) {
-      console.error("Genre fetch failed:", err);
+      try {
+        const res = await fetch('/api/books?allGenres=true')
+        const data = await res.json()
+        const raw = data.map(g => typeof g === 'object' ? g.genre : g)
+        const uniqueGenres = [...new Set(raw.filter(Boolean))]
+        setAllGenres(['Все', ...uniqueGenres])
+      } catch (err) { console.error(err) }
     }
-  };
+
     fetchProfile()
     fetchGenres()
   }, [])
@@ -121,10 +115,9 @@ const Library = () => {
     fetchBooks(1, true)
   }, [genreFromUrl])
 
-  // Infinite scroll observer
+  // Infinite scroll
   useEffect(() => {
     if (loading || !hasMore) return
-
     const currentRef = observerRef.current
     const observer = new IntersectionObserver(
       (entries) => {
@@ -134,73 +127,94 @@ const Library = () => {
       },
       { threshold: 1.0 }
     )
-
     if (currentRef) observer.observe(currentRef)
     return () => {
       if (currentRef) observer.unobserve(currentRef)
     }
   }, [loading, hasMore])
 
-  // Fetch next page
   useEffect(() => {
     if (page > 1) fetchBooks(page)
   }, [page])
 
   return (
-    <main className="min-h-screen  text-white pb-20">
+    <main className="min-h-screen text-white pb-20">
       <Navbar />
 
-      <div className="max-w-[1200px] mx-auto px-6 md:px-10">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-10">
 
         {/* Hero */}
-        <section className="pt-16 pb-12">
-          <h1 className="text-4xl md:text-6xl font-extrabold tracking-tight mb-4">
-            Библиотека <br />
-            <span className="bg-gradient-to-r from-[#3b82f6] to-[#60a5fa] bg-clip-text text-transparent">
-              Divergents School
-            </span>
-          </h1>
-          <p className="text-lg text-[#94a3b8] max-w-xl leading-relaxed">
-            Исследуй сотни книг, бронируй в один клик и развивайся вместе с нами.
-            Твой путь к знаниям начинается здесь.
-          </p>
+        <section className="pt-12 md:pt-16 pb-8 md:pb-10">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+          >
+            <div className="inline-flex items-center gap-2 mb-4 px-3 py-1 bg-[#e8b94e]/10 border border-[#e8b94e]/20 rounded-full text-[10px] font-bold text-[#e8b94e] uppercase tracking-widest">
+              <Sparkles size={10} /> {totalBooks} книг в каталоге
+            </div>
+            <h1 className="font-display text-4xl md:text-7xl font-black tracking-tighter leading-[0.95] mb-4">
+              Каталог <span className="text-gradient-gold">DLS</span>
+            </h1>
+            <p className="text-[#94a3b8] text-lg max-w-xl leading-relaxed">
+              Найди книгу, которая изменит твою жизнь. Бронируй в один клик, читай с удовольствием.
+            </p>
+          </motion.div>
         </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 mb-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3 sm:gap-4 mb-8">
           {[
-            { label: "Всего книг", value: totalBooks || 0, color: "from-white to-white/60" },
-            { label: "Прочитал", value: myShelf, color: "from-green-400 to-emerald-600" },
-          ].map((stat, i) => (
-            <div
-              key={i}
-              className="relative group overflow-hidden bg-[#0d1a2e]/40 border border-white/5 p-6 rounded-3xl backdrop-blur-sm"
-            >
-              <div className="absolute -right-4 -bottom-4 w-24 h-24 bg-blue-500/5 rounded-full blur-3xl group-hover:bg-blue-500/10 transition-all" />
-              <p className={`text-4xl font-black mb-1 bg-gradient-to-br ${stat.color} bg-clip-text text-transparent`}>
-                {stat.value}
-              </p>
-              <p className="text-sm font-medium text-[#4a6080] uppercase tracking-wider">{stat.label}</p>
-            </div>
-          ))}
+            { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: '#e8b94e' },
+            { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: '#4ecdc4' },
+            { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: '#60a5fa' }
+          ].map((stat, i) => {
+            const Icon = stat.icon
+            return (
+              <motion.div
+                key={i}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.1 }}
+                className="bg-[#11141f] border border-white/5 rounded-2xl p-4 sm:p-5 relative overflow-hidden group hover:border-[#e8b94e]/20 transition-all"
+              >
+                <div
+                  className="absolute -top-10 -right-10 w-32 h-32 rounded-full blur-3xl opacity-20 group-hover:opacity-30 transition-opacity"
+                  style={{ background: stat.color }}
+                />
+                <div
+                  className="w-10 h-10 rounded-xl flex items-center justify-center mb-3"
+                  style={{ background: `${stat.color}15`, color: stat.color }}
+                >
+                  <Icon size={18} />
+                </div>
+                <div className="text-3xl sm:text-4xl font-display font-black">{stat.value}</div>
+                <div className="text-xs uppercase tracking-wider text-[#5a6383] font-semibold mt-1">{stat.label}</div>
+              </motion.div>
+            )
+          })}
         </div>
 
         {/* Genre filter */}
-        <div className="mb-10">
-          <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold">Категории</h2>
-            <span className="text-sm text-[#4a6080]">{totalBooks} книг найдено</span>
+        <div className="mb-8">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-display font-bold text-lg flex items-center gap-2">
+              <Filter size={16} className="text-[#e8b94e]" /> Жанры
+            </h2>
+            <span className="text-sm text-[#5a6383]">
+              {genreFromUrl === 'Все' ? `${totalBooks} книг` : `${totalBooks} в жанре`}
+            </span>
           </div>
 
-          <div className="flex flex-wrap items-center gap-3 pb-4">
+          <div className="flex flex-wrap gap-2 pb-2">
             {allGenres.map(genre => (
               <button
                 key={genre}
-                onClick={() => router.push("/library?genre=" + genre)}
-                className={`whitespace-nowrap px-6 py-2.5 rounded-full text-sm font-semibold transition-all duration-300 border ${
+                onClick={() => router.push("/library?genre=" + encodeURIComponent(genre))}
+                className={`whitespace-nowrap px-4 py-2 rounded-xl text-sm font-bold transition-all duration-200 ${
                   genreFromUrl === genre
-                    ? "bg-blue-600 border-blue-500 shadow-lg shadow-blue-500/20 text-white"
-                    : "bg-[#0d1a2e] border-white/5 text-[#4a6080] hover:border-white/20 hover:text-white"
+                    ? 'bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] shadow-lg shadow-[#e8b94e]/20'
+                    : 'bg-white/5 text-[#94a3b8] hover:bg-white/10 hover:text-white border border-white/5'
                 }`}
               >
                 {genre}
@@ -209,13 +223,12 @@ const Library = () => {
           </div>
         </div>
 
-        {/* Books grid */}
+        {/* Books */}
         <div className="relative">
           {books.length === 0 && loading ? (
             <SkeletonGrid />
           ) : (
             <>
-             
               <Books
                 books={books}
                 myFinishedId={myFinishedId}
@@ -223,54 +236,30 @@ const Library = () => {
                 genreKey={genreFromUrl}
               />
 
-              {/* Sentinel for infinite scroll */}
               <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
                 {hasMore && (
-                  <div className="w-8 h-8 border-4 border-blue-500/30 border-t-blue-500 rounded-full animate-spin" />
+                  <div className="w-8 h-8 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
                 )}
               </div>
 
-              {/* End of list */}
               {!hasMore && books.length > 0 && (
-                <div>
-                  <div className="flex items-center justify-center gap-4 py-12">
-                    <div className="h-[1px] w-12 bg-gradient-to-r from-transparent to-[#4a6080]/30" />
-                    <p className="text-[#4a6080] text-sm font-medium tracking-widest uppercase">
-                      Вы достигли конца списка 📚
-                    </p>
-                    <div className="h-[1px] w-12 bg-gradient-to-l from-transparent to-[#4a6080]/30" />
-                  </div>
-
-                  <footer className="relative z-10 border-t border-[#162236] bg-[#0b111b]/20 py-8 backdrop-blur-sm">
-                    <div className="container mx-auto px-4 flex flex-col items-center gap-6">
-                      <div className="group relative">
-                        <div className="absolute -inset-2 rounded-full bg-[#4a6080]/10 blur-xl opacity-0 group-hover:opacity-100 transition-opacity" />
-                        <img
-                          src="/lb_logo.png"
-                          alt="dls-library logo"
-                          className="relative opacity-80 hover:scale-110 transition-all duration-300"
-                          width={55}
-                          height={55}
-                        />
-                      </div>
-
-                      <div className="text-center space-y-2">
-                        <p className="text-[#4a6080] text-sm tracking-tight">
-                          © 2026 <span className="text-[#6b85a8] font-semibold">Bookify</span>.
-                          <span className="opacity-70 ml-1">Divergents Leadership School.</span>
-                        </p>
-                        <p className="text-[10px] uppercase tracking-[0.2em] text-[#25334a] font-bold">
-                          Designed & Developed by
-                          <span className="ml-2 text-[#4a6080] hover:text-blue-400 transition-colors cursor-pointer border-b border-transparent hover:border-blue-400/30 pb-0.5">
-                            Magzhan
-                          </span>
-                        </p>
-                      </div>
-                    </div>
-                  </footer>
+                <div className="flex items-center justify-center gap-4 py-16">
+                  <div className="h-px w-12 bg-gradient-to-r from-transparent to-[#5a6383]/30" />
+                  <p className="text-[#5a6383] text-sm font-medium tracking-widest uppercase">
+                    Конец каталога 📚
+                  </p>
+                  <div className="h-px w-12 bg-gradient-to-l from-transparent to-[#5a6383]/30" />
                 </div>
               )}
             </>
+          )}
+
+          {!loading && books.length === 0 && (
+            <div className="text-center py-20 bg-[#11141f] border border-dashed border-white/10 rounded-2xl">
+              <Search size={32} className="text-[#5a6383] mx-auto mb-3" />
+              <p className="text-[#94a3b8] font-semibold mb-1">Книг не найдено</p>
+              <p className="text-sm text-[#5a6383]">Попробуй другой жанр</p>
+            </div>
           )}
         </div>
       </div>

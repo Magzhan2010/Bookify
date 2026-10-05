@@ -18,7 +18,7 @@ const TeacherDashboard = () => {
 
       try {
         const payload = JSON.parse(atob(token.split('.')[1]))
-        if (payload.role !== 'teacher' && payload.role !== 'admin') {
+        if (!['teacher', 'admin', 'librarian'].includes(payload.role)) {
           router.push('/')
           return
         }

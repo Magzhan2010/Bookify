@@ -1,541 +1,510 @@
 'use client'
-import { useEffect, useState } from "react"
-import { motion } from "framer-motion"
-import { BookOpen, Heart, FileText, Trash2, ArrowLeft, Trophy, BookOpenText, CheckCircle, Clock, Plus, Star } from "lucide-react" 
-import { useRouter } from "next/navigation"
-import { toast } from "sonner"
 
-const Profile = () => {
-  const [user, setUser] = useState(null)
-  const [activeBooks, setActiveBooks] = useState([])
-  const [submittedBooks, setSubmittedBooks] = useState([])
-  const [finishedBooks, setFinishedBooks] = useState([])
-  const [favorites, setFavorites] = useState([])
-  const [activeTab, setActiveTab] = useState('reading') 
-  const [loading, setLoading] = useState(false)
-  const [report, setReport] = useState([])
-  const [trackerLogs, setTrackerLogs] = useState([])
-  const [isAddingLog, setIsAddingLog] = useState(false)
-  const today = new Date().toISOString().split('T')[0];
-  const [isSubmitting,setIsSubmiting] = useState(false)
-  const [formBook, setFormBook] = useState({ 
-    title: '', 
-    start_date: today, 
-    end_date: today, 
-    raiting: 5 
-  });
-  const [readingGoal, setReadingGoal] = useState(12);
-  const [isEditingGoal, setIsEditingGoal] = useState(false);
-  const [hoveredStar, setHoveredStar] = useState(0)
+import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
+import { useRouter } from 'next/navigation'
+import { toast } from 'sonner'
+import {
+  BookOpen, Heart, CheckCircle, Clock, Star, Target,
+  TrendingUp, Trophy, Library, Plus, X, ChevronRight, Sparkles
+} from 'lucide-react'
+import {
+  ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
+  CartesianGrid, PieChart, Pie, Cell
+} from 'recharts'
 
+const TABS = [
+  { key: 'reading', label: 'Читаю', icon: BookOpen },
+  { key: 'finished', label: 'Прочитано', icon: CheckCircle },
+  { key: 'favorites', label: 'Избранное', icon: Heart }
+]
+
+const COLORS = ['#e8b94e', '#4ecdc4', '#ff5d8f', '#60a5fa', '#a78bfa', '#fb923c', '#34d399', '#f472b6']
+
+export default function ProfilePage() {
   const router = useRouter()
-  const firstWord = user?.name?.charAt(0).toUpperCase() || "?"
+  const [userData, setUserData] = useState(null)
+  const [active, setActive] = useState([])
+  const [submitted, setSubmitted] = useState([])
+  const [finished, setFinished] = useState([])
+  const [favorites, setFavorites] = useState([])
+  const [stats, setStats] = useState(null)
+  const [readingGoal, setReadingGoal] = useState(12)
+  const [activeTab, setActiveTab] = useState('reading')
+  const [loading, setLoading] = useState(true)
+  const [showGoalModal, setShowGoalModal] = useState(false)
+  const [goalInput, setGoalInput] = useState(12)
 
-  const fetchData = async () => {
-    const token = localStorage.getItem('token')
-    if (!token) return
+  const fetchAll = async () => {
+    const t = localStorage.getItem('token')
+    if (!t) return router.push('/login')
 
     try {
-      const [resProfile, resFav, resRep, resTracker] = await Promise.all([
-        fetch("/api/profile", { headers: { "Authorization": `Bearer ${token}` } }),
-        fetch("/api/favorites", { headers: { "Authorization": `Bearer ${token}` } }),
-        fetch('/api/admin/reports', { headers: { 'Authorization': `Bearer ${token}` } }),
-        fetch('/api/user/tracker', { headers : { "Authorization": `Bearer ${token}` } })
+      const [profile, fav, reports] = await Promise.all([
+        fetch('/api/profile', { headers: { Authorization: `Bearer ${t}` } }),
+        fetch('/api/favorites', { headers: { Authorization: `Bearer ${t}` } }),
+        fetch('/api/admin/reports', { headers: { Authorization: `Bearer ${t}` } })
       ])
 
-      if (resProfile.ok) {
-        const data = await resProfile.json()
-        setUser(data.user)
-        setFinishedBooks(data.finished || [])
-        setActiveBooks(data.active || [])
-        setSubmittedBooks(data.submitted || [])
-      }
-      if (resFav.ok) setFavorites(await resFav.json() || [])
-      if (resRep.ok) setReport(await resRep.json() || [])
-      if (resTracker.ok) {
-        const dataTracker = await resTracker.json()
-        setTrackerLogs(dataTracker.bookTracker || [])
+      if (!profile.ok) throw new Error('Не удалось загрузить профиль')
+
+      const p = await profile.json()
+      setUserData(p.user)
+      setActive(p.active || [])
+      setSubmitted(p.submitted || [])
+      setFinished(p.finished || [])
+      setStats(p.stats)
+      setReadingGoal(p.reading_goal || 12)
+
+      if (fav.ok) {
+        const f = await fav.json()
+        setFavorites(Array.isArray(f) ? f : (f.favorites || []))
       }
     } catch (err) {
-      console.error("Ошибка при загрузке данных:", err)
-    }
-  }
-
-  useEffect(() => {
-    fetchData()
-  }, [])
-
-  const handleSubmit = async () => {
-    if (!formBook.title || !formBook.start_date || !formBook.end_date) {
-      toast.error("Пожалуйста, заполните название и обе даты");
-      return;
-    }
-    setIsSubmiting(true)
-    try {
-      const token = localStorage.getItem("token")
-      const res = await fetch("/api/user/tracker", {
-        method: "POST",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
-        body: JSON.stringify(formBook)
-      })
-      if (res.ok) {
-        setIsAddingLog(false)
-        setFormBook({ title: '', start_date: '', end_date: '', raiting: 5 })
-        toast.success("Запись успешно добавлена в трекер!", {
-        style: { background: '#0d1a2e', color: '#fff', border: '1px solid #1a56db' }
-        })
-        await fetchData() 
-      }
-    } catch(err) {
-      toast.error(err.message)
+      console.error(err)
+      toast.error('Ошибка загрузки профиля')
     } finally {
-      setIsSubmiting(false)
+      setLoading(false)
     }
   }
 
-  const handleInputChange = (e) => {
-    setFormBook(prev => ({ ...prev, [e.target.name]: e.target.value }))
+  useEffect(() => { fetchAll() }, [])
+
+  const updateGoal = async () => {
+    const t = localStorage.getItem('token')
+    try {
+      const res = await fetch('/api/profile/goal', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${t}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ goal: goalInput })
+      })
+      if (!res.ok) throw new Error('Server error')
+      setReadingGoal(goalInput)
+      setShowGoalModal(false)
+      toast.success(`Цель обновлена: ${goalInput} книг`)
+    } catch (err) {
+      toast.error('Не удалось обновить цель')
+    }
   }
 
-  const handleRemoveFav = async (bookId) => {
-    const token = localStorage.getItem('token')
-    if (!token) return
-    setFavorites(prev => prev.filter(b => b.id !== bookId))
+  const removeFavorite = async (bookId) => {
+    const t = localStorage.getItem('token')
     try {
-      await fetch("/api/favorites", {
-        method: "DELETE",
-        headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" },
+      await fetch('/api/favorites', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
         body: JSON.stringify({ bookId })
       })
-    } catch (err) { console.error(err) }
-  }
-  const handleGoalChange = (e) => {
-    const value = parseInt(e.target.value) || 0;
-    setReadingGoal(value);
-  };
-
-  const toggleGoalEdit = () => {
-    setIsEditingGoal(!isEditingGoal);
-    if (isEditingGoal) {
-      toast.success(`Цель обновлена: ${readingGoal} книг`);
+      setFavorites(prev => prev.filter(f => f.book_id !== bookId && f.id !== bookId))
+      toast.success('Убрано из избранного')
+    } catch (err) {
+      toast.error('Ошибка')
     }
-  };
+  }
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-[#06070d] flex items-center justify-center">
+        <div className="w-10 h-10 border-2 border-[#e8b94e]/30 border-t-[#e8b94e] rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  if (!userData) {
+    return null
+  }
+
+  const finishedCount = parseInt(stats?.books_finished || 0)
+  const genresCount = parseInt(stats?.genres_count || 0)
+  const progress = readingGoal ? Math.min(100, Math.round((finishedCount / readingGoal) * 100)) : 0
+
+  // График по месяцам (из finished)
+  const monthlyData = buildMonthlyData(finished)
+  // Жанры
+  const genreData = buildGenreData(finished)
+
   return (
-    <motion.div
-      className="min-h-screen bg-[#080c14] text-white pb-20"
-      initial={{ opacity: 0, y: 8 }}
-      animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.35 }}
-    >
-      {user && (
-        <div className="max-w-[1100px] mx-auto px-6">
-          <button 
-            onClick={() => window.history.back()} 
-            className="text-[#4a6070] hover:text-white transition-colors pt-12 pb-10 flex items-center gap-2"
-          >
-            ← Назад к списку
-          </button>
+    <div className="min-h-screen bg-[#06070d] text-white">
+      <Navbar onBack={() => router.push('/library')} />
 
-          {/* User Header */}
-          <div className="pb-8 flex flex-row md:flex-row items-center gap-8 border-b border-white/5">
-            <div className="relative group">
-              <div className="absolute -inset-1 bg-gradient-to-r from-[#1a56db] to-[#60a5fa] rounded-full blur opacity-25 group-hover:opacity-50 transition"></div>
-              <div className='relative w-16 h-16 md:w-24 md:h-24 rounded-full bg-[#0d1a2e] border-2 border-[#1a56db] flex items-center justify-center font-bold text-4xl shadow-2xl'>
-                {firstWord}
-              </div>
-            </div>
-            <div className="text-center md:text-left space-y-2">
-              <h1 className="text-xl md:text-5xl mb-4 font-black tracking-tight">{user.name}</h1>
-              <span className="px-4 py-1 bg-blue-500/10 border border-blue-500/20 text-blue-400 text-[10px] uppercase font-bold tracking-widest rounded-full">
-                {user.role}
-              </span>
-            </div>
-          </div>
+      <main className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8 pb-20">
 
-          {/* Tabs Navigation */}
-          <div className="grid grid-cols-5 justify-center items-center sm:flex gap-1 md:gap-4 mt-8 p-1 bg-[#0d1a2e]/50 border border-white/5 rounded-2xl w-fit overflow-x-auto">
-            {[
-              { id: 'shelf', label: 'Полка', icon: Trophy, count: finishedBooks?.length },
-              { id: 'reading', label: 'Читаю', icon: BookOpenText, count: activeBooks?.length + submittedBooks?.length },
-              { id: 'favorites', label: 'Избранное', icon: Heart, count: favorites?.length },
-              { id: 'reports', label: 'Отчёты', icon: FileText, count: report?.length },
-              { id: 'tracker', label: 'Трекер', icon: Clock, count: trackerLogs.length }
-            ].map((tab) => (
-              <button
-                key={tab.id}
-                onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center gap-2 px-2 py-2 sm:px-6 rounded-xl text-sm font-semibold transition-all whitespace-nowrap ${
-                  activeTab === tab.id 
-                    ? "bg-[#1a56db] text-white shadow-lg shadow-blue-500/20" 
-                    : "text-[#4a6080] hover:text-white hover:bg-white/5"
-                }`}
-              >
-                <tab.icon size={18} />
-                <span className="hidden sm:inline">{tab.label}</span>
-                {tab.count > 0 && (
-                  <span className={`ml-1 px-1.5 py-0.5 rounded-md text-[10px] sm:text-sm ${activeTab === tab.id ? 'bg-white/20' : 'bg-[#162236]'}`}>
-                    {tab.count}
+        {/* Header card */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-br from-[#11141f] to-[#0a0c17] border border-white/5 rounded-3xl p-6 sm:p-8 mb-6 relative overflow-hidden"
+        >
+          <div className="absolute top-0 right-0 w-80 h-80 bg-[#e8b94e]/10 rounded-full blur-3xl pointer-events-none" />
+
+          <div className="flex flex-col sm:flex-row items-start gap-5 relative">
+            <motion.div
+              initial={{ scale: 0 }}
+              animate={{ scale: 1 }}
+              transition={{ type: 'spring', delay: 0.2 }}
+              className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-gradient-to-br from-[#e8b94e] to-[#9c6f25] flex items-center justify-center font-display text-3xl sm:text-4xl font-black text-[#06070d] shrink-0 shadow-2xl shadow-[#e8b94e]/30"
+            >
+              {userData.name?.charAt(0).toUpperCase()}
+            </motion.div>
+
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center gap-2 mb-1">
+                <h1 className="font-display text-2xl sm:text-4xl font-black tracking-tight">
+                  {userData.name}
+                </h1>
+                {userData.role === 'librarian' && (
+                  <span className="px-2 py-0.5 rounded-full bg-[#e8b94e]/20 text-[#e8b94e] text-xs font-bold">
+                    БИБЛИОТЕКАРЬ
                   </span>
                 )}
-              </button>
-            ))}
+              </div>
+              <p className="text-[#94a3b8] mb-3">
+                {userData.email}
+                {userData.class_name && <span className="text-[#5a6383]"> · {userData.class_name}</span>}
+              </p>
+
+              <div className="flex flex-wrap gap-2">
+                <span className="px-3 py-1 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1">
+                  <Trophy size={12} className="text-[#e8b94e]" />
+                  {finishedCount} прочитано
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1">
+                  <Library size={12} className="text-[#4ecdc4]" />
+                  {genresCount} жанров
+                </span>
+                <span className="px-3 py-1 rounded-full bg-white/5 text-xs font-bold flex items-center gap-1">
+                  <BookOpen size={12} className="text-[#60a5fa]" />
+                  {active.length} сейчас читаю
+                </span>
+                <span className="px-3 py-1 rounded-full bg-[#ff5d8f]/10 text-[#ff5d8f] text-xs font-bold flex items-center gap-1">
+                  <Heart size={12} />
+                  {favorites.length} в избранном
+                </span>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+
+        {/* Goal */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.1 }}
+          className="bg-[#11141f] border border-white/5 rounded-2xl p-6 mb-6"
+        >
+          <div className="flex items-start justify-between mb-4">
+            <div>
+              <h3 className="font-display font-bold text-lg flex items-center gap-2">
+                <Target size={18} className="text-[#e8b94e]" /> Цель на {new Date().getFullYear()} год
+              </h3>
+              <p className="text-sm text-[#5a6383] mt-0.5">Сколько книг ты хочешь прочитать</p>
+            </div>
+            <button
+              onClick={() => { setGoalInput(readingGoal); setShowGoalModal(true) }}
+              className="text-xs px-3 py-1.5 rounded-lg bg-white/5 hover:bg-white/10 transition-colors"
+            >
+              Изменить
+            </button>
           </div>
 
-          <div className="mt-12">
-            {/* READING TAB */}
-            {activeTab === 'reading' && (
-              <motion.div
-                key="reading"
-                className="space-y-4"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
-              >
-                {activeBooks.length === 0 && submittedBooks.length === 0 ? (
-                  <EmptyState message="Сейчас вы ничего не читаете" actionLabel="Выбрать книгу" />
-                ) : (
-                  <>
-                    {/* Активные книги */}
-                    {activeBooks.map(book => (
-                      <motion.div
-                        key={book.borrow_id}
-                        className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[24px]"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        whileHover={{ y: -2 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <img
-                          src={book.cover_url}
-                          className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0"
-                          alt=""
-                        />
-                        <div className="flex-1 text-center sm:text-left">
-                          <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
-                          <p className="text-[#4a6080] mb-3">{book.author}</p>
-                          <div className="text-orange-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-orange-500/10 border border-orange-500/20 rounded-full w-fit mx-auto sm:mx-0">
-                            Срок: 14 дней
-                          </div>
-                        </div>
-                        <button 
-                          onClick={() => router.push(`/report/${book.borrow_id}`)}
-                          className="w-full sm:w-auto px-8 py-3 bg-[#1a56db] hover:bg-blue-500 text-white rounded-xl font-bold transition-all shadow-lg shadow-blue-500/20"
-                        >
-                          Сдать отчет
-                        </button>
-                      </motion.div>
-                    ))}
-
-                    {/* Книги на проверке */}
-                    {submittedBooks.map(book => (
-                      <motion.div
-                        key={book.borrow_id}
-                        className="group flex flex-col sm:flex-row sm:items-center gap-4 p-5 bg-amber-500/5 border border-amber-500/10 rounded-[24px]"
-                        initial={{ opacity: 0, y: 12 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ duration: 0.25 }}
-                      >
-                        <img
-                          src={book.cover_url}
-                          className="w-14 h-20 sm:w-16 sm:h-20 md:w-20 md:h-28 object-cover rounded-xl mx-auto sm:mx-0 opacity-80"
-                          alt=""
-                        />
-                        <div className="flex-1 text-center sm:text-left">
-                          <h3 className="text-sm md:text-xl font-bold mb-1">{book.title}</h3>
-                          <p className="text-[#4a6080] mb-3">{book.author}</p>
-                          <div className="text-amber-400 text-[10px] font-black uppercase tracking-widest px-3 py-1 bg-amber-500/10 border border-amber-500/20 rounded-full w-fit mx-auto sm:mx-0 flex items-center gap-1.5">
-                            <Clock size={12} /> На проверке у учителя
-                          </div>
-                        </div>
-                      </motion.div>
-                    ))}
-                  </>
-                )}
-              </motion.div>
-            )}
-
-            {/* SHELF TAB */}
-            {activeTab === 'shelf' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
-                {finishedBooks.length === 0 ? (
-                  <div className="col-span-full py-20 text-center text-[#4a6080] border border-dashed border-white/5 rounded-3xl">
-                    <EmptyState message="Вы еще не сдали ни одного отчета" actionLabel="Начать чтение" />
-                  </div>
-                ) : (
-                  finishedBooks.map(book => (
-                    <div key={book.borrow_id} className="group">
-                      <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-emerald-500/20 shadow-2xl">
-                        <img src={book.cover_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
-                        <div className="absolute top-2 right-2 px-2 py-1 bg-emerald-500 text-white text-[10px] font-bold rounded-lg shadow-lg">ЗАЧТЕНО</div>
-                      </div>
-                      <h4 className="mt-3 font-bold text-md truncate">{book.title}</h4>
-                      <p className="text-sm text-[#4a6080] truncate">{book.author}</p>
-                    </div>
-                  ))
-                )}
+          <div className="flex items-end justify-between mb-3">
+            <div>
+              <div className="text-4xl font-display font-black text-gradient-gold">
+                {finishedCount}
+                <span className="text-[#5a6383] text-2xl"> / {readingGoal}</span>
               </div>
-            )}
-
-            {/* FAVORITES TAB */}
-            {activeTab === 'favorites' && (
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-8">
-                {favorites.length === 0 ? (
-                  <div className="col-span-full py-20 text-center text-[#4a6080] border border-dashed border-white/5 rounded-3xl">Избранное пусто</div>
-                ) : (
-                  favorites.map(book => (
-                    <div key={book.id} className="group relative">
-                      <div className="relative aspect-[2/3] rounded-2xl overflow-hidden border border-white/5 shadow-2xl">
-                        <img src={book.cover_url} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110" alt="" />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/60 md:from-black/80 via-transparent to-transparent opacity-100 md:opacity-0 md:group-hover:opacity-100 transition-opacity flex items-end p-4">
-                           <button onClick={() => handleRemoveFav(book.id)} className="w-full py-2 bg-red-500 text-white rounded-lg text-xs font-bold flex items-center justify-center gap-2">
-                             <Trash2 size={14} /> Убрать
-                           </button>
-                        </div>
-                      </div>
-                      <h4 className="mt-3 font-bold text-sm truncate">{book.title}</h4>
-                      <p className="text-xs text-[#4a6080] truncate">{book.author}</p>
-                    </div>
-                  ))
-                )}
-              </div>
-            )}
-
-            {/* REPORTS TAB — без AI */}
-            {activeTab === 'reports' && (
-              <motion.div
-                key="reports"
-                className="space-y-6"
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.35 }}
-              >
-                {report.length === 0 ? (
-                  <EmptyState message="Вы еще не сдали ни одного отчета" actionLabel="Начать чтение" />
-                ) : (
-                  report.map(rep => (
-                    <motion.div
-                      key={rep.id}
-                      className="bg-[#0d1a2e]/40 border border-white/5 rounded-[24px] p-4 sm:p-6 space-y-4 sm:space-y-6"
-                      initial={{ opacity: 0, y: 12 }}
-                      animate={{ opacity: 1, y: 0 }}
-                      whileHover={{ y: -2 }}
-                      transition={{ duration: 0.25 }}
-                    >
-                      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                        <div>
-                          <h3 className="text-lg sm:text-xl font-bold text-white">«{rep.book_title}»</h3>
-                          <p className="text-sm text-[#4a6080] mt-1">{new Date(rep.created_at).toLocaleDateString()}</p>
-                        </div>
-                        <div className="flex items-center gap-4">
-                          {rep.rating > 0 && (
-                            <span className="text-yellow-400">
-                              {'★'.repeat(rep.rating)}{'☆'.repeat(5 - rep.rating)}
-                            </span>
-                          )}
-                          <div className={`flex items-center gap-2 px-4 py-2 rounded-xl text-sm font-bold ${rep.status === 'approved' ? 'bg-emerald-500/10 text-emerald-400' : 'bg-amber-500/10 text-amber-400'}`}>
-                            {rep.status === 'approved' ? <CheckCircle size={18} /> : <Clock size={18} />}
-                            {rep.status === 'approved' ? 'Зачтено' : 'На проверке у учителя'}
-                          </div>
-                        </div>
-                      </div>
-                    </motion.div>
-                  ))
-                )}
-              </motion.div>
-            )}
-
-            {activeTab === 'tracker' && (
-              <div className="space-y-6 animate-in fade-in duration-500">
-                <div className="relative overflow-hidden bg-gradient-to-br from-[#1a56db]/20 to-transparent border border-blue-500/20 rounded-[32px] p-6 md:p-8">
-                  <div className="relative z-10 flex flex-col md:flex-row md:items-center justify-between gap-6">
-                    <div className="space-y-2">
-                      <div className="flex items-center gap-2 text-blue-400 font-bold uppercase text-[10px] tracking-[0.2em]">
-                        <Trophy size={14} /> Личная цель на 2026
-                      </div>
-                      
-                      <div className="flex items-center gap-3">
-                        {isEditingGoal ? (
-                          <input
-                            type="number"
-                            autoFocus
-                            value={readingGoal}
-                            onChange={handleGoalChange}
-                            onBlur={toggleGoalEdit}
-                            onKeyDown={(e) => e.key === 'Enter' && toggleGoalEdit()}
-                            className="bg-[#080c14] border border-blue-500 text-2xl font-black w-24 px-2 py-1 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/50"
-                          />
-                        ) : (
-                          <h2 
-                            onClick={toggleGoalEdit}
-                            className="text-lg md:text-3xl font-black cursor-pointer hover:text-blue-400 transition-colors flex items-center gap-2 group/text"
-                          >
-                            Прочитать {readingGoal} книг
-                            <Plus size={16} className="text-[#4a6080] opacity-100 md:opacity-0 md:group-hover/text:opacity-100 transition-opacity" />
-                          </h2>
-                        )}
-                      </div>
-
-                      <p className="text-[#4a6080] text-sm">
-                        Вы прочитали уже {finishedBooks.length}, осталось {Math.max(0, readingGoal - finishedBooks.length)}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col items-end gap-2">
-                      <div className="text-2xl font-black text-white">
-                        {Math.round((finishedBooks.length / (readingGoal || 1)) * 100)}%
-                      </div>
-                      <div className="w-full md:w-64 h-3 bg-white/5 rounded-full overflow-hidden border border-white/5">
-                        <div 
-                          className="h-full bg-gradient-to-r from-blue-600 to-sky-400 transition-all duration-1000 ease-out" 
-                          style={{ width: `${Math.min(100, (finishedBooks.length / (readingGoal || 1)) * 100)}%` }}
-                        />
-                      </div>
-                    </div>
-                  </div>
-                  
-                  <div className="absolute -right-10 -bottom-10 text-blue-500/5 rotate-12">
-                    <BookOpenText size={200} />
-                  </div>
-                </div>
-
-                <div className="flex flex-col gap-4">
-                  <div>
-                    <h2 className="text-xl md:text-2xl font-bold">Трекер чтения</h2>
-                    <p className="text-[#4a6080] text-xs md:text-sm">Ваша личная история прочитанных книг</p>
-                  </div>
-                  <button 
-                    onClick={() => setIsAddingLog(!isAddingLog)}
-                    className="w-full sm:w-auto px-6 py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-bold transition-all flex items-center justify-center gap-2 text-sm"
-                  >
-                    {isAddingLog ? "Отмена" : <><Plus size={18} /> Добавить запись</>}
-                  </button>
-                </div>
-
-                {isAddingLog ? (
-                  <div className="bg-[#0d1a2e]/60 border border-white/10 rounded-[24px] md:rounded-[32px] p-4 md:p-10 max-w-4xl mx-auto shadow-2xl backdrop-blur-sm">
-                    <div className="space-y-5">
-                      <div className="space-y-2">
-                        <label className="text-[13px] uppercase tracking-widest text-sky-500 font-bold ml-1">Название книги</label>
-                        <input 
-                        name="title"
-                        value={formBook.title}
-                        onChange={handleInputChange}
-                        className="w-full bg-[#080c14] border border-white/5 rounded-2xl px-5 py-4 focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 focus:outline-none transition-all text-white placeholder:text-white/10 shadow-inner"
-                        placeholder="Введите полное название книги..."
-                      />
-                      </div>
-
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[13px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата начала</label>
-                          <input 
-                            type="date"
-                            name="start_date"
-                            value={formBook.start_date}
-                            onChange={handleInputChange}
-                            className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
-                          />
-                        </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Дата завершения</label>
-                          <input 
-                            type="date"
-                            name="end_date"
-                            value={formBook.end_date}
-                            onChange={handleInputChange}
-                            className="w-full bg-[#080c14] border border-white/10 rounded-xl px-4 py-3 focus:border-blue-500 focus:outline-none text-white text-md"
-                          />
-                        </div>
-                      </div>
-
-                      <div className="space-y-3">
-                        <label className="text-[10px] uppercase tracking-widest text-[#4a6080] font-bold ml-1">Ваша оценка</label>
-                        <div className="flex gap-3 justify-center sm:justify-start">
-                          {[1, 2, 3, 4, 5].map((star) => (
-                            <button
-                              key={star}
-                              onMouseEnter={() => setHoveredStar(star)}
-                              onMouseLeave={() => setHoveredStar(0)}
-                              onClick={() => setFormBook(prev => ({ ...prev, raiting: star }))}
-                              className="transition-transform active:scale-75 shadow-sm"
-                            >
-                              <Star 
-                                className={`${
-                                  star <= (hoveredStar || formBook.raiting) 
-                                    ? "text-amber-400 fill-amber-400 w-24 md:w-32" 
-                                    : "text-white/5 w-24 md:w-32" 
-                                } transition-colors`}
-                              />
-                            </button>
-                          ))}
-                        </div>
-                      </div>
-
-                      <button 
-                        onClick={handleSubmit}
-                        disabled={isSubmitting}
-                        className={`w-full py-4 rounded-2xl font-black uppercase tracking-widest transition-all active:scale-95 flex items-center justify-center gap-2 text-sm ${
-                          isSubmitting 
-                            ? "bg-blue-900/50 text-white/50 cursor-not-allowed" 
-                            : "bg-gradient-to-r from-blue-600 to-blue-500 text-white shadow-lg shadow-blue-500/10"
-                        }`}
-                      >
-                        {isSubmitting ? (
-                          <div className="w-5 h-5 border-2 border-white/20 border-t-white rounded-full animate-spin" />
-                        ) : "Сохранить"}
-                      </button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4">
-                    {trackerLogs.length === 0 ? (
-                      <div className="col-span-full">
-                        <EmptyState message="История трекера пуста" actionLabel="Начать запись" />
-                      </div>
-                    ) : (
-                      trackerLogs.map((log, idx) => (
-                        <div key={idx} className="group p-5 bg-[#0d1a2e]/40 border border-white/5 rounded-[20px] active:bg-[#0d1a2e]/60 transition-all">
-                          <div className="flex justify-between items-start mb-3">
-                            <div className="p-2.5 bg-blue-500/10 rounded-lg text-blue-400">
-                              <BookOpen size={23} />
-                            </div>
-                            <div className="flex items-center gap-1 bg-[#080c14] px-2 py-1 rounded-full border border-white/5">
-                              <Star size={18} className="text-amber-400 fill-amber-400" />
-                              <span className="text-[10px] font-bold text-amber-400">{log.raiting}/5</span>
-                            </div>
-                          </div>
-                          <h3 className="text-base font-bold mb-2 line-clamp-1">{log.title}</h3>
-                          <div className="flex items-center gap-3 text-[11px] text-[#4a6080] font-medium">
-                            <div className="flex items-center gap-1">
-                              <Clock size={18} />
-                              <span>{new Date(log.start_date).toLocaleDateString()}</span>
-                            </div>
-                            <span className="opacity-30">—</span>
-                            <span>{new Date(log.end_date).toLocaleDateString()}</span>
-                          </div>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                )}
-              </div>
-            )}
+            </div>
+            <div className="text-right">
+              <div className="text-2xl font-display font-black text-[#4ecdc4]">{progress}%</div>
+              <div className="text-xs text-[#5a6383]">выполнено</div>
+            </div>
           </div>
+
+          <div className="h-3 bg-white/5 rounded-full overflow-hidden">
+            <motion.div
+              initial={{ width: 0 }}
+              animate={{ width: `${progress}%` }}
+              transition={{ duration: 1, ease: 'easeOut' }}
+              className="h-full bg-gradient-to-r from-[#e8b94e] to-[#c89538] rounded-full relative"
+            >
+              <div className="absolute inset-0 bg-white/20 animate-pulse" />
+            </motion.div>
+          </div>
+
+          {progress >= 100 && (
+            <div className="mt-4 p-3 rounded-xl bg-[#4ecdc4]/10 border border-[#4ecdc4]/20 text-[#4ecdc4] text-sm font-semibold flex items-center gap-2">
+              <Sparkles size={16} /> Цель достигнута! Ты машина 📚
+            </div>
+          )}
+        </motion.div>
+
+        {/* Charts */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-6">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.15 }}
+            className="bg-[#11141f] border border-white/5 rounded-2xl p-6"
+          >
+            <h3 className="font-display font-bold text-lg mb-1">Книги по месяцам</h3>
+            <p className="text-sm text-[#5a6383] mb-4">Твой ритм чтения</p>
+            <div className="h-56">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={monthlyData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#1a1f30" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill: '#5a6383', fontSize: 11 }} />
+                  <YAxis tick={{ fill: '#5a6383', fontSize: 11 }} allowDecimals={false} />
+                  <Tooltip
+                    cursor={{ fill: '#e8b94e10' }}
+                    contentStyle={{ background: '#0a0c17', border: '1px solid #1a1f30', borderRadius: 12 }}
+                  />
+                  <Bar dataKey="count" fill="#e8b94e" radius={[8, 8, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </motion.div>
+
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.2 }}
+            className="bg-[#11141f] border border-white/5 rounded-2xl p-6"
+          >
+            <h3 className="font-display font-bold text-lg mb-1">Жанры</h3>
+            <p className="text-sm text-[#5a6383] mb-4">Что ты читал</p>
+            {genreData.length === 0 ? (
+              <div className="flex items-center justify-center h-56 text-[#5a6383] text-sm">
+                Прочитай первую книгу — увидишь статистику здесь
+              </div>
+            ) : (
+              <div className="flex items-center gap-4 h-56">
+                <div className="flex-1 h-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <PieChart>
+                      <Pie data={genreData} dataKey="count" nameKey="genre"
+                           cx="50%" cy="50%" innerRadius={50} outerRadius={90} paddingAngle={2}>
+                        {genreData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
+                      </Pie>
+                      <Tooltip contentStyle={{ background: '#0a0c17', border: '1px solid #1a1f30', borderRadius: 12 }} />
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+                <div className="flex-1 space-y-2 max-h-56 overflow-y-auto">
+                  {genreData.map((g, i) => (
+                    <div key={g.genre} className="flex items-center gap-2">
+                      <div className="w-3 h-3 rounded shrink-0" style={{ background: COLORS[i % COLORS.length] }} />
+                      <div className="flex-1 text-sm font-semibold truncate">{g.genre}</div>
+                      <div className="text-xs text-[#5a6383]">{g.count}</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </motion.div>
         </div>
+
+        {/* Tabs */}
+        <div className="flex gap-2 mb-5">
+          {TABS.map(tab => {
+            const Icon = tab.icon
+            const count =
+              tab.key === 'reading' ? active.length :
+              tab.key === 'finished' ? finished.length :
+              favorites.length
+            return (
+              <button
+                key={tab.key}
+                onClick={() => setActiveTab(tab.key)}
+                className={`px-4 py-2.5 rounded-xl flex items-center gap-2 font-bold text-sm transition-all ${
+                  activeTab === tab.key
+                    ? 'bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d]'
+                    : 'bg-white/5 text-[#94a3b8] hover:bg-white/10'
+                }`}
+              >
+                <Icon size={16} />
+                {tab.label}
+                <span className={`px-1.5 py-0.5 rounded-full text-[10px] ${
+                  activeTab === tab.key ? 'bg-[#06070d]/20' : 'bg-white/10'
+                }`}>
+                  {count}
+                </span>
+              </button>
+            )
+          })}
+        </div>
+
+        {/* Content */}
+        <motion.div
+          key={activeTab}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+        >
+          {activeTab === 'reading' && (
+            <BookGrid
+              books={active}
+              emptyText="Сейчас ничего не читаешь. Возьми книгу из каталога!"
+              action={(book) => (
+                <button
+                  onClick={() => router.push(`/report/${book.borrow_id}`)}
+                  className="w-full px-3 py-2 rounded-xl bg-[#e8b94e] text-[#06070d] font-bold text-xs hover:bg-[#e8b94e]/90"
+                >
+                  Сдать отчёт
+                </button>
+              )}
+              extra={(book) => book.due_date && (
+                <div className="text-xs text-[#5a6383] flex items-center gap-1">
+                  <Clock size={10} /> до {new Date(book.due_date).toLocaleDateString('ru-RU')}
+                </div>
+              )}
+            />
+          )}
+
+          {activeTab === 'finished' && (
+            <BookGrid
+              books={finished}
+              emptyText="Прочитанных книг пока нет. Время начать!"
+            />
+          )}
+
+          {activeTab === 'favorites' && (
+            <BookGrid
+              books={favorites}
+              emptyText="Нет избранных книг"
+              onRemove={removeFavorite}
+            />
+          )}
+        </motion.div>
+      </main>
+
+      {/* Goal modal */}
+      {showGoalModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          className="fixed inset-0 z-50 bg-black/70 backdrop-blur-md flex items-center justify-center p-4"
+          onClick={() => setShowGoalModal(false)}
+        >
+          <motion.div
+            initial={{ scale: 0.95, y: 20 }}
+            animate={{ scale: 1, y: 0 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-[#11141f] border border-white/10 rounded-2xl w-full max-w-sm p-6 shadow-2xl"
+          >
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="font-display font-bold text-lg">Цель на год</h3>
+              <button onClick={() => setShowGoalModal(false)} className="text-[#5a6383] hover:text-white">
+                <X size={20} />
+              </button>
+            </div>
+            <p className="text-sm text-[#94a3b8] mb-4">Сколько книг хочешь прочитать в {new Date().getFullYear()}?</p>
+            <input
+              type="number"
+              min="1"
+              max="365"
+              value={goalInput}
+              onChange={e => setGoalInput(parseInt(e.target.value) || 1)}
+              className="w-full bg-[#0a0c17] border border-white/10 px-4 py-3 rounded-xl text-white text-2xl font-bold text-center outline-none focus:border-[#e8b94e]/40"
+            />
+            <button
+              onClick={updateGoal}
+              className="w-full mt-4 py-3 rounded-xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold"
+            >
+              Сохранить
+            </button>
+          </motion.div>
+        </motion.div>
       )}
-    </motion.div>
+    </div>
   )
 }
 
-const EmptyState = ({ message, actionLabel }) => (
-  <div className="py-20 flex flex-col items-center border border-dashed border-white/10 rounded-[40px] bg-[#0d1a2e]/20">
-    <div className="w-16 h-16 bg-[#162236] rounded-full flex items-center justify-center mb-6 text-[#4a6080]"><BookOpen size={32} /></div>
-    <p className="text-[#4a6080] text-lg mb-8">{message}</p>
-    <button onClick={() => window.location.href = '/library'} className="flex items-center gap-2 px-8 py-3 bg-blue-600 text-white rounded-xl font-bold hover:bg-blue-500 transition-all">
-      <ArrowLeft size={18} /> {actionLabel}
-    </button>
-  </div>
-)
+const BookGrid = ({ books, emptyText, action, extra, onRemove }) => {
+  const router = useRouter()
 
-export default Profile;
+  if (!books || books.length === 0) {
+    return (
+      <div className="text-center py-16 bg-[#11141f] border border-dashed border-white/10 rounded-2xl">
+        <p className="text-[#5a6383]">{emptyText}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+      {books.map((book, i) => (
+        <motion.div
+          key={book.borrow_id || book.book_id || book.id}
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: i * 0.05 }}
+          className="group bg-[#11141f] border border-white/5 rounded-2xl overflow-hidden hover:border-[#e8b94e]/30 transition-all"
+        >
+          <div
+            className="relative aspect-[2/3] bg-[#0a0c17] overflow-hidden cursor-pointer"
+            onClick={() => router.push(`/books/${book.book_id || book.id}`)}
+          >
+            {book.cover_url && (
+              <img src={book.cover_url} alt={book.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+            )}
+            {onRemove && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onRemove(book.book_id || book.id) }}
+                className="absolute top-2 right-2 p-1.5 rounded-full bg-black/70 backdrop-blur-sm text-white hover:bg-red-500/80 transition-colors"
+              >
+                <X size={14} />
+              </button>
+            )}
+          </div>
+          <div className="p-3">
+            <div className="font-bold text-sm line-clamp-1">{book.title}</div>
+            <div className="text-xs text-[#5a6383] line-clamp-1 mb-2">{book.author}</div>
+            {extra && extra(book)}
+            {action && action(book)}
+          </div>
+        </motion.div>
+      ))}
+    </div>
+  )
+}
+
+const Navbar = ({ onBack }) => {
+  const router = useRouter()
+  return (
+    <nav className="sticky top-0 z-40 bg-[#06070d]/80 backdrop-blur-xl border-b border-white/5">
+      <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-16 flex items-center justify-between">
+        <button
+          onClick={onBack || (() => router.push('/library'))}
+          className="text-sm font-semibold text-[#94a3b8] hover:text-white transition-colors flex items-center gap-2"
+        >
+          ← Каталог
+        </button>
+        <span className="font-display font-bold text-sm">Мой профиль</span>
+        <div className="w-16" />
+      </div>
+    </nav>
+  )
+}
+
+function buildMonthlyData(finished) {
+  const months = ['Янв', 'Фев', 'Мар', 'Апр', 'Май', 'Июн', 'Июл', 'Авг', 'Сен', 'Окт', 'Ноя', 'Дек']
+  const currentYear = new Date().getFullYear()
+  const counts = Array(12).fill(0)
+  finished?.forEach(b => {
+    if (b.returned_at) {
+      const d = new Date(b.returned_at)
+      if (d.getFullYear() === currentYear) counts[d.getMonth()]++
+    }
+  })
+  return months.map((m, i) => ({ month: m, count: counts[i] }))
+}
+
+function buildGenreData(finished) {
+  const map = {}
+  finished?.forEach(b => {
+    if (b.genre) map[b.genre] = (map[b.genre] || 0) + 1
+  })
+  return Object.entries(map).map(([genre, count]) => ({ genre, count })).sort((a, b) => b.count - a.count)
+}

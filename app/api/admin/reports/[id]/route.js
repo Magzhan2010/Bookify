@@ -26,7 +26,7 @@ export async function DELETE(req, { params }) {
 		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
 	}
 
-	if (payload.role !== 'admin' && payload.role !== 'teacher') {
+	if (!['admin', 'teacher', 'librarian'].includes(payload.role)) {
 		return NextResponse.json({ error: "Только Админ" }, { status: 403 })
 	}
 	await pool.query("DELETE FROM reports WHERE id = $1", [id])

@@ -1,307 +1,283 @@
 'use client'
 
-import { motion } from "framer-motion"
-import { useParams, useRouter } from "next/navigation";
-import { useEffect, useState } from "react";
+import { motion } from 'framer-motion'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import {
+  ArrowLeft, BookOpen, Quote, HelpCircle, Lightbulb,
+  Calendar, FileText, CheckCircle, Star, Loader2, Sparkles
+} from 'lucide-react'
 
-const Reports = () => {
-	const [selectedBorrow, setSelectedBorrow] = useState(null) 
-	const [quote1, setQuote1] = useState('')
-	const [quote2, setQuote2] = useState('')
-	const [confusing, setConfusing] = useState('')
-	const [lifeExample, setLifeExample] = useState('')
-	const [applyToday, setApplyToday] = useState('')
-	const [rating, setRating] = useState(0)
-	const [loading,setLoading] = useState(false)
-	const [result,setResult] = useState(null)
-	const router = useRouter()
-	const {borrowId} =  useParams()
-	
-	const handleSubmit = async () => {
-		setLoading(true)
-		setResult(null)
+const questions = [
+  {
+    n: 1,
+    field: 'quote1',
+    title: 'Две важные цитаты',
+    desc: 'Выпиши 2 ключевые мысли автора и объясни своими словами, почему они важны',
+    icon: Quote
+  },
+  {
+    n: 2,
+    field: 'quote2',
+    title: 'Что удивило',
+    desc: 'Какие идеи или концепции заставили задуматься?',
+    icon: HelpCircle
+  },
+  {
+    n: 3,
+    field: 'life_example',
+    title: 'Как это в твоей жизни',
+    desc: 'Свяжи прочитанное со своим опытом или ситуациями в школе',
+    icon: Lightbulb
+  },
+  {
+    n: 4,
+    field: 'apply_today',
+    title: 'Что применишь уже сегодня',
+    desc: 'Конкретный измеримый план на ближайшие дни',
+    icon: Calendar
+  },
+  {
+    n: 5,
+    field: 'confusing',
+    title: 'Новые факты',
+    desc: 'Выпиши новую информацию или факты, о которых не знал',
+    icon: FileText
+  }
+]
 
-		try {
-			const token = localStorage.getItem('token')
-			
-			const bodyData = {
-				bookId: selectedBorrow.book_id,
-				borrowId: borrowId,
-				quote1: quote1,
-				quote2: quote2,
-				confusing,
-				life_example: lifeExample,
-				apply_today: applyToday,
-				rating
-			}
+export default function ReportPage() {
+  const [book, setBook] = useState(null)
+  const [answers, setAnswers] = useState({
+    quote1: '', quote2: '', life_example: '', apply_today: '', confusing: '', rating: 0
+  })
+  const [loading, setLoading] = useState(false)
+  const [result, setResult] = useState(null)
+  const router = useRouter()
+  const { borrowId } = useParams()
 
-			const res = await fetch('/api/reports', {
-				method: "POST",
-				headers: {
-					"Authorization": `Bearer ${token}`,
-					"Content-Type": "application/json"
-				},
-				body: JSON.stringify(bodyData)
-			})
+  useEffect(() => {
+    const fetchBook = async () => {
+      const token = localStorage.getItem('token')
+      try {
+        const res = await fetch('/api/profile', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const data = await res.json()
+        const found = data.active?.find(b => Number(b.borrow_id) === Number(borrowId))
+        if (found) setBook(found)
+      } catch (err) { console.error(err) }
+    }
+    fetchBook()
+  }, [borrowId])
 
-			const data = await res.json()
+  const update = (field, value) => setAnswers(prev => ({ ...prev, [field]: value }))
 
-			if (res.ok) {
-				setResult({ success: "Отчет отправлен! Ожидайте проверки учителем." })
-			} else {
-				setResult({ error: data.error })
-			}
+  const canSubmit =
+    Object.entries(answers).every(([k, v]) =>
+      k === 'rating' ? v > 0 : (v?.trim()?.length >= 20)
+    )
 
-		} catch (err) {
-			setResult({ error: "Не удалось отправить отчет" })
-		} finally {
-			setLoading(false)
-		}
-	}
+  const handleSubmit = async () => {
+    if (!canSubmit) return
+    setLoading(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/reports', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ bookId: book.book_id, borrowId, ...answers })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setResult({ success: true })
+        setTimeout(() => router.push('/profile'), 2500)
+      } else {
+        setResult({ error: data.error })
+      }
+    } catch (err) {
+      setResult({ error: 'Не удалось отправить' })
+    } finally {
+      setLoading(false)
+    }
+  }
 
-	useEffect(() => {
-		const fetchData = async () => {
-			const token = localStorage.getItem("token")
+  return (
+    <div className="min-h-screen bg-[#06070d] text-white pb-20">
+      {/* Top bar */}
+      <div className="sticky top-0 z-30 bg-[#06070d]/85 backdrop-blur-xl border-b border-white/5">
+        <div className="max-w-[900px] mx-auto px-4 sm:px-6 h-16 flex items-center">
+          <button
+            onClick={() => router.back()}
+            className="flex items-center gap-2 text-sm font-semibold text-[#94a3b8] hover:text-white transition-colors"
+          >
+            <ArrowLeft size={16} /> Назад
+          </button>
+        </div>
+      </div>
 
-			try {
-				const resBooks = await fetch('/api/profile', {
-					method: "GET",
-					headers: { "Authorization": `Bearer ${token}`, "Content-Type": "application/json" }
-				})
-				const data = await resBooks.json()
-				const bookFind = data.active.find(b=> b.borrow_id === Number(borrowId))
-				setSelectedBorrow(bookFind)             
-			} catch(err) {  
-				console.error(err.message)
-			}
-		}
-		fetchData()
-	}, [])
-	
-	
-	return(
-		<div className="max-w-[800px] mx-auto px-4 sm:px-6 py-10 sm:py-12 min-h-screen bg-[#080c14] text-white">
-				
-			<div className="text-center mb-12 relative">
-				<button 
-					onClick={() => window.history.back()} 
-					className="text-[#4a6070] hover:text-white transition-colors flex items-center gap-2"
-				>
-					← Назад
-				</button>
-				<div className="absolute inset-0 bg-[#1a56db] blur-[120px] opacity-10 -z-10"></div>
-				<p className="text-[#4a6080] text-sm uppercase tracking-[0.3em] font-mono mb-4">Divergents Academic</p>
-				<h1 className="text-3xl md:text-4xl font-extrabold mb-4 bg-gradient-to-r from-white to-[#60a5fa] bg-clip-text text-transparent leading-tight">
-					Книга — для изменения мышления
-				</h1>
-				<p className="text-[#4a6080] text-sm italic max-w-[500px] mx-auto">
-					"Книги делятся мнением. Мнения сеют сомнения. От сомнения лень, а от лени веет забвением."
-				</p>
-				<div className="mt-6 inline-block bg-[#1a56db]/10 border border-[#1a56db]/30 text-[#60a5fa] text-xs font-bold uppercase tracking-widest px-6 py-2 rounded-full">
-					Book Review
-				</div>
-			</div>
+      <div className="max-w-[900px] mx-auto px-4 sm:px-6 pt-8">
+        {/* Header */}
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="text-center mb-8"
+        >
+          <div className="inline-flex items-center gap-2 mb-3 px-3 py-1 bg-[#e8b94e]/10 border border-[#e8b94e]/20 rounded-full text-[10px] font-bold text-[#e8b94e] uppercase tracking-widest">
+            <Sparkles size={10} /> Отчёт о прочитанном
+          </div>
+          <h1 className="font-display text-3xl sm:text-5xl font-black tracking-tighter mb-3 leading-tight">
+            Книга — для <span className="text-gradient-gold">изменения мышления</span>
+          </h1>
+          <p className="text-[#94a3b8] max-w-md mx-auto">
+            5 вопросов, чтобы перевести мысли из кратковременной в долговременную память
+          </p>
+        </motion.div>
 
-			{selectedBorrow && (
-				<div className="bg-[#0d1a2e] border border-[#162236] rounded-3xl p-6 flex gap-6 items-center relative overflow-hidden mb-8">
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-				
-					<img 
-						src={selectedBorrow.cover_url} 
-						className="w-24 h-32 object-cover rounded-xl shadow-2xl border border-white/10" 
-						alt="Обложка книги" 
-					/>
-				
-					<div className="flex-1">
-						<p className="text-[10px] uppercase tracking-[0.2em] text-[#4a6080] font-bold mb-1">Вы пишете отчет по книге</p>
-						<h3 className="text-2xl font-extrabold text-white mb-1 tracking-tight">{selectedBorrow.title}</h3>
-						<p className="text-[#7a8eb0] text-sm mb-3">{selectedBorrow.author}</p>
-						<span className="inline-block px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-orange-500/10 text-orange-400 border border-orange-500/20 rounded-full">
-							В процессе чтения
-						</span>
-					</div>
-				</div>
-			)}
+        {/* Book card */}
+        {book && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.1 }}
+            className="bg-[#11141f] border border-white/5 rounded-2xl p-5 flex gap-4 items-center mb-8"
+          >
+            <div className="w-20 h-28 rounded-lg overflow-hidden bg-[#0a0c17] shrink-0">
+              {book.cover_url && <img src={book.cover_url} className="w-full h-full object-cover" />}
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="text-[10px] uppercase tracking-wider font-bold text-[#5a6383] mb-1">
+                Отчёт по книге
+              </div>
+              <h3 className="font-display text-xl font-bold truncate">{book.title}</h3>
+              <p className="text-sm text-[#94a3b8] mb-2">{book.author}</p>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-[#e8b94e]/15 border border-[#e8b94e]/30 text-[#e8b94e] text-[10px] font-bold uppercase tracking-wider">
+                <BookOpen size={10} /> Читаю сейчас
+              </span>
+            </div>
+          </motion.div>
+        )}
 
+        {/* Success */}
+        {result?.success && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-[#4ecdc4]/10 border border-[#4ecdc4]/30 rounded-2xl p-8 text-center mb-6"
+          >
+            <div className="w-16 h-16 rounded-2xl bg-[#4ecdc4] mx-auto mb-3 flex items-center justify-center">
+              <CheckCircle size={32} className="text-[#06070d]" />
+            </div>
+            <h3 className="font-display font-bold text-2xl mb-2">Отчёт отправлен!</h3>
+            <p className="text-[#94a3b8] text-sm">Учитель проверит и зачтёт книгу. Возвращаемся в профиль...</p>
+          </motion.div>
+        )}
 
-			<motion.div
-				className="flex flex-col gap-10 mt-12"
-				initial={{ opacity: 0, y: 10 }}
-				animate={{ opacity: 1, y: 0 }}
-				transition={{ duration: 0.35 }}
-			>
+        {/* Questions */}
+        {!result?.success && questions.map((q, i) => {
+          const Icon = q.icon
+          const value = answers[q.field] || ''
+          const charCount = value.length
+          const isValid = charCount >= 20
 
-				<motion.div
-					initial={{ opacity: 0, y: 18 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.25 }}
-					transition={{ duration: 0.35 }}
-					className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
-				>
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-		
-					<label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
-						<span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">1</span>
-						Две важные цитаты из главы
-					</label>
-					<p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Найдите 2 ключевые мысли автора и объясните своими словами, почему они важны.</p>
-		
-					<textarea 
-						onChange={e => setQuote1(e.target.value)} 
-						value={quote1} 
-						placeholder="Например: 'Дисциплина — это решение делать то, чего очень не хочется делать...' Мой смысл: ..."
-						className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
-					/>
-				</motion.div>
+          return (
+            <motion.div
+              key={q.n}
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: 0.15 + i * 0.05 }}
+              className="bg-[#11141f] border border-white/5 rounded-2xl p-5 sm:p-6 mb-4"
+            >
+              <div className="flex items-start gap-3 mb-3">
+                <div className="w-10 h-10 rounded-xl bg-[#e8b94e]/10 border border-[#e8b94e]/20 text-[#e8b94e] flex items-center justify-center shrink-0">
+                  <Icon size={18} />
+                </div>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#5a6383]">
+                      Вопрос {q.n}
+                    </span>
+                    {isValid && (
+                      <CheckCircle size={12} className="text-[#4ecdc4]" />
+                    )}
+                  </div>
+                  <h3 className="font-display font-bold text-lg mb-1">{q.title}</h3>
+                  <p className="text-sm text-[#5a6383]">{q.desc}</p>
+                </div>
+              </div>
 
-				<motion.div
-					initial={{ opacity: 0, y: 18 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.25 }}
-					transition={{ duration: 0.35 }}
-					className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
-				>
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-		
-					<label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
-						<span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">2</span>
-						Что было непонятно или удивило?
-					</label>
-					<p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Опишите концепции, которые заставили вас задуматься или вызвали вопросы.</p>
-		
-					<textarea 
-						onChange={e => setQuote2(e.target.value)} 
-						value={quote2} 
-						placeholder="Меня удивил тот факт, что наш мозг тратит 20% всей энергии..."
-						className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
-					/>
-				</motion.div>
+              <textarea
+                value={value}
+                onChange={e => update(q.field, e.target.value)}
+                rows={4}
+                placeholder="Минимум 20 символов..."
+                className="w-full bg-[#0a0c17] border border-white/5 rounded-xl px-4 py-3 text-white placeholder-[#3a4565] outline-none focus:border-[#e8b94e]/30 transition-all resize-none text-sm"
+              />
 
-				<motion.div
-					initial={{ opacity: 0, y: 18 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.25 }}
-					transition={{ duration: 0.35 }}
-					className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
-				>
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-		
-					<label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
-						<span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">3</span>
-						Как это проявляется в твоей жизни?
-					</label>
-					<p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Свяжите прочитанное с личным опытом или ситуациями в вашей школе/жизни.</p>
-		
-					<textarea 
-						onChange={e => setLifeExample(e.target.value)} 
-						value={lifeExample} 
-						placeholder="В моей жизни это проявляется тогда, когда я пытаюсь проснуться в 6 утра..."
-						className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
-					/>
-				</motion.div>
+              <div className="text-right mt-2">
+                <span className={`text-xs ${isValid ? 'text-[#4ecdc4]' : 'text-[#5a6383]'}`}>
+                  {charCount} символов {isValid && '✓'}
+                </span>
+              </div>
+            </motion.div>
+          )
+        })}
 
-				<motion.div
-					initial={{ opacity: 0, y: 18 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.25 }}
-					transition={{ duration: 0.35 }}
-					className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
-				>
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-		
-					<label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
-						<span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">4</span>
-						Что попробуешь применить уже сегодня?
-					</label>
-					<p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Напишите конкретный, измеримый план действий на ближайшие дни.</p>
-		
-					<textarea 
-						onChange={e => setApplyToday(e.target.value)} 
-						value={applyToday} 
-						placeholder="Я удалю соцсети на 3 часа в день, чтобы сфокусироваться на коде..."
-						className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
-					/>
-				</motion.div>
+        {/* Rating */}
+        {!result?.success && (
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ delay: 0.4 }}
+            className="bg-[#11141f] border border-white/5 rounded-2xl p-6 text-center mb-6"
+          >
+            <p className="text-xs uppercase tracking-widest font-bold text-[#5a6383] mb-4">
+              Твоя оценка книги
+            </p>
+            <div className="flex justify-center gap-2">
+              {[1, 2, 3, 4, 5].map(star => (
+                <motion.button
+                  key={star}
+                  whileHover={{ scale: 1.2 }}
+                  whileTap={{ scale: 0.9 }}
+                  onClick={() => update('rating', star)}
+                  className={`text-4xl transition-colors ${
+                    star <= answers.rating ? 'text-[#e8b94e]' : 'text-[#252a3d]'
+                  }`}
+                >
+                  {star <= answers.rating ? '★' : '☆'}
+                </motion.button>
+              ))}
+            </div>
+          </motion.div>
+        )}
 
-				<motion.div
-					initial={{ opacity: 0, y: 18 }}
-					whileInView={{ opacity: 1, y: 0 }}
-					viewport={{ once: true, amount: 0.25 }}
-					transition={{ duration: 0.35 }}
-					className="bg-[#0d1a2e]/20 backdrop-blur-xl border border-[#162236] rounded-3xl p-6 sm:p-8 relative overflow-hidden group hover:border-[#1a56db]/50 transition-all duration-300"
-				>
-					<div className="absolute top-0 right-0 w-32 h-32 bg-[#1a56db] blur-[100px] opacity-10 -z-10"></div>
-		
-					<label className="text-lg font-bold text-white mb-2 flex items-center gap-3">
-						<span className="w-8 h-8 rounded-xl bg-[#1a56db]/20 border border-[#1a56db]/50 text-[#60a5fa] text-sm flex items-center justify-center font-bold">5</span>
-						Какие новые факты узнал?
-					</label>
-					<p className="text-[#4a6080] text-sm mb-4 ml-0 md:ml-11">Выпишите новую информацию, цифры или факты, о которых вы раньше не знали.</p>
-		
-					<textarea 
-						onChange={e => setConfusing(e.target.value)} 
-						value={confusing} 
-						placeholder="Я узнал, что Дэвид Гоггинс весил почти 130 кг перед тем, как..."
-						className="w-full bg-[#080c14]/50 border border-[#162236] rounded-xl px-5 py-4 text-white text-base outline-none focus:border-[#1a56db] focus:shadow-[0_0_15px_rgba(26,86,219,0.2)] transition-all resize-none h-32 sm:h-44 placeholder-[#1c2a40]"
-					/>
-				</motion.div>
-			</motion.div>
+        {/* Submit */}
+        {!result?.success && (
+          <>
+            <button
+              onClick={handleSubmit}
+              disabled={!canSubmit || loading}
+              className="w-full py-4 rounded-2xl bg-gradient-to-r from-[#e8b94e] to-[#c89538] text-[#06070d] font-bold text-lg flex items-center justify-center gap-2 disabled:opacity-30 disabled:cursor-not-allowed hover:shadow-lg hover:shadow-[#e8b94e]/30 transition-all"
+            >
+              {loading ? (
+                <Loader2 size={20} className="animate-spin" />
+              ) : (
+                <>Сдать отчёт <CheckCircle size={18} /></>
+              )}
+            </button>
 
-			<motion.div
-				className="mt-10 bg-[#0d1a2e]/50 border border-[#162236] p-6 sm:p-8 rounded-3xl flex flex-col items-center"
-				initial={{ opacity: 0, y: 10 }}
-				whileInView={{ opacity: 1, y: 0 }}
-				viewport={{ once: true, amount: 0.3 }}
-				transition={{ duration: 0.35 }}
-			>
-				<p className="text-xs text-[#4a6080] uppercase tracking-widest mb-4">Субъективная оценка книги</p>
-				<div className="flex gap-4">
-					{[1, 2, 3, 4, 5].map(star => (
-						<button 
-							key={star} 
-							className={`text-4xl transition-all duration-200 hover:scale-125 cursor-pointer ${star <= rating ? "text-yellow-400 drop-shadow-[0_0_10px_rgba(250,204,21,0.5)]" : "text-[#162236]"}`} 
-							onClick={() => setRating(star)}
-						>
-							{star <= rating ? "★" : "☆"}
-						</button>
-					))}
-				</div>
-			</motion.div>
-
-			<button 
-				onClick={() => handleSubmit()} 
-				disabled={loading}
-				className="w-full bg-gradient-to-r from-[#1a56db] to-[#60a5fa] py-5 rounded-2xl font-bold text-lg mt-8 shadow-lg shadow-[#1a56db]/20 transition-all hover:opacity-90 active:scale-[0.98] disabled:opacity-50 flex items-center justify-center gap-3"
-			>
-				{loading ? (
-					<>
-						<div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-						Отправляем отчёт учителю...
-					</>
-				) : 'Сдать отчёт учителю'}
-			</button>
-			{result && result.error && (
-				<motion.div
-					initial={{ opacity: 0, y: 10 }}
-					animate={{ opacity: 1, y: 0 }}
-					transition={{ duration: 0.25 }}
-					className="text-red-400 text-center mt-4 bg-red-500/10 border border-red-500/30 rounded-xl py-3 px-4"
-				>
-					{result.error}
-				</motion.div>
-			)}
-			{result && result.success && (
-				<motion.div
-					initial={{ opacity: 0, y: 10, scale: 0.98 }}
-					animate={{ opacity: 1, y: 0, scale: 1 }}
-					transition={{ duration: 0.35 }}
-					className="text-green-400 text-center mt-4 bg-green-500/10 border border-green-500/30 rounded-xl py-3 px-4"
-				>
-					{result.success}
-				</motion.div>
-			)}
-		</div>
-	)
-} 
-
-export default Reports;
+            {result?.error && (
+              <div className="text-center mt-3 p-3 rounded-xl bg-[#ff5d8f]/10 border border-[#ff5d8f]/30 text-[#ff5d8f] text-sm">
+                {result.error}
+              </div>
+            )}
+          </>
+        )}
+      </div>
+    </div>
+  )
+}

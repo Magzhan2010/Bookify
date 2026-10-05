@@ -1,69 +1,181 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy-900: #080c14;
-  --color-navy-800: #0d1a2e;
-  --color-navy-700: #162236;
-  --color-accent: #1a56db;
-  --color-accent-light: #3b82f6;
-}
-body {
-  background-color: #080c14;
-  color: white;
-  font-family: var(--font-poppins);
+  /* === Brand palette: тёплая библиотека с золотым акцентом === */
+  --color-ink-950: #06070d;
+  --color-ink-900: #0a0c17;
+  --color-ink-800: #11141f;
+  --color-ink-700: #1a1f30;
+  --color-ink-600: #252a3d;
+  --color-ink-500: #353c54;
+  --color-ink-400: #5a6383;
+
+  --color-parchment-50:  #faf6ee;
+  --color-parchment-100: #f4ecd8;
+  --color-parchment-200: #e8d9b3;
+
+  --color-gold-300: #f6cf6b;
+  --color-gold-400: #e8b94e;
+  --color-gold-500: #c89538;
+  --color-gold-600: #9c6f25;
+
+  --color-amber-glow: #ffb547;
+  --color-coral: #ff7e6b;
+  --color-mint: #4ecdc4;
+  --color-rose: #ff5d8f;
+
+  --color-accent: var(--color-gold-400);
+  --color-accent-light: var(--color-gold-300);
+
+  --font-display: 'Fraunces', 'Playfair Display', 'Montserrat', serif;
 }
 
-h1,h2,h3 {
-  font-family: var(--font-montserrat);
+:root {
+  --grid: rgba(232, 185, 78, 0.05);
+  --noise: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='200' height='200'><filter id='n'><feTurbulence baseFrequency='0.9' numOctaves='2' /><feColorMatrix values='0 0 0 0 1 0 0 0 0 0.9 0 0 0 0 0.7 0 0 0 0.06 0'/></filter><rect width='200' height='200' filter='url(%23n)' /></svg>");
 }
+
+html {
+  background-color: var(--color-ink-950);
+  color: white;
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: var(--color-ink-950);
+  background-image:
+    radial-gradient(at 20% 0%, rgba(232, 185, 78, 0.08), transparent 50%),
+    radial-gradient(at 80% 100%, rgba(78, 205, 196, 0.06), transparent 50%),
+    linear-gradient(var(--grid) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+  background-size: 100% 100%, 100% 100%, 32px 32px, 32px 32px;
+  background-attachment: fixed;
+  color: white;
+  font-family: var(--font-poppins), system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, .display {
+  font-family: var(--font-display), var(--font-montserrat), serif;
+  letter-spacing: -0.02em;
+}
+
+/* === Animation system === */
 @keyframes scan {
   0% { transform: translateY(0); opacity: 0; }
   50% { opacity: 0.8; }
   100% { transform: translateY(300px); opacity: 0; }
 }
-
-.animate-scan {
-  animation: scan 3s linear infinite;
-}
+.animate-scan { animation: scan 3s linear infinite; }
 
 @keyframes modalIn {
   from { opacity: 0; transform: translateY(20px) scale(0.95); }
-  to { opacity: 1; transform: translateY(0) scale(1); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
 }
-
-.animate-modalIn {
-  animation: modalIn 0.3s ease-out forwards;
-}
-.no-scrollbar {
-  -ms-overflow-style: none;
-  scrollbar-width: none;
-}
-.no-scrollbar::-webkit-scrollbar {
-  display: none;
-}
-
-.safe-bottom {
-  padding-bottom: max(env(safe-area-inset-bottom, 0px), 2rem);
-}
+.animate-modalIn { animation: modalIn 0.3s cubic-bezier(0.23, 1, 0.32, 1) forwards; }
 
 @keyframes pageIn {
-  from {
-    opacity: 0;
-    transform: translateY(10px);
-  }
-  to {
-    opacity: 1;
-    transform: translateY(0);
-  }
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+main { animation: pageIn 0.4s cubic-bezier(0.23, 1, 0.32, 1) both; }
+
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-shimmer {
+  background: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0.04) 25%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.04) 75%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
 }
 
-/* Анимация входа страницы (для большинства страниц, где используется <main />) */
-main {
-  animation: pageIn 0.35s ease-out both;
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+.animate-float { animation: float 4s ease-in-out infinite; }
+
+@keyframes glow {
+  0%, 100% { box-shadow: 0 0 20px rgba(232, 185, 78, 0.3); }
+  50% { box-shadow: 0 0 40px rgba(232, 185, 78, 0.6); }
+}
+.animate-glow { animation: glow 3s ease-in-out infinite; }
+
+@keyframes spin-slow {
+  to { transform: rotate(360deg); }
+}
+.animate-spin-slow { animation: spin-slow 12s linear infinite; }
+
+/* === Utility classes === */
+.no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+.no-scrollbar::-webkit-scrollbar { display: none; }
+
+.safe-bottom { padding-bottom: max(env(safe-area-inset-bottom, 0px), 2rem); }
+
+/* Glassmorphism */
+.glass {
+  background: rgba(17, 20, 31, 0.65);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
 }
 
+.glass-light {
+  background: rgba(255, 255, 255, 0.04);
+  backdrop-filter: blur(20px) saturate(180%);
+  -webkit-backdrop-filter: blur(20px) saturate(180%);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+/* Gold gradient text */
+.text-gradient-gold {
+  background: linear-gradient(135deg, var(--color-gold-300), var(--color-gold-500));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+/* Scrollbar style */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: var(--color-ink-900); }
+::-webkit-scrollbar-thumb {
+  background: var(--color-ink-600);
+  border-radius: 5px;
+  border: 2px solid var(--color-ink-900);
+}
+::-webkit-scrollbar-thumb:hover { background: var(--color-gold-500); }
+
+/* Selection */
+::selection {
+  background: var(--color-gold-400);
+  color: var(--color-ink-950);
+}
+
+/* Book card 3D tilt preparation */
+.book-card {
+  perspective: 1000px;
+  transform-style: preserve-3d;
+}
+
+/* Reduced motion */
 @media (prefers-reduced-motion: reduce) {
-  main {
-    animation: none;
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
   }
+  main { animation: none; }
+}
+
+/* Layout helpers */
+.bg-mesh-warm {
+  background-image:
+    radial-gradient(at 30% 20%, rgba(232, 185, 78, 0.18), transparent 45%),
+    radial-gradient(at 80% 80%, rgba(78, 205, 196, 0.12), transparent 45%);
 }
