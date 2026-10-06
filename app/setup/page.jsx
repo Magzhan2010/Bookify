@@ -111,7 +111,7 @@ export default function SetupPage() {
                   <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">Тестовые аккаунты</p>
                   <div className="space-y-1.5 text-[12px] font-mono">
                     <div className="flex justify-between text-[var(--color-text-primary)]">
-                      <span>aigerim@librarian.school.com</span><span className="text-[var(--color-text-tertiary)]">library123</span>
+                      <span>teacher@dls.school</span><span className="text-[var(--color-text-tertiary)]">library123</span>
                     </div>
                     <div className="flex justify-between text-[var(--color-text-primary)]">
                       <span>aidana@student.school.com</span><span className="text-[var(--color-text-tertiary)]">student123</span>

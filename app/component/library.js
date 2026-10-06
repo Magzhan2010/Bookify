@@ -3,7 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, Filter, X, BookOpen, CheckCircle } from 'lucide-react'
+import { Search, X, BookOpen, CheckCircle, Plus, ChevronDown } from 'lucide-react'
 
 import Navbar from "./NavBar"
 import Books from "./books"
@@ -13,26 +13,26 @@ export default function Library() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  // Состояние
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalBooks, setTotalBooks] = useState(0)
   const [myFinishedId, setMyFinishedId] = useState([])
   const [myReadingId, setMyReadingId] = useState([])
   const [myShelf, setMyShelf] = useState(0)
-  const [allGenres, setAllGenres] = useState(['Все'])
+  const [allGenres, setAllGenres] = useState([])
 
-  // Текущий фильтр из URL (?genre=Психология)
   const activeGenre = searchParams.get('genre') || 'Все'
-
-  // Поиск (отдельно от фильтра)
   const [search, setSearch] = useState('')
 
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const observerRef = useRef(null)
 
-  // Auth check
+  // === Главные жанры — сразу видны ===
+  const TOP_GENRES = ['Все', 'Художественная', 'Деловая', 'Психология', 'Учебная', 'Биография', 'Саморазвитие', 'Философия', 'Финансы', 'Наука', 'Научпоп', 'Искусство']
+  const GENRES_PER_PAGE = 6
+
+  // === Auth ===
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) { router.push('/login'); return }
@@ -41,7 +41,40 @@ export default function Library() {
     }
   }, [router])
 
-  // Профиль — для статуса чтения
+  // === Восстанавливаем scroll при возврате с book/[id] ===
+  useEffect(() => {
+    try {
+      const saved = sessionStorage.getItem('bookify:scroll:library')
+      if (saved) {
+        // Небольшая задержка чтобы DOM успел отрендериться
+        setTimeout(() => {
+          window.scrollTo({ top: parseInt(saved), behavior: 'instant' })
+        }, 50)
+      }
+    } catch (e) {}
+  }, [])
+
+  // Сохраняем scroll при уходе со страницы (например на book/[id])
+  useEffect(() => {
+    const handleScroll = () => {
+      try {
+        sessionStorage.setItem('bookify:scroll:library', String(window.scrollY))
+      } catch (e) {}
+    }
+    // Throttle
+    let raf
+    const throttled = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(handleScroll)
+    }
+    window.addEventListener('scroll', throttled, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', throttled)
+      cancelAnimationFrame(raf)
+    }
+  }, [])
+
+  // === Профиль ===
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token')
@@ -57,18 +90,34 @@ export default function Library() {
     fetchProfile()
   }, [])
 
-  // Список жанров для фильтров
+  // === Список жанров ===
   useEffect(() => {
     fetch('/api/books?allGenres=true')
       .then(r => r.json())
       .then(data => {
         const raw = data.map(g => typeof g === 'object' ? g.genre : g).filter(Boolean)
-        setAllGenres(['Все', ...raw])
+        // Приоритет: сначала TOP_GENRES (что есть в БД), потом остальные
+        const topInDb = TOP_GENRES.filter(g => g === 'Все' || raw.includes(g))
+        const otherGenres = raw.filter(g => !topInDb.includes(g)).sort()
+        setAllGenres([...topInDb, ...otherGenres])
       })
-      .catch(() => {})
+      .catch(() => setAllGenres(TOP_GENRES))
   }, [])
 
-  // Загрузка книг с фильтром жанра
+  // === Видимые жанры (прогрессивная подгрузка по 6) ===
+  const [visibleCount, setVisibleCount] = useState(GENRES_PER_PAGE * 2) // Сразу показываем 12
+  const visibleGenres = useMemo(() => allGenres.slice(0, visibleCount), [allGenres, visibleCount])
+  const hasMoreGenres = visibleCount < allGenres.length
+
+  // Сброс visibleCount если активный жанр не в видимых
+  useEffect(() => {
+    if (activeGenre !== 'Все' && !visibleGenres.includes(activeGenre) && allGenres.includes(activeGenre)) {
+      const idx = allGenres.indexOf(activeGenre)
+      setVisibleCount(Math.max(visibleCount, idx + GENRES_PER_PAGE))
+    }
+  }, [activeGenre, allGenres])
+
+  // === Загрузка книг ===
   const fetchBooks = async (pageNum, isNewSearch) => {
     if (isNewSearch) setLoading(true)
     try {
@@ -93,12 +142,10 @@ export default function Library() {
     }
   }
 
-  // Загружаем при изменении фильтра
   useEffect(() => {
     setPage(1)
     setHasMore(true)
     fetchBooks(1, true)
-    // Обновляем total
     const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
     fetch(`/api/books?countOnly=true${genreParam}`)
       .then(r => r.json())
@@ -106,13 +153,8 @@ export default function Library() {
       .catch(() => {})
   }, [activeGenre])
 
-  // Сброс на первую страницу при смене фильтра
-  useEffect(() => {
-    setPage(1)
-    setHasMore(true)
-  }, [activeGenre])
+  useEffect(() => { setPage(1); setHasMore(true) }, [activeGenre])
 
-  // Infinite scroll
   useEffect(() => {
     if (loading || !hasMore) return
     const currentRef = observerRef.current
@@ -128,7 +170,7 @@ export default function Library() {
     if (page > 1) fetchBooks(page)
   }, [page])
 
-  // Клик по жанру — обновляет URL (без скролла)
+  // === Клик по жанру — обновляет URL (без push, чтобы не ломать историю) ===
   const handleGenreClick = (genre) => {
     const params = new URLSearchParams(searchParams.toString())
     if (genre === 'Все') {
@@ -137,14 +179,20 @@ export default function Library() {
       params.set('genre', genre)
     }
     router.replace(`/library?${params.toString()}`, { scroll: false })
-    window.scrollTo({ top: 0, behavior: 'smooth' })
+    // Плавный скролл наверх к каталогу
+    setTimeout(() => {
+      document.getElementById('catalog-top')?.scrollIntoView({ behavior: 'smooth' })
+    }, 50)
   }
 
-  // Популярные жанры (показываем только топ, остальные в "ещё")
-  const generalGenres = ['Все', 'Художественная', 'Деловая', 'Психология', 'Учебная', 'Биография', 'Саморазвитие', 'Философия', 'Финансы', 'Наука', 'Научпоп', 'Искусство']
-  const visibleGenres = generalGenres.filter(g => allGenres.includes(g))
-  const overflowGenres = allGenres.filter(g => !generalGenres.includes(g))
-  const [showAllGenres, setShowAllGenres] = useState(false)
+  // === Показать ещё 6 жанров ===
+  const handleLoadMoreGenres = () => {
+    setVisibleCount(prev => Math.min(prev + GENRES_PER_PAGE, allGenres.length))
+  }
+
+  // === Прогресс жанров ===
+  const genresLoaded = visibleGenres.length
+  const genresTotal = allGenres.length
 
   const stats = [
     { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: 'var(--color-brand)' },
@@ -156,7 +204,7 @@ export default function Library() {
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] pb-20">
       <Navbar />
 
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8">
+      <div id="catalog-top" className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8">
         {/* Hero */}
         <section className="pt-10 md:pt-14 pb-6">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
@@ -167,7 +215,7 @@ export default function Library() {
               Каталог DLS
             </h1>
             <p className="text-[17px] text-[var(--color-text-secondary)] max-w-xl leading-[1.5]">
-              Используй фильтры ниже — книги остаются видимыми, просто меняется порядок
+              Используй фильтры — книги остаются, меняется только подборка
             </p>
           </motion.div>
         </section>
@@ -195,7 +243,7 @@ export default function Library() {
           })}
         </div>
 
-        {/* Active filter + search */}
+        {/* Search + active filter */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4 items-stretch sm:items-center">
           <div className="relative flex-1">
             <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
@@ -228,21 +276,22 @@ export default function Library() {
           )}
         </div>
 
-        {/* Genre filters chips */}
+        {/* Progressive genre filters */}
         <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <Filter size={14} className="text-[var(--color-text-tertiary)]" />
-            <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">Жанры</span>
-            <span className="text-[11px] text-[var(--color-text-tertiary)]">·</span>
-            <span className="text-[11px] text-[var(--color-text-tertiary)]">книги остаются, меняется фильтр</span>
+          <div className="flex items-center justify-between mb-3">
+            <div className="text-[12px] text-[var(--color-text-tertiary)]">
+              Жанры · <span className="text-[var(--color-text-primary)] font-medium">{genresLoaded}</span> из <span className="text-[var(--color-text-primary)] font-medium">{genresTotal}</span>
+            </div>
           </div>
 
           <div className="flex flex-wrap gap-2 items-center">
-            {/* Топ жанры */}
-            {(showAllGenres ? allGenres : visibleGenres).map(genre => {
+            {visibleGenres.map((genre, i) => {
               const active = activeGenre === genre
               return (
                 <motion.button
+                  initial={{ opacity: 0, y: 6 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: i < GENRES_PER_PAGE * 2 ? i * 0.02 : 0 }}
                   whileTap={{ scale: 0.97 }}
                   key={genre}
                   onClick={() => handleGenreClick(genre)}
@@ -257,14 +306,18 @@ export default function Library() {
               )
             })}
 
-            {/* Показать ещё */}
-            {overflowGenres.length > 0 && (
-              <button
-                onClick={() => setShowAllGenres(!showAllGenres)}
-                className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] transition-colors"
+            {/* Кнопка "Ещё 6" */}
+            {hasMoreGenres && (
+              <motion.button
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                onClick={handleLoadMoreGenres}
+                className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] transition-colors flex items-center gap-1"
               >
-                {showAllGenres ? 'Свернуть ↑' : `Ещё ${overflowGenres.length} ↓`}
-              </button>
+                <Plus size={13} />
+                Ещё {Math.min(GENRES_PER_PAGE, genresTotal - genresLoaded)}
+                <ChevronDown size={11} />
+              </motion.button>
             )}
           </div>
         </div>
@@ -294,11 +347,11 @@ export default function Library() {
             </div>
             {!hasMore && books.length > 0 && (
               <div className="flex items-center justify-center gap-4 py-14">
-                <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--color-border)]" />
+                <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--color-border)]" />
                 <p className="text-[var(--color-text-tertiary)] text-[12px] font-medium tracking-wider uppercase">
                   Конец каталога
                 </p>
-                <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--color-border)]" />
+                <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--color-border)]" />
               </div>
             )}
           </>

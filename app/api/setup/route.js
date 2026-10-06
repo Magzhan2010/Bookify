@@ -40,7 +40,7 @@ export async function POST() {
 
     // Демо-аккаунты
     const demo = [
-      { name: 'Библиотекарь Айгерим', email: 'aigerim@librarian.school.com', password: 'library123', role: 'librarian' },
+      { name: 'Малика апай', email: 'teacher@dls.school', password: 'library123', role: 'librarian' },
       { name: 'Айдана Сатпаева', email: 'aidana@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
       { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' },
       { name: 'Алия Молдабекова', email: 'aliya@student.school.com', password: 'student123', role: 'student', class_name: '9-А' }

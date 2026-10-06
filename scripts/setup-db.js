@@ -21,7 +21,7 @@ if (!DATABASE_URL) {
 }
 
 const DEMO_USERS = [
-  { name: 'Малика апай', email: 'malika@librarian.school.com', password: 'library123', role: 'librarian' },
+  { name: 'Малика апай', email: 'teacher@dls.school', password: 'library123', role: 'librarian' },
   { name: 'Айдана Сатпаева', email: 'aidana@student.school.com', password: 'student123', role: 'student', class_name: '10-А' },
   { name: 'Тимур Касенов', email: 'timur@student.school.com', password: 'student123', role: 'student', class_name: '11-Б' }
 ]
@@ -260,7 +260,7 @@ async function run() {
 
   await client.end()
   console.log('\n🎉 Готово! Залогинься одним из:')
-  console.log('   📚 aigerim@librarian.school.com / library123')
+  console.log('   📚 teacher@dls.school / library123')
   console.log('   👤 aidana@student.school.com / student123')
 }
 

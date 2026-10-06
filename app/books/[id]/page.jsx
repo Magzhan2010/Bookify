@@ -10,6 +10,8 @@ import {
   Bell, BellOff, Loader2, Clock, Star, Sparkles, User
 } from 'lucide-react'
 
+const SCROLL_KEY_PREFIX = 'bookify:scroll:'
+
 const Book = () => {
   const [book, setBook] = useState(null)
   const [requestLoading, setRequestLoading] = useState(false)
@@ -22,7 +24,19 @@ const Book = () => {
   const router = useRouter()
   const { id } = useParams()
 
+  // === Сохраняем scroll позицию библиотеки чтобы вернуться на то же место ===
   useEffect(() => {
+    // При уходе со страницы книги — вернуть скролл библиотеки
+    const handleBeforeUnload = () => {
+      try {
+        sessionStorage.setItem(SCROLL_KEY_PREFIX + 'library', String(window.scrollY))
+      } catch (e) {}
+    }
+    return () => handleBeforeUnload()
+  }, [])
+
+  useEffect(() => {
+    // На самой странице книги — всегда вверх
     window.scrollTo(0, 0)
   }, [id])
 
