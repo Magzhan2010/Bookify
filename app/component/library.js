@@ -3,9 +3,7 @@
 import { useRouter, useSearchParams } from "next/navigation"
 import { useEffect, useState, useRef, useMemo } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import {
-  BookOpen, CheckCircle, Sparkles, ChevronRight, Home, Filter
-} from 'lucide-react'
+import { Search, Filter, X, BookOpen, CheckCircle } from 'lucide-react'
 
 import Navbar from "./NavBar"
 import Books from "./books"
@@ -14,102 +12,80 @@ import SkeletonGrid from "./skeleton"
 export default function Library() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  // Состояние
   const [books, setBooks] = useState([])
   const [loading, setLoading] = useState(true)
   const [totalBooks, setTotalBooks] = useState(0)
   const [myFinishedId, setMyFinishedId] = useState([])
   const [myReadingId, setMyReadingId] = useState([])
   const [myShelf, setMyShelf] = useState(0)
+  const [allGenres, setAllGenres] = useState(['Все'])
 
-  // Wizard state — инициализируется из URL (?genre=Психология/Саморазвитие)
-  const initialPath = useMemo(() => {
-    const g = searchParams.get('genre')
-    if (!g || g === 'Все') return []
-    return g.split('/').map(s => s.trim()).filter(Boolean)
-  }, [searchParams])
+  // Текущий фильтр из URL (?genre=Психология)
+  const activeGenre = searchParams.get('genre') || 'Все'
 
-  const [path, setPath] = useState(initialPath)
-  const [pathBooks, setPathBooks] = useState([])
-  const [pathTotal, setPathTotal] = useState(0)
-  const [pathLoading, setPathLoading] = useState(false)
-  const [mode, setMode] = useState(initialPath.length > 0 ? 'books' : 'wizard')
+  // Поиск (отдельно от фильтра)
+  const [search, setSearch] = useState('')
 
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
   const observerRef = useRef(null)
 
+  // Auth check
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (!token) {
-      router.push('/login')
-      return
-    }
+    if (!token) { router.push('/login'); return }
     try { JSON.parse(atob(token.split('.')[1])) } catch (e) {
-      localStorage.removeItem('token')
-      router.push('/')
+      localStorage.removeItem('token'); router.push('/')
     }
   }, [router])
 
+  // Профиль — для статуса чтения
   useEffect(() => {
     const fetchProfile = async () => {
       const token = localStorage.getItem('token')
       if (!token) return
       try {
-        const res = await fetch('/api/profile', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
+        const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
         const data = await res.json()
         setMyFinishedId((data.finished || []).map(b => Number(b.book_id)))
         setMyReadingId((data.active || []).map(b => Number(b.book_id)))
         setMyShelf(data.finished?.length || 0)
-      } catch (err) { console.error(err) }
+      } catch (err) {}
     }
     fetchProfile()
   }, [])
 
-  // Загружаем общую статистику для hero
+  // Список жанров для фильтров
   useEffect(() => {
-    fetch('/api/books?countOnly=true')
+    fetch('/api/books?allGenres=true')
       .then(r => r.json())
-      .then(d => setTotalBooks(parseInt(d.total) || 0))
+      .then(data => {
+        const raw = data.map(g => typeof g === 'object' ? g.genre : g).filter(Boolean)
+        setAllGenres(['Все', ...raw])
+      })
       .catch(() => {})
   }, [])
 
-  // Загружаем категории для текущего уровня wizard
-  useEffect(() => {
-    const pathStr = path.join(' / ')
-    setPathLoading(true)
-    fetch(`/api/genres/sub?path=${encodeURIComponent(pathStr)}`)
-      .then(r => r.json())
-      .then(d => {
-        setPathBooks(d.categories || [])
-        setPathTotal((d.categories || []).reduce((s, c) => s + c.totalCount, 0))
-        setPathLoading(false)
-      })
-      .catch(() => setPathLoading(false))
-  }, [path])
-
-  // Загружаем книги для выбранной ветки (нижний уровень)
-  const fetchBooksForPath = async (currentPage, isNewPath) => {
-    const pathSegments = path.map(encodeURIComponent)
-    const url = `/api/genres/${pathSegments.join('/')}/books?page=${currentPage}&limit=12`
-    setLoading(true)
+  // Загрузка книг с фильтром жанра
+  const fetchBooks = async (pageNum, isNewSearch) => {
+    if (isNewSearch) setLoading(true)
     try {
-      const res = await fetch(url)
-      const data = await res.json()
-      const newBooks = data.books || []
+      const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
+      const url = `/api/books?page=${pageNum}${genreParam}`
+      const data = await (await fetch(url)).json()
 
-      if (isNewPath) {
-        setBooks(newBooks)
+      if (isNewSearch) {
+        setBooks(data)
       } else {
         setBooks(prev => {
           const existingIds = new Set(prev.map(b => b.id))
-          return [...prev, ...newBooks.filter(b => !existingIds.has(b.id))]
+          return [...prev, ...data.filter(b => !existingIds.has(b.id))]
         })
       }
 
-      if (newBooks.length < 12) setHasMore(false)
-      setTotalBooks(data.total || 0)
+      if (data.length < 12) setHasMore(false)
     } catch (err) {
       console.error(err)
     } finally {
@@ -117,86 +93,62 @@ export default function Library() {
     }
   }
 
-  // Если mode = 'books', грузим книги
+  // Загружаем при изменении фильтра
   useEffect(() => {
-    if (mode !== 'books') return
     setPage(1)
     setHasMore(true)
-    fetchBooksForPath(1, true)
-  }, [mode, path])
+    fetchBooks(1, true)
+    // Обновляем total
+    const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
+    fetch(`/api/books?countOnly=true${genreParam}`)
+      .then(r => r.json())
+      .then(d => setTotalBooks(parseInt(d.total) || 0))
+      .catch(() => {})
+  }, [activeGenre])
 
-  // Infinite scroll для книг
+  // Сброс на первую страницу при смене фильтра
   useEffect(() => {
-    if (mode !== 'books' || loading || !hasMore) return
+    setPage(1)
+    setHasMore(true)
+  }, [activeGenre])
+
+  // Infinite scroll
+  useEffect(() => {
+    if (loading || !hasMore) return
     const currentRef = observerRef.current
-    const observer = new IntersectionObserver(entries => {
-      if (entries[0].isIntersecting) {
-        setPage(p => p + 1)
-      }
-    }, { threshold: 1.0 })
+    const observer = new IntersectionObserver(
+      entries => { if (entries[0].isIntersecting) setPage(p => p + 1) },
+      { threshold: 1.0 }
+    )
     if (currentRef) observer.observe(currentRef)
     return () => { if (currentRef) observer.unobserve(currentRef) }
-  }, [mode, loading, hasMore])
+  }, [loading, hasMore])
 
   useEffect(() => {
-    if (mode === 'books' && page > 1) fetchBooksForPath(page)
+    if (page > 1) fetchBooks(page)
   }, [page])
 
-  // Клик по категории — спускаемся глубже или показываем книги
-  const handleCategoryClick = (cat) => {
-    const newPath = path.length ? [...path, cat.name] : [cat.name]
-    const newMode = (cat.hasChildren && cat.totalCount > 0) ? 'wizard' : 'books'
-
-    // Обновляем URL для сохранения состояния при router.back()
+  // Клик по жанру — обновляет URL (без скролла)
+  const handleGenreClick = (genre) => {
     const params = new URLSearchParams(searchParams.toString())
-    if (newPath.length > 0) {
-      params.set('genre', newPath.join(' / '))
-    } else {
+    if (genre === 'Все') {
       params.delete('genre')
+    } else {
+      params.set('genre', genre)
     }
     router.replace(`/library?${params.toString()}`, { scroll: false })
-
-    setPath(newPath)
-    setMode(newMode)
+    window.scrollTo({ top: 0, behavior: 'smooth' })
   }
 
-  const handleBack = () => {
-    if (mode === 'books') {
-      setMode('wizard')
-      return
-    }
-    if (path.length > 0) {
-      const newPath = path.slice(0, -1)
-      const params = new URLSearchParams(searchParams.toString())
-      if (newPath.length > 0) {
-        params.set('genre', newPath.join(' / '))
-      } else {
-        params.delete('genre')
-      }
-      router.replace(`/library?${params.toString()}`, { scroll: false })
-      setPath(newPath)
-    }
-  }
-
-  const handleCrumbClick = (index) => {
-    const newMode = mode === 'books' ? 'wizard' : mode
-    const newPath = index === -1 ? [] : path.slice(0, index + 1)
-
-    const params = new URLSearchParams(searchParams.toString())
-    if (newPath.length > 0) {
-      params.set('genre', newPath.join(' / '))
-    } else {
-      params.delete('genre')
-    }
-    router.replace(`/library?${params.toString()}`, { scroll: false })
-
-    setPath(newPath)
-    setMode(newMode)
-  }
+  // Популярные жанры (показываем только топ, остальные в "ещё")
+  const generalGenres = ['Все', 'Художественная', 'Деловая', 'Психология', 'Учебная', 'Биография', 'Саморазвитие', 'Философия', 'Финансы', 'Наука', 'Научпоп', 'Искусство']
+  const visibleGenres = generalGenres.filter(g => allGenres.includes(g))
+  const overflowGenres = allGenres.filter(g => !generalGenres.includes(g))
+  const [showAllGenres, setShowAllGenres] = useState(false)
 
   const stats = [
     { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: 'var(--color-brand)' },
-    { icon: BookOpen, label: 'Сейчас читаю', value: myReadingId.length, color: 'var(--color-warning)' },
+    { icon: BookOpen, label: 'Читаю сейчас', value: myReadingId.length, color: 'var(--color-warning)' },
     { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: 'var(--color-success)' }
   ]
 
@@ -204,9 +156,9 @@ export default function Library() {
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] pb-20">
       <Navbar />
 
-      <div className="max-w-[1300px] mx-auto px-4 sm:px-6 md:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 md:px-8">
         {/* Hero */}
-        <section className="pt-10 md:pt-14 pb-8">
+        <section className="pt-10 md:pt-14 pb-6">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em] mb-3">
               {totalBooks} книг в каталоге
@@ -214,14 +166,14 @@ export default function Library() {
             <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-3 text-[var(--color-text-primary)]">
               Каталог DLS
             </h1>
-            <p className="text-[18px] text-[var(--color-text-secondary)] max-w-xl leading-[1.5]">
-              Выбери категорию по цепочке — от общего к частному
+            <p className="text-[17px] text-[var(--color-text-secondary)] max-w-xl leading-[1.5]">
+              Используй фильтры ниже — книги остаются видимыми, просто меняется порядок
             </p>
           </motion.div>
         </section>
 
         {/* Stats */}
-        <div className="grid grid-cols-3 gap-3 mb-8">
+        <div className="grid grid-cols-3 gap-3 mb-6">
           {stats.map((stat, i) => {
             const Icon = stat.icon
             return (
@@ -243,155 +195,114 @@ export default function Library() {
           })}
         </div>
 
-        {/* Breadcrumbs */}
-        <div className="mb-5 flex items-center gap-2 flex-wrap">
-          <button
-            onClick={() => handleCrumbClick(-1)}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-              path.length === 0 && mode === 'wizard'
-                ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]'
-                : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-            }`}
-          >
-            <Home size={13} /> Все жанры
-          </button>
-          {path.map((segment, i) => (
-            <div key={i} className="flex items-center gap-2">
-              <ChevronRight size={13} className="text-[var(--color-text-tertiary)]" />
+        {/* Active filter + search */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4 items-stretch sm:items-center">
+          <div className="relative flex-1">
+            <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+            <input
+              type="text"
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              className="w-full bg-[var(--color-bg-card)] border border-[var(--color-border)] pl-10 pr-3 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:ring-4 focus:ring-[var(--color-brand-soft)] transition-all"
+              placeholder="Поиск по названию или автору..."
+            />
+            {search && (
               <button
-                onClick={() => handleCrumbClick(i)}
-                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-all ${
-                  i === path.length - 1 && mode === 'wizard'
-                    ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]'
-                    : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
-                }`}
+                onClick={() => setSearch('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]"
               >
-                {segment}
+                <X size={14} />
               </button>
-            </div>
-          ))}
-          {mode === 'books' && (
-            <>
-              <ChevronRight size={13} className="text-[var(--color-text-tertiary)]" />
-              <span className="px-3 py-1.5 rounded-lg text-[13px] font-semibold bg-[var(--color-brand)] text-[var(--color-text-on-brand)]">
-                Книги
-              </span>
-            </>
+            )}
+          </div>
+
+          {activeGenre !== 'Все' && (
+            <button
+              onClick={() => handleGenreClick('Все')}
+              className="flex items-center gap-2 px-3 py-2 rounded-xl bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[13px] font-medium whitespace-nowrap"
+            >
+              <span className="text-[10px] uppercase tracking-wider opacity-60">Фильтр:</span>
+              <span>{activeGenre}</span>
+              <X size={13} />
+            </button>
           )}
         </div>
 
-        <AnimatePresence mode="wait">
-          {/* WIZARD MODE: показываем категории */}
-          {mode === 'wizard' && (
-            <motion.div
-              key={'wizard-' + path.join('/')}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
-            >
-              {pathLoading ? (
-                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                  {Array.from({ length: 8 }).map((_, i) => (
-                    <div key={i} className="h-24 bg-[var(--color-bg-soft)] rounded-2xl animate-pulse" />
-                  ))}
-                </div>
-              ) : pathBooks.length === 0 ? (
-                <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
-                  <p className="text-[var(--color-text-secondary)] text-[14px]">Нет категорий</p>
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between mb-2">
-                    <h3 className="text-[13px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium">
-                      {path.length === 0 ? 'Выбери тему' : `Подкатегории — ${path[path.length - 1]}`}
-                    </h3>
-                    <span className="text-[12px] text-[var(--color-text-tertiary)]">
-                      {pathBooks.length} {pathBooks.length === 1 ? 'категория' : 'категорий'}
-                    </span>
-                  </div>
+        {/* Genre filters chips */}
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <Filter size={14} className="text-[var(--color-text-tertiary)]" />
+            <span className="text-[13px] text-[var(--color-text-secondary)] font-medium">Жанры</span>
+            <span className="text-[11px] text-[var(--color-text-tertiary)]">·</span>
+            <span className="text-[11px] text-[var(--color-text-tertiary)]">книги остаются, меняется фильтр</span>
+          </div>
 
-                  <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
-                    {pathBooks.map((cat, i) => (
-                      <motion.button
-                        key={cat.fullPath}
-                        initial={{ opacity: 0, y: 8 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.03 }}
-                        whileHover={{ y: -2 }}
-                        onClick={() => handleCategoryClick(cat)}
-                        className="group bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5 text-left hover:border-[var(--color-brand)]/40 hover:shadow-[var(--shadow-elevated)] transition-all"
-                      >
-                        <div className="flex items-start justify-between mb-3">
-                          <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-[15px] font-bold transition-all ${
-                            cat.hasChildren ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]' : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)]'
-                          }`}>
-                            {cat.name.charAt(0)}
-                          </div>
-                          {cat.hasChildren && (
-                            <ChevronRight size={16} className="text-[var(--color-text-tertiary)] group-hover:text-[var(--color-brand)] group-hover:translate-x-0.5 transition-all" />
-                          )}
-                        </div>
-                        <div className="font-semibold text-[14px] mb-1 text-[var(--color-text-primary)] truncate">{cat.name}</div>
-                        <div className="flex items-center gap-2 text-[11px] text-[var(--color-text-tertiary)]">
-                          <span className="text-[var(--color-brand)] font-bold">{cat.totalCount}</span>
-                          <span>{cat.totalCount === 1 ? 'книга' : 'книг'}</span>
-                          {cat.hasChildren && (
-                            <>
-                              <span>•</span>
-                              <span>{cat.bookCount} напрямую</span>
-                            </>
-                          )}
-                        </div>
-                      </motion.button>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </motion.div>
-          )}
+          <div className="flex flex-wrap gap-2 items-center">
+            {/* Топ жанры */}
+            {(showAllGenres ? allGenres : visibleGenres).map(genre => {
+              const active = activeGenre === genre
+              return (
+                <motion.button
+                  whileTap={{ scale: 0.97 }}
+                  key={genre}
+                  onClick={() => handleGenreClick(genre)}
+                  className={`px-3 py-1.5 rounded-lg text-[13px] font-medium whitespace-nowrap transition-all ${
+                    active
+                      ? 'bg-[var(--color-brand)] text-[var(--color-text-on-brand)] shadow-[0_2px_8px_rgba(26,86,219,0.25)]'
+                      : 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)]'
+                  }`}
+                >
+                  {genre}
+                </motion.button>
+              )
+            })}
 
-          {/* BOOKS MODE: показываем книги */}
-          {mode === 'books' && (
-            <motion.div
-              key={'books-' + path.join('/')}
-              initial={{ opacity: 0, y: 12 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.25 }}
-            >
-              {loading && books.length === 0 ? (
-                <SkeletonGrid />
-              ) : books.length === 0 ? (
-                <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
-                  <p className="text-[var(--color-text-secondary)] text-[14px]">Книг пока нет</p>
-                </div>
-              ) : (
-                <>
-                  <Books
-                    books={books}
-                    myFinishedId={myFinishedId}
-                    myReadingId={myReadingId}
-                  />
-                  <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
-                    {hasMore && (
-                      <div className="w-7 h-7 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
-                    )}
-                  </div>
-                  {!hasMore && books.length > 0 && (
-                    <div className="flex items-center justify-center gap-4 py-14">
-                      <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--color-border)]" />
-                      <p className="text-[var(--color-text-tertiary)] text-[12px] font-medium tracking-wider uppercase">
-                        Конец каталога
-                      </p>
-                      <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--color-border)]" />
-                    </div>
-                  )}
-                </>
+            {/* Показать ещё */}
+            {overflowGenres.length > 0 && (
+              <button
+                onClick={() => setShowAllGenres(!showAllGenres)}
+                className="px-3 py-1.5 rounded-lg text-[13px] font-medium text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)] transition-colors"
+              >
+                {showAllGenres ? 'Свернуть ↑' : `Ещё ${overflowGenres.length} ↓`}
+              </button>
+            )}
+          </div>
+        </div>
+
+        {/* Books grid */}
+        {loading && books.length === 0 ? (
+          <SkeletonGrid />
+        ) : books.length === 0 ? (
+          <div className="text-center py-20 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+            <p className="text-[var(--color-text-secondary)] text-[14px]">Книг пока нет</p>
+          </div>
+        ) : (
+          <>
+            <div className="flex items-center justify-between mb-3 text-[12px] text-[var(--color-text-tertiary)]">
+              <span>Показано: <strong className="text-[var(--color-text-primary)]">{books.length}</strong> из <strong className="text-[var(--color-text-primary)]">{totalBooks}</strong></span>
+              {activeGenre !== 'Все' && <span>фильтр: <strong className="text-[var(--color-brand)]">{activeGenre}</strong></span>}
+            </div>
+            <Books
+              books={books}
+              myFinishedId={myFinishedId}
+              myReadingId={myReadingId}
+            />
+            <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
+              {hasMore && (
+                <div className="w-7 h-7 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
               )}
-            </motion.div>
-          )}
-        </AnimatePresence>
+            </div>
+            {!hasMore && books.length > 0 && (
+              <div className="flex items-center justify-center gap-4 py-14">
+                <div className="h-px w-12 bg-gradient-to-r from-transparent to-[var(--color-border)]" />
+                <p className="text-[var(--color-text-tertiary)] text-[12px] font-medium tracking-wider uppercase">
+                  Конец каталога
+                </p>
+                <div className="h-px w-12 bg-gradient-to-l from-transparent to-[var(--color-border)]" />
+              </div>
+            )}
+          </>
+        )}
       </div>
     </main>
   )
