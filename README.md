@@ -4,7 +4,7 @@
 
 ---
 
-## ⚡ Быстрый старт
+## 🚀 Запуск
 
 ### 1. Установи зависимости
 ```bash
@@ -16,36 +16,45 @@ npm install --legacy-peer-deps
 DATABASE_URL=postgresql://user:password@host/db?sslmode=require
 JWT_SECRET=любая-длинная-строка
 ```
-> 💡 **Нет Postgres?** Зарегистрируйся бесплатно на [neon.tech](https://neon.tech) и создай БД. Скопируй Connection String.
+> 💡 **Нет Postgres?** Зарегистрируйся бесплатно на [neon.tech](https://neon.tech) и создай БД.
 
-### 3. Примени схему + добавь демо-данные
+### 3. Примени схему БД
 ```bash
 node scripts/setup-db.js
 ```
-Это создаст таблицы + добавит:
-- 👤 8 пользователей (admin / librarian / teacher / 5 студентов)
-- 📚 15 книг разных жанров
 
 ### 4. Запусти
 ```bash
 npm run dev
 ```
 
-Открой http://localhost:3000
-
-### 5. Готовые аккаунты
-| Email | Пароль | Роль |
-|---|---|---|
-| admin@dls.school.com | admin123 | admin |
-| aigerim@librarian.school.com | library123 | librarian (библиотекарь) |
-| yerzhan@teacher.school.com | teacher123 | teacher |
-| aidana@student.school.com | student123 | student (10-А) |
-
-> Авторизация определяется по email: `@admin.school`, `@librarian.school`/`@lib.school`, `@teacher.school` — иначе student.
+Открой http://localhost:3000 и зарегистрируй первого библиотекаря.
 
 ---
 
-## 🔄 Импорт из Google Sheets
+## 👤 Роли
+
+Только 2 роли:
+- **student** — ученик (читает книги, делает заявки)
+- **librarian** — библиотекарь (выдаёт, принимает, ведёт аналитику)
+
+### Как библиотекарь получает роль
+При регистрации определяется автоматически по email:
+- `*@dls.school` → **librarian**
+- `*@librarian.school` → **librarian**
+- `*@lib.school` → **librarian**
+- любой другой → **student**
+
+### Как создать первого библиотекаря
+1. Зайди на `/register`
+2. Email: `malika@dls.school` (или с `@librarian.school`)
+3. Пароль: любой ≥ 6 символов
+4. Автоматически получишь права библиотекаря
+5. Залогинься → попадёшь в `/librarian`
+
+---
+
+## 🔄 Импорт книг из Google Sheets
 
 Подготовь таблицу с такой структурой (лист `books`):
 
@@ -62,78 +71,97 @@ npm run dev
    GOOGLE_SERVICE_ACCOUNT_EMAIL=xxx@project.iam.gserviceaccount.com
    GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----"
    ```
-5. Зайди как librarian → `http://localhost:3000/librarian/sync` → жми «Синхронизировать»
+5. Зайди как библиотекарь → `/librarian/sync` → жми «Синхронизировать»
 
 ---
 
-## 📁 Структура
+## 🔄 Основные flow
+
+### Ученик берёт книгу
+1. `/library` — каталог с фильтрами по жанрам
+2. Клик на книгу → `/books/[id]` — описание, кнопка **«Хочу забрать»**
+3. Библиотекарь выдаёт → книга у ученика
+4. После прочтения → ученик может поставить ★ оценку
+5. `/librarian/returns` — библиотекарь жмёт «Принять» → книга возвращена
+
+### Библиотекарь выдаёт
+1. `/librarian` — дашборд с аналитикой
+2. `/librarian/requests` — заявки учеников (кто что хочет)
+3. «Выдать» → создаётся borrow + заявка fulfilled
+4. Или `/librarian/issue` — выдать напрямую (без заявки)
+
+### Аналитика
+- `/librarian/analytics` — графики, топ читателей, жанры
+- `/librarian/students` — все ученики с историей
+- `/librarian/history` — журнал выдач/возвратов
+- `/librarian/lookup` — поиск «у кого сейчас книга?»
+
+---
+
+## 📁 Структура проекта
 
 ```
 app/
 ├── page.js                  # Лендинг
 ├── login/, register/        # Авторизация
-├── library/                 # Каталог (ученик)
-├── books/[id]/              # Карточка книги + комментарии
+├── library/                 # Каталог (wizard + книги)
+├── books/[id]/              # Карточка книги
 ├── profile/                  # Профиль + графики
-├── report/[borrowId]/       # Сдача отчёта
 ├── librarian/               # Панель библиотекаря
-│   ├── page.jsx             # Аналитика + KPI
-│   ├── issue/               # Выдать книгу (wizard)
+│   ├── page.jsx             # Дашборд
+│   ├── requests/            # Заявки учеников
+│   ├── issue/               # Выдать книгу
 │   ├── returns/             # Принять возврат
-│   ├── lookup/              # Поиск "у кого книга"
+│   ├── lookup/              # Поиск "у кого книга?"
 │   ├── students/            # Управление учениками
-│   ├── history/             # История операций
+│   ├── history/             # Журнал операций
 │   ├── analytics/           # Графики
-│   └── sync/                # Google Sheets sync
-├── admin/                   # Админ-панель
-│   ├── page.jsx             # CRUD книг
-│   └── dashboard/           # Проверка отчётов
+│   └── sync/                # Импорт из Google Sheets
+├── setup/                   # Проверка БД
 └── api/                     # Backend
     ├── auth/                # Login + Register
-    ├── books/               # CRUD + borrow/return
-    ├── librarian/           # Issue + return + lookup + history + analytics + students + sync-sheets
-    ├── reports/             # POST (ученик) + PATCH (одобрение)
+    ├── books/               # CRUD + borrow + return + request
+    ├── librarian/           # Issue + return + lookup + history + analytics + students + sync-sheets + requests
     ├── profile/             # Профиль + goal
-    └── comments/, favorites/, user/tracker/
+    ├── favorites/           # Избранное
+    └── genres/[...path]/    # Иерархия жанров (wizard)
 
 lib/
-├── db.js                    # Postgres pool
+├── db.js                    # Postgres pool + ensureSchema
 ├── auth.js                  # JWT helpers + role detection
 └── google-sheets.js         # Google Sheets API
 
 db/schema.sql                 # Схема БД
-scripts/setup-db.js           # Скрипт настройки
+scripts/setup-db.js           # Применение схемы
+scripts/fetch-books.js        # Скачивание книг из Sheets
+scripts/import-from-sheets.js # Импорт книг в БД
 ```
+
+---
+
+## 🛠 Технологии
+
+- **Frontend:** Next.js 15, React 19, Tailwind CSS v4
+- **Дизайн:** Inter / SF Pro stack, light/dark темы
+- **Анимации:** Framer Motion
+- **Графики:** Recharts
+- **Backend:** Next.js API Routes (serverless)
+- **БД:** PostgreSQL (Neon)
+- **Auth:** JWT + bcryptjs
+- **googleapis:** импорт книг из таблиц
+- **sonner:** тосты
+- **lucide-react:** иконки
 
 ---
 
 ## 🆘 Troubleshooting
 
-**Не могу зарегистрироваться**
-→ Скорее всего не применена схема БД. Запусти `node scripts/setup-db.js`
-
-**Ошибка `connection refused`**
-→ Проверь DATABASE_URL в `.env.local`. Neon DB может быть приостановлен — зайди на [neon.tech](https://neon.tech) и разбуди его.
-
-**Google Sheets не подключается**
-→ Убедись что Service Account добавлен как Editor таблицы. PRIVATE_KEY должен быть в кавычках с `\n`.
-
-**Сборка падает**
-→ Используй `npm install --legacy-peer-deps` (конфликт recharts и React 19).
-
----
-
-## 🛠 Стек
-
-- Next.js 15 (App Router) + React 19
-- Tailwind CSS v4 — Apple-style дизайн (Inter / SF Pro stack)
-- Framer Motion — анимации
-- Recharts — графики
-- PostgreSQL (Neon) — БД
-- JWT + bcryptjs — авторизация
-- googleapis — Google Sheets sync
-- Sonner — тосты
-- Lucide — иконки
+| Ошибка | Решение |
+|---|---|
+| `connection refused` | Проверь `DATABASE_URL` в `.env.local`. Зайди на [neon.tech](https://neon.tech) и разбуди БД если suspend. |
+| `relation does not exist` | Запусти `node scripts/setup-db.js` |
+| Ошибка сети в браузере | Vercel: проверь env vars в дашборде. Локально: перезапусти `npm run dev` |
+| Login не работает | Проверь `JWT_SECRET` в `.env.local` (должен быть стабильный) |
 
 ---
 

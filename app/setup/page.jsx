@@ -4,7 +4,7 @@ import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Database, CheckCircle, AlertCircle, Loader2, ArrowRight, UserPlus } from 'lucide-react'
+import { Database, CheckCircle, AlertCircle, Loader2, ArrowRight, RefreshCw } from 'lucide-react'
 
 export default function SetupPage() {
   const [status, setStatus] = useState(null)
@@ -32,7 +32,7 @@ export default function SetupPage() {
       const res = await fetch('/api/setup', { method: 'POST' })
       const data = await res.json()
       if (data.success) {
-        setResult({ type: 'success', message: `Готово! Создано пользователей: ${data.users_created}` })
+        setResult({ type: 'success', message: 'Таблицы созданы' })
         checkStatus()
       } else {
         setResult({ type: 'error', message: data.error })
@@ -67,8 +67,8 @@ export default function SetupPage() {
             <div className="inline-flex items-center justify-center w-14 h-14 rounded-2xl bg-[var(--color-brand-soft)] mb-3">
               <Database size={26} className="text-[var(--color-brand)]" />
             </div>
-            <h1 className="text-[24px] font-semibold tracking-tight text-[var(--color-text-primary)]">Настройка Bookify</h1>
-            <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">Создаём таблицы и тестовые аккаунты</p>
+            <h1 className="text-[24px] font-semibold tracking-tight text-[var(--color-text-primary)]">Статус системы</h1>
+            <p className="text-[14px] text-[var(--color-text-secondary)] mt-1">Проверка подключения к базе данных</p>
           </div>
 
           {loading ? (
@@ -77,10 +77,10 @@ export default function SetupPage() {
             </div>
           ) : status?.ready ? (
             <>
-              <div className="p-4 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-border)] mb-4">
+              <div className="p-4 rounded-xl bg-[var(--color-success)]/10 border border-[var(--color-success)]/20 mb-4">
                 <div className="flex items-center gap-2 mb-2">
                   <CheckCircle className="text-[var(--color-success)]" size={16} />
-                  <span className="font-semibold text-[14px] text-[var(--color-text-primary)]">БД настроена</span>
+                  <span className="font-semibold text-[14px] text-[var(--color-text-primary)]">БД готова к работе</span>
                 </div>
                 <div className="text-[12px] text-[var(--color-text-secondary)] space-y-0.5">
                   <div>📊 Таблиц: <strong className="text-[var(--color-text-primary)]">{status.tables}</strong></div>
@@ -90,35 +90,20 @@ export default function SetupPage() {
               </div>
 
               {status.users === 0 && (
-                <button
-                  onClick={handleSetup}
-                  disabled={seeding}
-                  className="w-full py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[14px] font-medium flex items-center justify-center gap-2 disabled:opacity-50 transition-colors mb-3"
-                >
-                  {seeding ? <Loader2 size={14} className="animate-spin" /> : <><UserPlus size={14} /> Создать демо-аккаунты</>}
-                </button>
+                <div className="mb-4 p-4 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/30">
+                  <div className="text-[13px] font-semibold text-[var(--color-brand)] mb-2">Первый запуск</div>
+                  <p className="text-[12px] text-[var(--color-text-primary)] leading-[1.5]">
+                    Зарегистрируйте библиотекаря: используйте email вида <code className="bg-[var(--color-bg-card)] px-1.5 py-0.5 rounded text-[11px]">@dls.school</code> — это автоматически даст права библиотекаря.
+                  </p>
+                </div>
               )}
 
               <Link
                 href="/login"
-                className="w-full py-3 rounded-xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-border)] text-[var(--color-text-primary)] text-[14px] font-medium flex items-center justify-center gap-2 transition-colors"
+                className="w-full py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[14px] font-medium flex items-center justify-center gap-2 transition-colors"
               >
                 Войти <ArrowRight size={14} />
               </Link>
-
-              {status.users > 0 && (
-                <div className="mt-5 p-4 rounded-xl bg-[var(--color-bg-soft)]">
-                  <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">Тестовые аккаунты</p>
-                  <div className="space-y-1.5 text-[12px] font-mono">
-                    <div className="flex justify-between text-[var(--color-text-primary)]">
-                      <span>teacher@dls.school</span><span className="text-[var(--color-text-tertiary)]">library123</span>
-                    </div>
-                    <div className="flex justify-between text-[var(--color-text-primary)]">
-                      <span>aidana@student.school.com</span><span className="text-[var(--color-text-tertiary)]">student123</span>
-                    </div>
-                  </div>
-                </div>
-              )}
             </>
           ) : (
             <>
@@ -129,6 +114,16 @@ export default function SetupPage() {
                 </div>
                 <p className="text-[12px] text-[var(--color-text-secondary)] mb-2">{status?.error}</p>
               </div>
+
+              {status?.tables === 0 && (
+                <button
+                  onClick={handleSetup}
+                  disabled={seeding}
+                  className="w-full mb-3 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[14px] font-medium flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+                >
+                  {seeding ? <Loader2 size={14} className="animate-spin" /> : <Database size={14} />} Создать таблицы
+                </button>
+              )}
 
               <div className="p-4 rounded-xl bg-[var(--color-bg-soft)]">
                 <p className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">Что делать</p>
