@@ -95,6 +95,19 @@ CREATE TABLE IF NOT EXISTS favorites (
   UNIQUE (user_id, book_id)
 );
 
+-- COMMENTS: комментарии учеников к книгам
+CREATE TABLE IF NOT EXISTS book_comments (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  content TEXT NOT NULL,
+  is_pinned BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+CREATE INDEX IF NOT EXISTS idx_comments_book ON book_comments(book_id);
+CREATE INDEX IF NOT EXISTS idx_comments_user ON book_comments(user_id);
+
 -- READING_GOALS: цель чтения на год
 CREATE TABLE IF NOT EXISTS reading_goals (
   id SERIAL PRIMARY KEY,

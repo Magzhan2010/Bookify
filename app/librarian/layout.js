@@ -6,13 +6,13 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, RefreshCw, LogOut, BookOpen, Bell
+  Users, History, BarChart3, RefreshCw, LogOut, BookOpen, Library
 } from 'lucide-react'
 
 const navItems = [
   { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
-  { href: '/librarian/requests', label: 'Заявки учеников', icon: Bell },
-  { href: '/librarian/issue', label: 'Выдать книгу', icon: BookMarked },
+  { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked },
+  { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
   { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
   { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
   { href: '/librarian/students', label: 'Ученики', icon: Users },
@@ -115,9 +115,15 @@ export default function LibrarianLayout({ children }) {
               </div>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[13px] truncate text-[var(--color-text-primary)]">{user?.name}</div>
-                <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{user?.role === 'admin' ? 'Администратор' : 'Библиотекарь'}</div>
+                <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">Библиотекарь</div>
               </div>
             </div>
+            <Link
+              href="/library"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)] transition-colors text-[13px] font-medium mb-2"
+            >
+              <Library size={14} /> Открыть каталог
+            </Link>
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15 transition-colors text-[13px] font-medium"
