@@ -49,35 +49,62 @@ export default function Library() {
     })
   }, [router])
 
-  // === Восстанавливаем scroll при возврате с book/[id] ===
+  // === Управление скроллом (ручное вместо автоматического браузером) ===
   useEffect(() => {
-    try {
-      const saved = sessionStorage.getItem('bookify:scroll:library')
-      if (saved) {
-        // Небольшая задержка чтобы DOM успел отрендериться
-        setTimeout(() => {
-          window.scrollTo({ top: parseInt(saved), behavior: 'instant' })
-        }, 50)
-      }
-    } catch (e) {}
-  }, [])
+    // Отключаем автоматическое восстановление scroll браузером
+    if ('scrollRestoration' in window.history) {
+      window.history.scrollRestoration = 'manual'
+    }
 
-  // Сохраняем scroll при уходе со страницы (например на book/[id])
-  useEffect(() => {
-    const handleScroll = () => {
+    // Восстанавливаем scroll при возврате с другой страницы
+    const restoreScroll = () => {
+      try {
+        const saved = sessionStorage.getItem('bookify:scroll:library')
+        if (saved) {
+          const pos = parseInt(saved)
+          if (!isNaN(pos) && pos > 0) {
+            // Несколько попыток для надежности
+            const tryRestore = (attempt = 0) => {
+              if (attempt > 5) return
+              requestAnimationFrame(() => {
+                window.scrollTo(0, pos)
+                if (Math.abs(window.scrollY - pos) > 5 && attempt < 5) {
+                  setTimeout(() => tryRestore(attempt + 1), 50)
+                }
+              })
+            }
+            tryRestore()
+          }
+        }
+      } catch (e) {}
+    }
+
+    // Сохраняем при unmount и периодически при скролле
+    const saveScroll = () => {
       try {
         sessionStorage.setItem('bookify:scroll:library', String(window.scrollY))
       } catch (e) {}
     }
-    // Throttle
+
+    // Пытаемся восстановиться при mount
+    setTimeout(restoreScroll, 50)
+
+    // Также пробуем после pageshow (на случай bfcache)
+    window.addEventListener('pageshow', restoreScroll)
+
+    // Throttled scroll listener для сохранения
     let raf
     const throttled = () => {
       cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(handleScroll)
+      raf = requestAnimationFrame(saveScroll)
     }
     window.addEventListener('scroll', throttled, { passive: true })
+
     return () => {
+      // Сохраняем последнюю позицию при unmount
+      saveScroll()
       window.removeEventListener('scroll', throttled)
+      window.removeEventListener('pageshow', restoreScroll)
       cancelAnimationFrame(raf)
     }
   }, [])

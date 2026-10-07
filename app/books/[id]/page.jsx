@@ -35,6 +35,16 @@ const Book = () => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [id])
 
+  // Перед уходом со страницы книги сохраняем scroll библиотеки
+  useEffect(() => {
+    const handleBeforeUnload = () => {
+      // Ничего не делаем — scroll уже сохраняется в library через scroll event
+      // Здесь можно добавить специальную логику если потребуется
+    }
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
+  }, [])
+
   useEffect(() => {
     const fetchAll = async () => {
       const token = localStorage.getItem('token')
