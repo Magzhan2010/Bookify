@@ -51,19 +51,52 @@ export async function POST(req) {
   } catch (err) {
     console.error('Login error:', err)
 
-    if (err.message?.includes('ECONNREFUSED') || err.message?.includes('connect')) {
+    // Определяем тип ошибки
+    const msg = err.message || ''
+    const isConn = msg.includes('ECONNREFUSED') || msg.includes('ENOTFOUND') || msg.includes('EAI_AGAIN') || msg.includes('getaddrinfo')
+    const isTimeout = msg.includes('ETIMEDOUT') || msg.includes('timeout')
+    const isSSL = msg.includes('SSL') || msg.includes('certificate')
+    const isAuth = msg.includes('password authentication') || msg.includes('role') || msg.includes('permission')
+    const isMissing = msg.includes('does not exist') || msg.includes('relation')
+
+    if (isConn) {
       return NextResponse.json({
-        error: 'БД недоступна. Перейди на /setup',
-        hint: 'DATABASE_URL не задан'
+        error: 'Не удалось подключиться к БД',
+        hint: 'Проверь DATABASE_URL в .env.local и что Neon не уснул'
       }, { status: 500 })
     }
 
-    if (err.message?.includes('relation') && err.message?.includes('does not exist')) {
+    if (isTimeout) {
       return NextResponse.json({
-        error: 'Таблицы не созданы. Перейди на /setup'
+        error: 'Таймаут подключения к БД',
+        hint: 'Neon мог уснуть. Зайди на console.neon.tech и разбуди'
       }, { status: 500 })
     }
 
-    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+    if (isSSL) {
+      return NextResponse.json({
+        error: 'SSL ошибка подключения',
+        hint: 'Добавь ?sslmode=require в DATABASE_URL'
+      }, { status: 500 })
+    }
+
+    if (isAuth) {
+      return NextResponse.json({
+        error: 'Ошибка авторизации БД',
+        hint: 'Проверь логин/пароль в DATABASE_URL'
+      }, { status: 500 })
+    }
+
+    if (isMissing) {
+      return NextResponse.json({
+        error: 'Таблицы не созданы',
+        hint: 'Запусти node scripts/setup-db.js или зайди на /setup'
+      }, { status: 500 })
+    }
+
+    return NextResponse.json({
+      error: 'Ошибка сервера',
+      hint: msg.substring(0, 150)
+    }, { status: 500 })
   }
 }

@@ -19,15 +19,33 @@ export default function Login() {
     if (!email || !password) return toast.error('Заполни email и пароль')
 
     setLoading(true)
+
+    // Таймаут 12 секунд — потом сообщаем о проблеме сети
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 12000)
+
     try {
       const res = await fetch('/api/auth/login', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, password })
+        body: JSON.stringify({ email, password }),
+        signal: controller.signal
       })
+      clearTimeout(timeout)
+
+      // Проверяем что ответ JSON
+      const contentType = res.headers.get('content-type') || ''
+      if (!contentType.includes('application/json')) {
+        toast.error('Сервер вернул не JSON', {
+          description: `HTTP ${res.status} — возможно БД не настроена`,
+          duration: 8000
+        })
+        return
+      }
+
       const data = await res.json()
 
-      if (data.token) {
+      if (res.ok && data.token) {
         localStorage.setItem('token', data.token)
         const payload = JSON.parse(atob(data.token.split('.')[1]))
         toast.success(`С возвращением, ${payload.name}`)
@@ -36,13 +54,26 @@ export default function Login() {
           else router.push('/library')
         }, 400)
       } else {
-        toast.error(data.error || 'Не удалось войти', { duration: 6000 })
-        if (data.hint || data.error?.includes('БД') || data.error?.includes('/setup')) {
+        const msg = data.error || `HTTP ${res.status} — Не удалось войти`
+        toast.error(msg, { duration: 6000 })
+
+        if (data.hint || /БД|setup|таблиц/i.test(msg)) {
           setTimeout(() => router.push('/setup'), 1500)
         }
       }
     } catch (err) {
-      toast.error('Ошибка сети')
+      clearTimeout(timeout)
+      if (err.name === 'AbortError') {
+        toast.error('Сервер не отвечает', {
+          description: 'Таймаут 12 сек. Проверь подключение к БД',
+          duration: 8000
+        })
+      } else {
+        toast.error('Ошибка сети', {
+          description: err.message || 'Не удалось подключиться к серверу',
+          duration: 8000
+        })
+      }
     } finally {
       setLoading(false)
     }
