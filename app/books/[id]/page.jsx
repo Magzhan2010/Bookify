@@ -46,7 +46,8 @@ const Book = () => {
 
       if (token) {
         try {
-          const payload = JSON.parse(atob(token.split('.')[1]))
+          const { parseJwt } = await import('../../../lib/jwt')
+          const payload = parseJwt(token) || { role: 'student' }
           setUserRole(payload.role)
 
           const profileRes = await fetch('/api/profile', {

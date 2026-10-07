@@ -36,9 +36,17 @@ export default function Library() {
   useEffect(() => {
     const token = localStorage.getItem('token')
     if (!token) { router.push('/login'); return }
-    try { JSON.parse(atob(token.split('.')[1])) } catch (e) {
-      localStorage.removeItem('token'); router.push('/')
-    }
+    // Асинхронный импорт parseJwt — не падает на невалидном токене
+    import('../../lib/jwt').then(({ parseJwt }) => {
+      const payload = parseJwt(token)
+      if (!payload) {
+        localStorage.removeItem('token')
+        router.push('/login')
+      }
+    }).catch(() => {
+      localStorage.removeItem('token')
+      router.push('/login')
+    })
   }, [router])
 
   // === Восстанавливаем scroll при возврате с book/[id] ===

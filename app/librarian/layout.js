@@ -34,17 +34,22 @@ export default function LibrarianLayout({ children }) {
       router.push('/login')
       return
     }
-    try {
-      const payload = JSON.parse(atob(token.split('.')[1]))
+    import('../../lib/jwt').then(({ parseJwt }) => {
+      const payload = parseJwt(token)
+      if (!payload) {
+        localStorage.removeItem('token')
+        router.push('/login')
+        return
+      }
       if (!['librarian'].includes(payload.role)) {
         router.push('/login')
         return
       }
       setUser(payload)
       setReady(true)
-    } catch (e) {
+    }).catch(() => {
       router.push('/login')
-    }
+    })
   }, [])
 
   const handleLogout = () => {

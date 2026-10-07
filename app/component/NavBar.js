@@ -25,12 +25,18 @@ const Navbar = () => {
 
   useEffect(() => {
     const token = localStorage.getItem('token')
-    if (token) {
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]))
+    if (!token) return
+    // Безопасный парсинг — не падает на невалидном токене
+    import('../../lib/jwt').then(({ parseJwt }) => {
+      const payload = parseJwt(token)
+      if (payload) {
         setUser(payload)
-      } catch (e) { console.error('Token error') }
-    }
+      } else {
+        localStorage.removeItem('token')
+      }
+    }).catch(() => {
+      localStorage.removeItem('token')
+    })
   }, [])
 
   useEffect(() => {

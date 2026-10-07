@@ -47,7 +47,13 @@ export default function Login() {
 
       if (res.ok && data.token) {
         localStorage.setItem('token', data.token)
-        const payload = JSON.parse(atob(data.token.split('.')[1]))
+        // Безопасный парсинг токена
+        const { parseJwt } = await import('../../lib/jwt')
+        const payload = parseJwt(data.token)
+        if (!payload) {
+          toast.error('Токен невалидный')
+          return
+        }
         toast.success(`С возвращением, ${payload.name}`)
         setTimeout(() => {
           if (payload.role === 'librarian') router.push('/librarian')
