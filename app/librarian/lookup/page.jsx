@@ -102,32 +102,44 @@ export default function LookupPage() {
                 </div>
 
                 {/* Info */}
-                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                <div className="flex-1 min-w-0 flex flex-col justify-between gap-3">
+                  {/* === КНИГА (сверху, основная) === */}
                   <div>
-                    <div className="flex items-center gap-2 mb-1.5">
+                    <div className="flex items-start gap-1.5 mb-1">
                       {overdue && (
-                        <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                        <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
                           −{overdueDays}д
                         </span>
                       )}
+                      <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap shrink-0">
+                        📖 Книга
+                      </span>
                     </div>
-                    <div className="font-semibold text-[14px] leading-tight line-clamp-2 mb-1 text-[var(--color-text-primary)]">
+                    <h3 className="font-bold text-[15px] leading-tight line-clamp-2 mb-1 text-[var(--color-text-primary)]">
                       {r.book_title}
-                    </div>
-                    <div className="text-[11px] text-[var(--color-text-tertiary)] line-clamp-1 mb-2">{r.book_author}</div>
+                    </h3>
+                    <p className="text-[12px] text-[var(--color-text-secondary)] line-clamp-1 font-medium">
+                      ✍️ {r.book_author}
+                    </p>
                   </div>
 
-                  <div className="space-y-1">
-                    <div className="flex items-center gap-2">
-                      <div className="w-5 h-5 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[10px] font-bold text-white">
+                  {/* === УЧЕНИК (снизу, с разделителем) === */}
+                  <div className="pt-3 border-t border-[var(--color-border)]">
+                    <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-1.5">
+                      У ученика
+                    </div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <div className="w-6 h-6 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
                         {r.student_name?.charAt(0).toUpperCase()}
                       </div>
-                      <span className="font-semibold text-[13px] truncate text-[var(--color-text-primary)]">{r.student_name}</span>
+                      <span className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{r.student_name}</span>
                       {r.student_class && (
-                        <span className="text-[11px] text-[var(--color-text-tertiary)]">· {r.student_class}</span>
+                        <span className="px-1.5 py-0.5 rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[11px] font-medium whitespace-nowrap">
+                          {r.student_class}
+                        </span>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 text-[11px]">
+                    <div className="flex items-center gap-2 text-[11px] pl-8">
                       <Calendar size={11} className="text-[var(--color-text-tertiary)] shrink-0" />
                       <span className={overdue ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}>
                         Вернуть: {new Date(r.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
