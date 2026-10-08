@@ -2,10 +2,12 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check } from 'lucide-react'
 
 export default function StudentsPage() {
+  const router = useRouter()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -90,7 +92,8 @@ export default function StudentsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
-              className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-border-strong)] hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all"
+              onClick={() => router.push(`/librarian/students/${s.id}`)}
+              className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all cursor-pointer"
             >
               <div className="flex items-start gap-3 mb-3">
                 <div className="w-11 h-11 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0">
