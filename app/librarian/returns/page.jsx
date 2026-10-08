@@ -159,8 +159,10 @@ export default function ReturnsPage() {
                       : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
                   }`}
                 >
-                  <div className="w-11 h-15 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
-                    {loan.book_cover && <img src={loan.book_cover} className="w-full h-full object-cover" />}
+                  <div className="w-12 shrink-0">
+                    <div className="relative aspect-[2/3] rounded-lg bg-[var(--color-bg-soft)] overflow-hidden">
+                      {loan.cover_url && <img src={loan.cover_url} alt={loan.book_title} className="w-full h-full object-cover" />}
+                    </div>
                   </div>
 
                   <div className="flex-1 min-w-0">

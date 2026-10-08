@@ -72,39 +72,67 @@ export default function LookupPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
           {results.map((r, i) => {
             const overdue = new Date(r.due_date) < new Date()
+            const overdueDays = overdue ? Math.floor((new Date() - new Date(r.due_date)) / (24 * 60 * 60 * 1000)) : 0
             return (
               <motion.div
                 key={r.id}
-                initial={{ opacity: 0, y: 8 }}
+                initial={{ opacity: 0, y: 10 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.03 }}
-                className={`p-4 rounded-2xl border ${
+                transition={{ delay: Math.min(i * 0.03, 0.3) }}
+                className={`group relative flex gap-4 p-4 rounded-2xl border transition-all hover:shadow-[var(--shadow-soft)] hover:border-[var(--color-border-strong)] ${
                   overdue ? 'bg-[var(--color-danger)]/5 border-[var(--color-danger)]/30' : 'bg-[var(--color-bg-card)] border-[var(--color-border)]'
                 }`}
               >
-                <div className="flex gap-3 mb-3">
-                  <div className="w-11 h-15 rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shrink-0">
-                    {r.book_cover && <img src={r.book_cover} className="w-full h-full object-cover" />}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="font-semibold text-[13px] line-clamp-2 text-[var(--color-text-primary)]">{r.book_title}</div>
-                    <div className="text-[11px] text-[var(--color-text-tertiary)]">{r.book_author}</div>
+                {/* Book cover (с правильным aspect-ratio) */}
+                <div className="w-20 shrink-0">
+                  <div className="relative aspect-[2/3] rounded-lg bg-[var(--color-bg-soft)] overflow-hidden shadow-md ring-1 ring-[var(--color-border)]">
+                    {r.cover_url ? (
+                      <img
+                        src={r.cover_url}
+                        alt={r.book_title}
+                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center bg-gradient-to-br from-[var(--color-brand-soft)] to-[var(--color-bg-soft)]">
+                        <BookOpen size={20} className="text-[var(--color-text-tertiary)]" />
+                      </div>
+                    )}
                   </div>
                 </div>
 
-                <div className="space-y-1.5 text-[13px]">
-                  <div className="flex items-center gap-2">
-                    <UserIcon size={12} className="text-[var(--color-brand)] shrink-0" />
-                    <span className="font-medium truncate text-[var(--color-text-primary)]">{r.student_name}</span>
+                {/* Info */}
+                <div className="flex-1 min-w-0 flex flex-col justify-between">
+                  <div>
+                    <div className="flex items-center gap-2 mb-1.5">
+                      {overdue && (
+                        <span className="px-1.5 py-0.5 rounded-full bg-[var(--color-danger)]/15 text-[var(--color-danger)] text-[10px] font-bold uppercase tracking-wider whitespace-nowrap">
+                          −{overdueDays}д
+                        </span>
+                      )}
+                    </div>
+                    <div className="font-semibold text-[14px] leading-tight line-clamp-2 mb-1 text-[var(--color-text-primary)]">
+                      {r.book_title}
+                    </div>
+                    <div className="text-[11px] text-[var(--color-text-tertiary)] line-clamp-1 mb-2">{r.book_author}</div>
                   </div>
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <span className="text-[var(--color-text-tertiary)]">{r.student_class || '—'}</span>
-                  </div>
-                  <div className="flex items-center gap-2 text-[11px]">
-                    <Calendar size={11} className="text-[var(--color-text-tertiary)] shrink-0" />
-                    <span className={overdue ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}>
-                      Вернуть: {new Date(r.due_date).toLocaleDateString('ru-RU')}
-                    </span>
+
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2">
+                      <div className="w-5 h-5 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[10px] font-bold text-white">
+                        {r.student_name?.charAt(0).toUpperCase()}
+                      </div>
+                      <span className="font-semibold text-[13px] truncate text-[var(--color-text-primary)]">{r.student_name}</span>
+                      {r.student_class && (
+                        <span className="text-[11px] text-[var(--color-text-tertiary)]">· {r.student_class}</span>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px]">
+                      <Calendar size={11} className="text-[var(--color-text-tertiary)] shrink-0" />
+                      <span className={overdue ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}>
+                        Вернуть: {new Date(r.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </motion.div>
