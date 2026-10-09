@@ -18,7 +18,7 @@ const navItems = [
   { href: '/librarian/students', label: 'Ученики', icon: Users },
   { href: '/librarian/history', label: 'История', icon: History },
   { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 },
-  { href: '/admin', label: 'Добавить книгу', icon: PlusCircle }
+  { href: '/librarian/books/add', label: 'Добавить книгу', icon: PlusCircle }
 ]
 
 export default function LibrarianLayout({ children }) {
