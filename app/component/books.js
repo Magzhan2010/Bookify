@@ -143,11 +143,19 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
               </h3>
               <p className="text-[12px] text-[var(--color-text-tertiary)] line-clamp-1 mb-2">{book.author}</p>
 
-              {book.genre && (
-                <span className="inline-block px-2 py-0.5 rounded-md bg-[var(--color-bg-soft)] text-[10px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
-                  {book.genre.split(' / ')[0]}
-                </span>
-              )}
+              <div className="flex items-center gap-1.5 flex-wrap">
+                {book.genre && (
+                  <span className="inline-block px-2 py-0.5 rounded-md bg-[var(--color-bg-soft)] text-[10px] font-medium text-[var(--color-text-secondary)] uppercase tracking-wider">
+                    {book.genre.split(' / ')[0]}
+                  </span>
+                )}
+                {book.total_copies > 0 && (
+                  <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[10px] font-bold">
+                    <span className="w-1 h-1 rounded-full bg-[var(--color-brand)]" />
+                    {book.total_copies} экз.
+                  </span>
+                )}
+              </div>
             </div>
 
             {/* Bottom shine effect */}

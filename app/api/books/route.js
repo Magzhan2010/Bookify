@@ -32,8 +32,17 @@ export async function GET(req) {
   if (countOnly) {
     if (isFiltered) {
       const result = await pool.query(
-        'SELECT COUNT(*) AS total FROM books WHERE genre = $1',
-        [genre]
+        `SELECT COUNT(*) AS total FROM books
+         WHERE genre = $1
+            OR genre LIKE $2
+            OR genre LIKE $3
+            OR genre LIKE $4`,
+        [
+          genre,
+          genre + ' / %',
+          '% / ' + genre,
+          '% / ' + genre + ' / %'
+        ]
       )
       return NextResponse.json({ total: parseInt(result.rows[0].total) })
     }
@@ -43,8 +52,20 @@ export async function GET(req) {
 
   if (isFiltered) {
     const result = await pool.query(
-      'SELECT * FROM books WHERE genre = $1 ORDER BY created_at DESC LIMIT $2 OFFSET $3',
-      [genre, limit, offset]
+      `SELECT * FROM books
+       WHERE genre = $1
+          OR genre LIKE $2
+          OR genre LIKE $3
+          OR genre LIKE $4
+       ORDER BY created_at DESC LIMIT $5 OFFSET $6`,
+      [
+        genre,
+        genre + ' / %',
+        '% / ' + genre,
+        '% / ' + genre + ' / %',
+        limit,
+        offset
+      ]
     )
     return NextResponse.json(result.rows)
   }
