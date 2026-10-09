@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import jwt from 'jsonwebtoken'
 import pool from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
+import { appendBookToSheet } from '../../../lib/google-sheets'
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url)
@@ -82,7 +83,8 @@ export async function POST(req) {
 
   const {
     title, author, genre, year, description,
-    cover_url, file_url, total_copies, isbn, pages, tags
+    cover_url, file_url, total_copies, isbn, pages, tags,
+    language, difficulty
   } = await req.json()
 
   if (!title || !author) {
@@ -93,6 +95,13 @@ export async function POST(req) {
   }
 
   const copies = parseInt(total_copies) || 1
+
+  // Собираем теги (жанр + язык + сложность)
+  const tagParts = []
+  if (genre) tagParts.push(genre)
+  if (language) tagParts.push(language)
+  if (difficulty) tagParts.push(difficulty)
+  const tagsStr = tagParts.join(', ') || null
 
   try {
     const result = await pool.query(
@@ -106,10 +115,25 @@ export async function POST(req) {
         year || null, description || null,
         cover_url || null, file_url || null,
         copies, isbn || null,
-        pages ? parseInt(pages) : null, tags || null
+        pages ? parseInt(pages) : null, tagsStr
       ]
     )
-    return NextResponse.json({ success: true, book: result.rows[0] })
+
+    const newBook = result.rows[0]
+
+    // Также добавляем в Google Sheets (если credentials настроены)
+    const sheetsResult = await appendBookToSheet({
+      title, author, genre, year, description,
+      cover_url, file_url, total_copies: copies,
+      isbn, pages, tags: tagsStr
+    })
+
+    return NextResponse.json({
+      success: true,
+      book: newBook,
+      sheets_synced: sheetsResult.success,
+      sheets_error: sheetsResult.success ? undefined : sheetsResult.error
+    })
   } catch (err) {
     console.error('Create book error:', err)
     return NextResponse.json({ error: err.message }, { status: 500 })

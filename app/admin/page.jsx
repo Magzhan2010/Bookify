@@ -57,7 +57,13 @@ const Admin = () => {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`«${form.title}» добавлена в каталог`)
+        let msg = `«${form.title}» добавлена в каталог`
+        if (data.sheets_synced) {
+          msg += ' → синхронизирована с Google Sheets ✓'
+        } else if (data.sheets_error) {
+          msg += ` (Sheets: ${data.sheets_error})`
+        }
+        toast.success(msg, { duration: 5000 })
         setForm({ title: '', author: '', genre: '', year: '', description: '', cover_url: '', file_url: '', total_copies: 1 })
         fetchBooks()
       } else {
