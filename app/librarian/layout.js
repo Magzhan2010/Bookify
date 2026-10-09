@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, RefreshCw, LogOut, BookOpen, Library
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle
 } from 'lucide-react'
 
 const navItems = [
@@ -17,7 +17,8 @@ const navItems = [
   { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
   { href: '/librarian/students', label: 'Ученики', icon: Users },
   { href: '/librarian/history', label: 'История', icon: History },
-  { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 }
+  { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 },
+  { href: '/admin', label: 'Добавить книгу', icon: PlusCircle }
 ]
 
 export default function LibrarianLayout({ children }) {
