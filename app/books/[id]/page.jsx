@@ -8,8 +8,158 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
-  Send, Trash2, Sparkles, Save, X, Edit, AlertTriangle, Check
+  Send, Trash2, Sparkles, Save, X, Edit
 } from 'lucide-react'
+
+const Field = ({ label, children, type }) => (
+  <div>
+    <label className="block text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1.5 uppercase tracking-wider">{label}</label>
+    {children}
+  </div>
+)
+
+// === ФОРМА РЕДАКТИРОВАНИЯ (для библиотекаря) ===
+const EditBookForm = ({ form, setForm, onSave, saving }) => {
+  const update = (k, v) => setForm({ ...form, [k]: v })
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6 sm:p-8"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-[var(--color-brand-soft)] flex items-center justify-center">
+          <Edit size={20} className="text-[var(--color-brand)]" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Редактирование книги</h2>
+          <p className="text-[12px] text-[var(--color-text-tertiary)]">Изменения сохранятся в БД и Google Sheets</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Название *">
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => update('title', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Автор *">
+            <input
+              type="text"
+              value={form.author}
+              onChange={e => update('author', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Field label="Жанр">
+            <input
+              type="text"
+              value={form.genre || ''}
+              onChange={e => update('genre', e.target.value)}
+              placeholder="Классика"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Год">
+            <input
+              type="text"
+              value={form.year || ''}
+              onChange={e => update('year', e.target.value)}
+              placeholder="1967"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Язык">
+            <input
+              type="text"
+              value={form.language || ''}
+              onChange={e => update('language', e.target.value)}
+              placeholder="Русский"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Сложность">
+            <input
+              type="text"
+              value={form.difficulty || ''}
+              onChange={e => update('difficulty', e.target.value)}
+              placeholder="Средний"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Экземпляров всего">
+            <input
+              type="number"
+              min="1"
+              value={form.total_copies}
+              onChange={e => update('total_copies', parseInt(e.target.value) || 1)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Страниц">
+            <input
+              type="number"
+              min="0"
+              value={form.pages || ''}
+              onChange={e => update('pages', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <Field label="Описание">
+          <textarea
+            rows={3}
+            value={form.description || ''}
+            onChange={e => update('description', e.target.value)}
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-none"
+          />
+        </Field>
+
+        <Field label="URL обложки">
+          <input
+            type="url"
+            value={form.cover_url || ''}
+            onChange={e => update('cover_url', e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <Field label="URL PDF">
+          <input
+            type="url"
+            value={form.file_url || ''}
+            onChange={e => update('file_url', e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <div className="pt-4 border-t border-[var(--color-border)] flex gap-3">
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="flex-1 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> Сохранить</>}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
 
 const Book = () => {
   const [book, setBook] = useState(null)
@@ -46,12 +196,17 @@ const Book = () => {
       const token = localStorage.getItem('token')
 
       if (token) {
-        try {
-          const { parseJwt } = await import('../../../lib/jwt')
-          const payload = parseJwt(token) || { role: 'student' }
-          setUserRole(payload?.role)
-          setUserId(payload?.id)
-        } catch (e) { /* ignore */ }
+        // parseJwt использует atob — client-only. Импортируем динамически.
+        import('../../../lib/jwt')
+          .then(({ parseJwt: pj }) => {
+            const payload = pj(token) || { role: 'student' }
+            setUserRole(payload?.role)
+            setUserId(payload?.id)
+          })
+          .catch(() => {
+            setUserRole('student')
+            setUserId(null)
+          })
 
         try {
           const profileRes = await fetch('/api/profile', {
@@ -679,155 +834,5 @@ const Book = () => {
     </div>
   )
 }
-
-// === ФОРМА РЕДАКТИРОВАНИЯ (для библиотекаря) ===
-const EditBookForm = ({ form, setForm, onSave, saving }) => {
-  const update = (k, v) => setForm({ ...form, [k]: v })
-
-  return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6 sm:p-8"
-    >
-      <div className="flex items-center gap-3 mb-6">
-        <div className="w-10 h-10 rounded-xl bg-[var(--color-brand-soft)] flex items-center justify-center">
-          <Edit size={20} className="text-[var(--color-brand)]" />
-        </div>
-        <div>
-          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Редактирование книги</h2>
-          <p className="text-[12px] text-[var(--color-text-tertiary)]">Изменения сохранятся в БД и Google Sheets</p>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Название *">
-            <input
-              type="text"
-              value={form.title}
-              onChange={e => update('title', e.target.value)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Автор *">
-            <input
-              type="text"
-              value={form.author}
-              onChange={e => update('author', e.target.value)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Field label="Жанр">
-            <input
-              type="text"
-              value={form.genre || ''}
-              onChange={e => update('genre', e.target.value)}
-              placeholder="Классика"
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Год">
-            <input
-              type="text"
-              value={form.year || ''}
-              onChange={e => update('year', e.target.value)}
-              placeholder="1967"
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Язык">
-            <input
-              type="text"
-              value={form.language || ''}
-              onChange={e => update('language', e.target.value)}
-              placeholder="Русский"
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Сложность">
-            <input
-              type="text"
-              value={form.difficulty || ''}
-              onChange={e => update('difficulty', e.target.value)}
-              placeholder="Средний"
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Экземпляров всего">
-            <input
-              type="number"
-              min="1"
-              value={form.total_copies}
-              onChange={e => update('total_copies', parseInt(e.target.value) || 1)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Страниц">
-            <input
-              type="number"
-              min="0"
-              value={form.pages || ''}
-              onChange={e => update('pages', e.target.value)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-        </div>
-
-        <Field label="Описание">
-          <textarea
-            rows={3}
-            value={form.description || ''}
-            onChange={e => update('description', e.target.value)}
-            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-none"
-          />
-        </Field>
-
-        <Field label="URL обложки">
-          <input
-            type="url"
-            value={form.cover_url || ''}
-            onChange={e => update('cover_url', e.target.value)}
-            placeholder="https://..."
-            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-          />
-        </Field>
-
-        <Field label="URL PDF">
-          <input
-            type="url"
-            value={form.file_url || ''}
-            onChange={e => update('file_url', e.target.value)}
-            placeholder="https://..."
-            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-          />
-        </Field>
-
-        <div className="pt-4 border-t border-[var(--color-border)] flex gap-3">
-          <button
-            onClick={onSave}
-            disabled={saving}
-            className="flex-1 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
-          >
-            {saving ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> Сохранить</>}
-          </button>
-        </div>
-      </div>
-    </motion.div>
-  )
-}
-
-const Field = ({ label, children, type }) => (
-  <div>
-    <label className="block text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1.5 uppercase tracking-wider">{label}</label>
-    {children}
-  </div>
-)
 
 export default Book
