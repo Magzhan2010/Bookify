@@ -11,9 +11,10 @@ import {
 
 const navItems = [
   { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
-  { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked },
+  { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
   { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
   { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
+  { href: '/librarian/books', label: 'Книги', icon: Library },
   { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
   { href: '/librarian/students', label: 'Ученики', icon: Users },
   { href: '/librarian/history', label: 'История', icon: History },
@@ -27,6 +28,34 @@ export default function LibrarianLayout({ children }) {
   const [user, setUser] = useState(null)
   const [ready, setReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [pendingCount, setPendingCount] = useState(0)
+
+  // Счётчик ожидающих заявок в меню
+  useEffect(() => {
+    if (!ready) return
+    const token = localStorage.getItem('token')
+    if (!token) return
+
+    let alive = true
+    const load = async () => {
+      try {
+        const res = await fetch('/api/librarian/requests?status=pending', {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        if (!res.ok) return
+        const data = await res.json()
+        if (alive) setPendingCount(Array.isArray(data) ? data.length : 0)
+      } catch (e) {
+        // тихо игнорируем — счётчик не критичен
+      }
+    }
+    load()
+    const timer = setInterval(load, 60000)
+    return () => {
+      alive = false
+      clearInterval(timer)
+    }
+  }, [ready])
 
   useEffect(() => {
     const token = localStorage.getItem('token')
@@ -90,6 +119,7 @@ export default function LibrarianLayout({ children }) {
             {navItems.map(item => {
               const Icon = item.icon
               const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+              const badge = item.badge === 'requests' && pendingCount > 0 ? pendingCount : null
               return (
                 <Link
                   key={item.href}
@@ -102,7 +132,12 @@ export default function LibrarianLayout({ children }) {
                   }`}
                 >
                   <Icon size={16} />
-                  {item.label}
+                  <span className="flex-1">{item.label}</span>
+                  {badge && (
+                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-danger)] text-white text-[11px] font-semibold flex items-center justify-center">
+                      {badge > 99 ? '99+' : badge}
+                    </span>
+                  )}
                 </Link>
               )
             })}

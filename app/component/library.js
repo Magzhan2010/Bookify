@@ -23,6 +23,7 @@ export default function Library() {
 
   const activeGenre = searchParams.get('genre') || 'Все'
   const [search, setSearch] = useState('')
+  const [searchQuery, setSearchQuery] = useState('')
 
   const [page, setPage] = useState(1)
   const [hasMore, setHasMore] = useState(true)
@@ -153,23 +154,25 @@ export default function Library() {
   }, [activeGenre, allGenres])
 
   // === Загрузка книг ===
+  // searchQuery — применённый поисковый запрос (в state.search с дебаунсом)
   const fetchBooks = async (pageNum, isNewSearch) => {
     if (isNewSearch) setLoading(true)
     try {
       const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
-      const url = `/api/books?page=${pageNum}${genreParam}`
+      const searchParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''
+      const url = `/api/books?page=${pageNum}${genreParam}${searchParam}`
       const data = await (await fetch(url)).json()
 
       if (isNewSearch) {
-        setBooks(data)
+        setBooks(Array.isArray(data) ? data : [])
       } else {
         setBooks(prev => {
           const existingIds = new Set(prev.map(b => b.id))
-          return [...prev, ...data.filter(b => !existingIds.has(b.id))]
+          return [...prev, ...(Array.isArray(data) ? data : []).filter(b => !existingIds.has(b.id))]
         })
       }
 
-      if (data.length < 12) setHasMore(false)
+      if (!Array.isArray(data) || data.length < 12) setHasMore(false)
     } catch (err) {
       console.error(err)
     } finally {
@@ -182,13 +185,18 @@ export default function Library() {
     setHasMore(true)
     fetchBooks(1, true)
     const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
-    fetch(`/api/books?countOnly=true${genreParam}`)
+    const searchParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''
+    fetch(`/api/books?countOnly=true${genreParam}${searchParam}`)
       .then(r => r.json())
       .then(d => setTotalBooks(parseInt(d.total) || 0))
       .catch(() => {})
-  }, [activeGenre])
+  }, [activeGenre, searchQuery])
 
-  useEffect(() => { setPage(1); setHasMore(true) }, [activeGenre])
+  // Дебаунс: в state.search печатаем, в searchQuery — то, что реально уходит в API
+  useEffect(() => {
+    const t = setTimeout(() => setSearchQuery(search.trim()), 400)
+    return () => clearTimeout(t)
+  }, [search])
 
   useEffect(() => {
     if (loading || !hasMore) return

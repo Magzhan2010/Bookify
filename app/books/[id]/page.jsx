@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
-  Send, Trash2, Sparkles, Save, X, Edit, RotateCcw
+  Send, Trash2, Sparkles, Save, X, Edit, RotateCcw, Search
 } from 'lucide-react'
 
 // === ВСПОМОГАТЕЛЬНОЕ ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ ===
@@ -229,6 +229,87 @@ const Book = () => {
   const [savingEdit, setSavingEdit] = useState(false)
   const [deleting, setDeleting] = useState(false)
 
+  // Librarian: выдача прямо со страницы книги
+  const [issueOpen, setIssueOpen] = useState(false)
+  const [issueQuery, setIssueQuery] = useState('')
+  const [issueStudents, setIssueStudents] = useState([])
+  const [issueLoading, setIssueLoading] = useState(false)
+  const [issueSubmitting, setIssueSubmitting] = useState(false)
+  const [dueDate, setDueDate] = useState('')
+
+  // Поиск учеников при выдаче (с дебаунсом)
+  useEffect(() => {
+    if (!issueOpen) return
+    const token = localStorage.getItem('token')
+    const t = setTimeout(async () => {
+      setIssueLoading(true)
+      try {
+        const res = await fetch(`/api/librarian/students?q=${encodeURIComponent(issueQuery.trim())}`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+        const data = await res.ok ? await res.json() : []
+        setIssueStudents(Array.isArray(data) ? data.slice(0, 20) : [])
+      } catch (e) {
+        setIssueStudents([])
+      } finally {
+        setIssueLoading(false)
+      }
+    }, 300)
+    return () => clearTimeout(t)
+  }, [issueQuery, issueOpen])
+
+  // Срок по умолчанию — +14 дней (тот же дефолт, что и на странице выдачи)
+  useEffect(() => {
+    if (!issueOpen) return
+    const d = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    setDueDate(d.toISOString().slice(0, 10))
+    setIssueQuery('')
+  }, [issueOpen])
+
+  // Esc закрывает окно
+  useEffect(() => {
+    if (!issueOpen) return
+    const onKey = e => { if (e.key === 'Escape') setIssueOpen(false) }
+    window.addEventListener('keydown', onKey)
+    return () => window.removeEventListener('keydown', onKey)
+  }, [issueOpen])
+
+  const handleIssue = async (student) => {
+    setIssueSubmitting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/librarian/issue', {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          studentIdentifier: student.id,
+          bookId: Number(id),
+          dueDate: dueDate || undefined
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        const when = data.due_date
+          ? new Date(data.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
+          : ''
+        toast.success(`«${book.title}» выдана: ${student.name}`, {
+          description: `Вернуть до ${when}`
+        })
+        setBook(prev => ({ ...prev, available_copies: Math.max(0, (prev.available_copies || 1) - 1) }))
+        setIssueOpen(false)
+      } else {
+        toast.error(data.error || 'Ошибка')
+      }
+    } catch (e) {
+      toast.error('Ошибка сети')
+    } finally {
+      setIssueSubmitting(false)
+    }
+  }
+
   // Комментарии
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
@@ -335,9 +416,11 @@ const Book = () => {
         }
 
         if (bookData.genre) {
-          const rootGenre = bookData.genre.split('/')[0].trim()
+          // ВАЖНО: ветка 'sub' возвращает дерево жанров ({path, parts, categories})
+          // без книг, поэтому блок «Похожие книги» был всегда пустым.
+          // Книги по жанру отдаёт ветка 'books': {genre, books, total, ...}
           try {
-            const r = await fetch(`/api/genres/sub/${encodeURIComponent(rootGenre)}/books?limit=6`)
+            const r = await fetch(`/api/genres/books/${encodeURIComponent(bookData.genre)}?limit=8`)
             if (r.ok) {
               const d = await r.json()
               setRelated((d.books || []).filter(b => Number(b.id) !== Number(id)).slice(0, 4))
@@ -625,6 +708,20 @@ const Book = () => {
 
           {isLibrarian && (
             <div className="flex items-center gap-2">
+              <button
+                onClick={() => setIssueOpen(true)}
+                disabled={book.archived_at || book.available_copies <= 0}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title={
+                  book.archived_at
+                    ? 'Книга в архиве'
+                    : book.available_copies <= 0
+                      ? 'Все экземпляры на руках'
+                      : 'Выдать книгу ученику'
+                }
+              >
+                <Send size={13} /> Выдать
+              </button>
               <button
                 onClick={() => setEditMode(!editMode)}
                 className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
@@ -937,6 +1034,105 @@ const Book = () => {
             </div>
           )}
         </motion.section>
+
+        {/* === ОКНО ВЫДАЧИ КНИГИ (библиотекарь) === */}
+        {issueOpen && (
+          <div
+            className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40 backdrop-blur-sm p-0 sm:p-4"
+            onClick={e => { if (e.target === e.currentTarget && !issueSubmitting) setIssueOpen(false) }}
+          >
+            <motion.div
+              initial={{ opacity: 0, y: 24 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="w-full sm:max-w-md bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-t-3xl sm:rounded-2xl p-5 sm:p-6 max-h-[90vh] flex flex-col"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Выдать книгу"
+            >
+              <div className="flex items-start justify-between gap-3 mb-4">
+                <div>
+                  <h2 className="text-lg font-semibold text-[var(--color-text-primary)]">Выдать книгу</h2>
+                  <p className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5 truncate">
+                    {book.title}
+                  </p>
+                </div>
+                <button
+                  onClick={() => setIssueOpen(false)}
+                  disabled={issueSubmitting}
+                  className="p-2 -mr-1 -mt-1 rounded-lg hover:bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)]"
+                  aria-label="Закрыть"
+                >
+                  <X size={16} />
+                </button>
+              </div>
+
+              <div className="relative mb-3">
+                <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+                <input
+                  autoFocus
+                  value={issueQuery}
+                  onChange={e => setIssueQuery(e.target.value)}
+                  placeholder="Имя, класс или email ученика"
+                  className="w-full bg-[var(--color-bg-soft)] border border-transparent pl-10 pr-3 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40"
+                />
+              </div>
+
+              <div className="mb-4">
+                <label className="block text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1.5 uppercase tracking-wider">
+                  Вернуть до
+                </label>
+                <input
+                  type="date"
+                  value={dueDate}
+                  min={new Date().toISOString().slice(0, 10)}
+                  onChange={e => setDueDate(e.target.value)}
+                  className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40"
+                />
+              </div>
+
+              <div className="flex-1 -mx-1 overflow-y-auto">
+                {issueLoading ? (
+                  <div className="flex justify-center py-8">
+                    <Loader2 size={20} className="animate-spin text-[var(--color-text-tertiary)]" />
+                  </div>
+                ) : issueStudents.length === 0 ? (
+                  <p className="text-center text-[13px] text-[var(--color-text-tertiary)] py-8">
+                    Никого не найдено
+                  </p>
+                ) : (
+                  <div className="space-y-1">
+                    {issueStudents.map(s => (
+                      <button
+                        key={s.id}
+                        onClick={() => handleIssue(s)}
+                        disabled={issueSubmitting}
+                        className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-[var(--color-bg-soft)] disabled:opacity-50 transition-colors"
+                      >
+                        <div className="w-8 h-8 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] flex items-center justify-center text-[12px] font-semibold shrink-0">
+                          {s.name?.charAt(0).toUpperCase()}
+                        </div>
+                        <div className="min-w-0 flex-1">
+                          <div className="text-[14px] font-medium text-[var(--color-text-primary)] truncate">
+                            {s.name}
+                          </div>
+                          <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">
+                            {s.class_name || 'без класса'}
+                            {s.currently_holding > 0 ? ` · на руках: ${s.currently_holding}` : ''}
+                          </div>
+                        </div>
+                        {issueSubmitting ? (
+                          <Loader2 size={14} className="animate-spin text-[var(--color-brand)]" />
+                        ) : (
+                          <Send size={14} className="text-[var(--color-brand)] shrink-0" />
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </motion.div>
+          </div>
+        )}
 
         {/* Похожие книги */}
         {!editMode && related.length > 0 && (

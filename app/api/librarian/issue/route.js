@@ -31,19 +31,19 @@ export async function POST(req) {
     if (typeof studentIdentifier === 'number' || /^\d+$/.test(studentIdentifier)) {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE id = $1 AND role IN ('student','teacher')`,
+         WHERE id = $1 AND role = 'student'`,
         [parseInt(studentIdentifier)]
       )
-    } else if (studentIdentifier.includes('@')) {
+    } else if (String(studentIdentifier).includes('@')) {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE LOWER(email) = LOWER($1) AND role IN ('student','teacher')`,
+         WHERE LOWER(email) = LOWER($1) AND role = 'student'`,
         [studentIdentifier]
       )
     } else {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE LOWER(name) LIKE LOWER($1) AND role IN ('student','teacher')
+         WHERE LOWER(name) LIKE LOWER($1) AND role = 'student'
          ORDER BY name ASC LIMIT 1`,
         [`%${studentIdentifier}%`]
       )
@@ -61,7 +61,8 @@ export async function POST(req) {
 
     // Проверяем книгу и доступность
     const bookRes = await client.query(
-      'SELECT id, title, author, available_copies, total_copies FROM books WHERE id = $1 FOR UPDATE',
+      `SELECT id, title, author, available_copies, total_copies, archived_at
+       FROM books WHERE id = $1 FOR UPDATE`,
       [bookId]
     )
     if (!bookRes.rows[0]) {
@@ -70,10 +71,20 @@ export async function POST(req) {
     }
 
     const book = bookRes.rows[0]
+
+    // Архивные книги не выдаются
+    if (book.archived_at) {
+      await client.query('ROLLBACK')
+      return NextResponse.json(
+        { error: 'Книга в архиве. Сначала верните её в каталог.' },
+        { status: 400 }
+      )
+    }
+
     if (book.available_copies <= 0) {
       await client.query('ROLLBACK')
       return NextResponse.json(
-        { error: `Все экземпляры "${book.title}" на руках` },
+        { error: `Все экземпляры «${book.title}» на руках` },
         { status: 400 }
       )
     }
@@ -93,9 +104,23 @@ export async function POST(req) {
     }
 
     // Срок сдачи — по умолчанию 14 дней
-    const due = dueDate
-      ? new Date(dueDate)
-      : new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    let due
+    if (dueDate) {
+      due = new Date(dueDate)
+      if (Number.isNaN(due.getTime())) {
+        await client.query('ROLLBACK')
+        return NextResponse.json({ error: 'Некорректная дата возврата' }, { status: 400 })
+      }
+      if (due.getTime() < Date.now()) {
+        await client.query('ROLLBACK')
+        return NextResponse.json(
+          { error: 'Дата возврата не может быть в прошлом' },
+          { status: 400 }
+        )
+      }
+    } else {
+      due = new Date(Date.now() + 14 * 24 * 60 * 60 * 1000)
+    }
 
     // Создаём запись о выдаче
     const borrowRes = await client.query(
