@@ -14,9 +14,9 @@ export async function GET(req) {
     // 1. Общие счётчики
     const totals = await pool.query(`
       SELECT
-        (SELECT COUNT(*) FROM books) AS total_books,
-        (SELECT COUNT(*) FROM books WHERE available_copies > 0) AS available_books,
-        (SELECT SUM(total_copies - available_copies) FROM books) AS books_on_hands,
+        (SELECT COUNT(*) FROM books WHERE archived_at IS NULL) AS total_books,
+        (SELECT COUNT(*) FROM books WHERE archived_at IS NULL AND available_copies > 0) AS available_books,
+        (SELECT COALESCE(SUM(total_copies - available_copies), 0) FROM books WHERE archived_at IS NULL) AS books_on_hands,
         (SELECT COUNT(*) FROM users WHERE role = 'student') AS total_students,
         (SELECT COUNT(DISTINCT user_id) FROM borrows
            WHERE borrowed_at > NOW() - INTERVAL '30 days') AS active_readers_30d,

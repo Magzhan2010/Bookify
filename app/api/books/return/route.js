@@ -1,69 +1,86 @@
 import pool from '../../../../lib/db'
-import jwt from "jsonwebtoken"
-import { NextResponse } from "next/server"
+import { NextResponse } from 'next/server'
+import { requireAuth } from '../../../../lib/auth'
 
 /**
  * POST /api/books/return
- * Body: { borrowId, bookId }
- * Ученик сам может вернуть книгу (без библиотекаря).
+ * Body: { borrowId }
+ * Ученик отмечает, что вернул книгу.
+ *
+ * БЕЗОПАСНОСТЬ:
+ * - bookId НЕ принимается из тела запроса. Он берётся ТОЛЬКО из строки заёма.
+ *   Раньше можно было вернуть свою книгу, а счётчик available_copies увеличить
+ *   у произвольной книги по её id — счётчики рассинхронизировались навсегда.
+ * - Поиск заёма и его закрытие идут под AND status='active' + FOR UPDATE,
+ *   поэтому повторный запрос больше не накручивает счётчик.
  */
 export async function POST(req) {
+  const guard = requireAuth(req)
+  if (!guard.ok) return guard.response
+
   const client = await pool.connect()
+  let inTx = false
+
   try {
-    const { borrowId, bookId } = await req.json()
-    const auth = req.headers.get('authorization')
-    const token = auth?.split(' ')[1]
-    if (!token) {
-      return NextResponse.json({ error: 'Токен не найден' }, { status: 401 })
-    }
+    const { borrowId } = await req.json()
+    const userId = guard.payload.id
 
-    const secret = process.env.JWT_SECRET
-    if (!secret) {
-      return NextResponse.json({ error: 'JWT_SECRET не задан' }, { status: 500 })
+    if (!borrowId) {
+      return NextResponse.json({ error: 'Не указан заём' }, { status: 400 })
     }
-
-    let payload
-    try {
-      payload = jwt.verify(token, secret)
-    } catch (err) {
-      if (err.name === 'TokenExpiredError') {
-        return NextResponse.json({ error: 'Токен истёк' }, { status: 401 })
-      }
-      return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 })
-    }
-
-    const userId = payload.id
-
-    // Проверяем заём
-    const borrowCheck = await client.query(
-      'SELECT user_id, book_id FROM borrows WHERE id = $1',
-      [borrowId]
-    )
-    if (!borrowCheck.rows[0]) {
-      return NextResponse.json({ error: 'Заём не найден' }, { status: 404 })
-    }
-    if (borrowCheck.rows[0].user_id !== userId) {
-      return NextResponse.json({ error: 'Это не твоя книга' }, { status: 403 })
-    }
-
-    const realBookId = bookId || borrowCheck.rows[0].book_id
 
     await client.query('BEGIN')
+    inTx = true
 
-    await client.query(
-      "UPDATE borrows SET status = 'returned', returned_at = NOW(), updated_at = NOW() WHERE id = $1 AND user_id = $2",
+    // Заём должен существовать, принадлежать пользователю и быть активным
+    const borrowCheck = await client.query(
+      `SELECT user_id, book_id FROM borrows
+       WHERE id = $1 AND user_id = $2 AND status = 'active'
+       FOR UPDATE`,
       [borrowId, userId]
     )
 
+    if (!borrowCheck.rows[0]) {
+      await client.query('ROLLBACK')
+      inTx = false
+      return NextResponse.json(
+        { error: 'Заём не найден или книга уже возвращена' },
+        { status: 404 }
+      )
+    }
+
+    // id книги — только из БД, клиенту доверять нельзя
+    const realBookId = borrowCheck.rows[0].book_id
+
+    const updated = await client.query(
+      `UPDATE borrows
+       SET status = 'returned', returned_at = NOW(), updated_at = NOW()
+       WHERE id = $1 AND user_id = $2 AND status = 'active'`,
+      [borrowId, userId]
+    )
+
+    if (updated.rowCount === 0) {
+      await client.query('ROLLBACK')
+      inTx = false
+      return NextResponse.json({ error: 'Книга уже возвращена' }, { status: 409 })
+    }
+
     await client.query(
-      'UPDATE books SET available_copies = LEAST(available_copies + 1, total_copies), updated_at = NOW() WHERE id = $1',
+      `UPDATE books
+       SET available_copies = LEAST(available_copies + 1, total_copies), updated_at = NOW()
+       WHERE id = $1 AND archived_at IS NULL`,
       [realBookId]
     )
 
     await client.query('COMMIT')
+    inTx = false
     return NextResponse.json({ success: true })
   } catch (err) {
-    await client.query('ROLLBACK')
+    if (inTx) {
+      try {
+        await client.query('ROLLBACK')
+      } catch (_) {}
+    }
     console.error('Return error:', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
   } finally {

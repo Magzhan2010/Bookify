@@ -37,7 +37,8 @@ export async function GET(req, { params }) {
 
       const booksRes = await pool.query(
         `SELECT * FROM books
-         WHERE genre = $1 OR genre LIKE $2
+         WHERE archived_at IS NULL
+           AND (genre = $1 OR genre LIKE $2)
          ORDER BY created_at DESC
          LIMIT $3 OFFSET $4`,
         [genrePath, genrePath + ' / %', limit, offset]
@@ -45,7 +46,8 @@ export async function GET(req, { params }) {
 
       const totalRes = await pool.query(
         `SELECT COUNT(*) AS total FROM books
-         WHERE genre = $1 OR genre LIKE $2`,
+         WHERE archived_at IS NULL
+           AND (genre = $1 OR genre LIKE $2)`,
         [genrePath, genrePath + ' / %']
       )
 
@@ -64,7 +66,7 @@ export async function GET(req, { params }) {
     const result = await pool.query(`
       SELECT genre, COUNT(*) AS count
       FROM books
-      WHERE genre IS NOT NULL AND genre != ''
+      WHERE archived_at IS NULL AND genre IS NOT NULL AND genre != ''
       GROUP BY genre
       ORDER BY genre
     `)

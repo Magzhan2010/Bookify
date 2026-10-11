@@ -74,22 +74,46 @@ export async function GET(req, { params }) {
 /**
  * PATCH /api/librarian/students/[id]
  * Обновить данные ученика: имя, класс, телефон, пароль.
+ *
+ * БЕЗОПАСНОСТЬ:
+ * - Редактировать можно ТОЛЬКО учеников. Другого библиотекаря — нельзя
+ *   (иначе любой библиотекарь перезаписывал бы пароль коллеги и входил под ним).
+ * - Себя библиотекарь править может (имя/телефон/пароль).
  */
 export async function PATCH(req, { params }) {
   const guard = requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
-  const { name, className, phone, password } = await req.json()
+  const selfId = guard.payload.id
 
   try {
+    const target = await pool.query(
+      'SELECT id, role FROM users WHERE id = $1',
+      [id]
+    )
+    if (!target.rows[0]) {
+      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
+    }
+    if (target.rows[0].role === 'librarian' && Number(id) !== Number(selfId)) {
+      return NextResponse.json(
+        { error: 'Нельзя редактировать другого библиотекаря' },
+        { status: 403 }
+      )
+    }
+
+    const { name, className, phone, password } = await req.json()
+
     const fields = []
     const values = []
     let i = 1
 
     if (name !== undefined) {
+      if (!String(name).trim()) {
+        return NextResponse.json({ error: 'Имя не может быть пустым' }, { status: 400 })
+      }
       fields.push(`name = $${i++}`)
-      values.push(name)
+      values.push(String(name).trim())
     }
     if (className !== undefined) {
       fields.push(`class_name = $${i++}`)
@@ -100,6 +124,12 @@ export async function PATCH(req, { params }) {
       values.push(phone || null)
     }
     if (password) {
+      if (String(password).length < 6) {
+        return NextResponse.json(
+          { error: 'Пароль должен быть не короче 6 символов' },
+          { status: 400 }
+        )
+      }
       fields.push(`password = $${i++}`)
       values.push(await bcrypt.hash(password, 10))
     }
@@ -111,14 +141,19 @@ export async function PATCH(req, { params }) {
     fields.push(`updated_at = NOW()`)
     values.push(id)
 
+    // Строка-guard по роли остаётся и в самом UPDATE (защита от гонки)
     const res = await pool.query(
-      `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
-       RETURNING id, name, email, class_name, phone`,
-      values
+      `UPDATE users SET ${fields.join(', ')}
+       WHERE id = $${i} AND (role = 'student' OR id = $${i + 1})
+       RETURNING id, name, email, role, class_name, phone`,
+      [...values, selfId]
     )
 
     if (!res.rows[0]) {
-      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
+      return NextResponse.json(
+        { error: 'Недостаточно прав или пользователь не найден' },
+        { status: 403 }
+      )
     }
 
     return NextResponse.json({ success: true, student: res.rows[0] })
@@ -137,8 +172,27 @@ export async function DELETE(req, { params }) {
   if (!guard.ok) return guard.response
 
   const { id } = await params
+  const selfId = guard.payload.id
+
+  if (Number(id) === Number(selfId)) {
+    return NextResponse.json(
+      { error: 'Нельзя удалить свой аккаунт' },
+      { status: 400 }
+    )
+  }
 
   try {
+    const target = await pool.query('SELECT id, role FROM users WHERE id = $1', [id])
+    if (!target.rows[0]) {
+      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
+    }
+    if (target.rows[0].role === 'librarian') {
+      return NextResponse.json(
+        { error: 'Нельзя удалить библиотекаря' },
+        { status: 403 }
+      )
+    }
+
     const active = await pool.query(
       `SELECT id FROM borrows WHERE user_id = $1 AND status = 'active'`,
       [id]
@@ -150,7 +204,14 @@ export async function DELETE(req, { params }) {
       )
     }
 
-    await pool.query('DELETE FROM users WHERE id = $1', [id])
+    const res = await pool.query(
+      `DELETE FROM users WHERE id = $1 AND role = 'student' RETURNING id`,
+      [id]
+    )
+    if (!res.rows[0]) {
+      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
+    }
+
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Delete student error:', err)

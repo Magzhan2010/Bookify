@@ -38,6 +38,7 @@ CREATE TABLE IF NOT EXISTS books (
   isbn TEXT,
   pages INT,
   tags TEXT,
+  archived_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
@@ -45,6 +46,7 @@ CREATE TABLE IF NOT EXISTS books (
 CREATE INDEX IF NOT EXISTS idx_books_genre ON books(genre);
 CREATE INDEX IF NOT EXISTS idx_books_title ON books(title);
 CREATE INDEX IF NOT EXISTS idx_books_author ON books(author);
+CREATE INDEX IF NOT EXISTS idx_books_archived ON books(archived_at);
 
 -- BOOK_REQUESTS: ученик хочет забрать книгу (заявка)
 CREATE TABLE IF NOT EXISTS book_requests (

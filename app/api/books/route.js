@@ -1,17 +1,20 @@
 import { NextResponse } from 'next/server'
-import jwt from 'jsonwebtoken'
-import pool from '../../../lib/db'
+import pool, { ensureSchema } from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
 import { appendBookToSheet } from '../../../lib/google-sheets'
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url)
+  await ensureSchema()
+
+  // Архивные книги не показываем в каталоге
+  const LIVE = 'archived_at IS NULL'
 
   // 1. Все жанры для фильтра
   if (searchParams.get('allGenres') === 'true') {
     const result = await pool.query(
       `SELECT DISTINCT genre FROM books
-       WHERE genre IS NOT NULL AND genre != ''
+       WHERE ${LIVE} AND genre IS NOT NULL AND genre != ''
        ORDER BY genre ASC`
     )
     return NextResponse.json(result.rows.map(r => r.genre))
@@ -19,10 +22,13 @@ export async function GET(req) {
 
   // 2. Все книги для админки
   if (searchParams.get('allBooks') === 'true') {
-    const result = await pool.query('SELECT * FROM books ORDER BY created_at DESC')
+    const result = await pool.query(
+      `SELECT * FROM books WHERE ${LIVE} ORDER BY created_at DESC`
+    )
     return NextResponse.json(result.rows)
   }
 
+  const search = (searchParams.get('q') || '').trim()
   const countOnly = searchParams.get('countOnly') === 'true'
   const page = parseInt(searchParams.get('page')) || 1
   const limit = 12
@@ -30,49 +36,55 @@ export async function GET(req) {
   const genre = searchParams.get('genre')
   const isFiltered = genre && genre !== 'Все'
 
+  // Поиск по названию / автору
+  const buildSearch = (params) => {
+    if (!search) return ''
+    params.push(`%${search}%`)
+    return ` AND (title ILIKE $${params.length} OR author ILIKE $${params.length})`
+  }
+
   if (countOnly) {
+    const params = []
+    let sql = `SELECT COUNT(*) AS total FROM books WHERE ${LIVE}`
+
     if (isFiltered) {
-      const result = await pool.query(
-        `SELECT COUNT(*) AS total FROM books
-         WHERE genre = $1
-            OR genre LIKE $2
-            OR genre LIKE $3
-            OR genre LIKE $4`,
-        [
-          genre,
-          genre + ' / %',
-          '% / ' + genre,
-          '% / ' + genre + ' / %'
-        ]
-      )
-      return NextResponse.json({ total: parseInt(result.rows[0].total) })
+      params.push(genre, genre + ' / %', '% / ' + genre, '% / ' + genre + ' / %')
+      sql += ` AND (genre = $1 OR genre LIKE $2 OR genre LIKE $3 OR genre LIKE $4)`
     }
-    const result = await pool.query('SELECT COUNT(*) AS total FROM books')
+    sql += buildSearch(params)
+
+    const result = await pool.query(sql, params)
     return NextResponse.json({ total: parseInt(result.rows[0].total) })
   }
 
+  const params = []
+  let limitIdx
+  let offsetIdx
+
   if (isFiltered) {
+    params.push(genre, genre + ' / %', '% / ' + genre, '% / ' + genre + ' / %')
+    let sql = `SELECT * FROM books
+       WHERE ${LIVE}
+         AND (genre = $1 OR genre LIKE $2 OR genre LIKE $3 OR genre LIKE $4)`
+    sql += buildSearch(params)
+    params.push(limit, offset)
+    limitIdx = params.length - 1
+    offsetIdx = params.length
     const result = await pool.query(
-      `SELECT * FROM books
-       WHERE genre = $1
-          OR genre LIKE $2
-          OR genre LIKE $3
-          OR genre LIKE $4
-       ORDER BY created_at DESC LIMIT $5 OFFSET $6`,
-      [
-        genre,
-        genre + ' / %',
-        '% / ' + genre,
-        '% / ' + genre + ' / %',
-        limit,
-        offset
-      ]
+      `${sql} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      params
     )
     return NextResponse.json(result.rows)
   }
+
+  let sql = `SELECT * FROM books WHERE ${LIVE}`
+  sql += buildSearch(params)
+  params.push(limit, offset)
+  limitIdx = params.length - 1
+  offsetIdx = params.length
   const result = await pool.query(
-    'SELECT * FROM books ORDER BY created_at DESC LIMIT $1 OFFSET $2',
-    [limit, offset]
+    `${sql} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    params
   )
   return NextResponse.json(result.rows)
 }

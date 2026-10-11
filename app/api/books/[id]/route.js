@@ -1,11 +1,11 @@
-import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
-import pool from '../../../../lib/db'
+import pool, { ensureSchema } from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 
 export async function GET(req, { params }) {
   const { id } = await params
   try {
+    await ensureSchema()
     const res = await pool.query("SELECT * FROM books WHERE id = $1", [id])
     if (!res.rows[0]) {
       return NextResponse.json({ error: "Книга не найдена" }, { status: 404 })
@@ -23,6 +23,7 @@ export async function PATCH(req, { params }) {
 
   const { id } = await params
   const data = await req.json()
+  await ensureSchema()
 
   // Разрешённые поля для обновления.
   // ВАЖНО: 'language' и 'difficulty' НЕ включаем — таких колонок в books нет,
@@ -99,8 +100,13 @@ export async function DELETE(req, { params }) {
   if (!guard.ok) return guard.response
 
   const { id } = await params
+  const { searchParams } = new URL(req.url)
+  // ?hard=1 — полное удаление (разрешено только если по книге НЕТ никакой истории)
+  const hard = searchParams.get('hard') === '1'
 
   try {
+    await ensureSchema()
+
     // Проверяем, есть ли активные займы этой книги
     const active = await pool.query(
       `SELECT id FROM borrows WHERE book_id = $1 AND status = 'active' LIMIT 1`,
@@ -108,23 +114,56 @@ export async function DELETE(req, { params }) {
     )
     if (active.rows[0]) {
       return NextResponse.json(
-        { error: 'Нельзя удалить: у книги есть активные займы' },
+        { error: 'Нельзя удалить: книга сейчас у кого-то на руках' },
         { status: 400 }
       )
     }
 
-    // Удаляем связанные данные (комментарии, избранное)
-    await pool.query('DELETE FROM book_comments WHERE book_id = $1', [id])
-    await pool.query('DELETE FROM favorites WHERE book_id = $1', [id])
-
-    const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING title', [id])
-    if (!result.rows[0]) {
+    const current = await pool.query('SELECT title, archived_at FROM books WHERE id = $1', [id])
+    if (!current.rows[0]) {
       return NextResponse.json({ error: 'Книга не найдена' }, { status: 404 })
     }
+    const title = current.rows[0].title
+
+    // ─── Полное удаление ───
+    // Раньше здесь был DELETE FROM books, а из-за ON DELETE CASCADE
+    // вместе с книгой стирались ВСЕ borrows и book_requests — история выдач пропадала.
+    if (hard) {
+      const history = await pool.query(
+        'SELECT COUNT(*)::int AS count FROM borrows WHERE book_id = $1',
+        [id]
+      )
+      if (history.rows[0].count > 0) {
+        return NextResponse.json(
+          {
+            error: `Нельзя удалить навсегда: по книге есть история выдач (${history.rows[0].count}). Отправьте её в архив — история сохранится.`
+          },
+          { status: 400 }
+        )
+      }
+
+      await pool.query('DELETE FROM book_comments WHERE book_id = $1', [id])
+      await pool.query('DELETE FROM favorites WHERE book_id = $1', [id])
+
+      const result = await pool.query('DELETE FROM books WHERE id = $1 RETURNING title', [id])
+      if (!result.rows[0]) {
+        return NextResponse.json({ error: 'Книга не найдена' }, { status: 404 })
+      }
+      return NextResponse.json({ success: true, deleted: result.rows[0].title, hard: true })
+    }
+
+    // ─── Архивирование (по умолчанию) ───
+    const result = await pool.query(
+      `UPDATE books SET archived_at = COALESCE(archived_at, NOW()), updated_at = NOW()
+       WHERE id = $1 RETURNING title`,
+      [id]
+    )
 
     return NextResponse.json({
       success: true,
-      deleted: result.rows[0].title
+      archived: title,
+      hard: false,
+      message: 'Книга убрана из каталога. История выдач сохранена.'
     })
   } catch (err) {
     console.error('Delete book error:', err)

@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
-  Send, Trash2, Sparkles, Save, X, Edit
+  Send, Trash2, Sparkles, Save, X, Edit, RotateCcw
 } from 'lucide-react'
 
 // === ВСПОМОГАТЕЛЬНОЕ ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ ===
@@ -417,9 +417,14 @@ const Book = () => {
     }
   }
 
-  // === Библиотекарь: удалить книгу ===
-  const handleDelete = async () => {
-    if (!confirm(`Удалить «${book.title}» навсегда?\n\nЭто нельзя отменить. Все комментарии и избранное будут удалены.`)) return
+  // === Библиотекарь: убрать книгу в архив (историю выдач не стираем) ===
+  const handleArchive = async () => {
+    if (
+      !confirm(
+        `Убрать «${book.title}» из каталога?\n\nКнига пропадёт из каталога и из выдачи, но история выдач и возвратов сохранится. Книгу можно вернуть обратно в любой момент.`
+      )
+    )
+      return
 
     setDeleting(true)
     try {
@@ -430,8 +435,34 @@ const Book = () => {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success(`«${data.deleted}» удалена`)
-        setTimeout(() => router.push('/library'), 1000)
+        toast.success(`«${data.archived}» убрана в архив`, {
+          description: 'История выдач сохранена'
+        })
+        setTimeout(() => router.push('/library'), 900)
+      } else {
+        toast.error(data.error || 'Ошибка')
+        setDeleting(false)
+      }
+    } catch (e) {
+      toast.error('Ошибка сети')
+      setDeleting(false)
+    }
+  }
+
+  // === Библиотекарь: вернуть книгу из архива ===
+  const handleRestore = async () => {
+    setDeleting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/books/${id}/restore`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success('Книга снова в каталоге')
+        setBook(data.book)
+        setDeleting(false)
       } else {
         toast.error(data.error || 'Ошибка')
         setDeleting(false)
@@ -605,11 +636,22 @@ const Book = () => {
                 <Edit size={13} /> {editMode ? 'Отменить' : 'Редактировать'}
               </button>
               <button
-                onClick={handleDelete}
+                onClick={book.archived_at ? handleRestore : handleArchive}
                 disabled={deleting}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15 text-[12px] font-medium transition-colors disabled:opacity-50"
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                  book.archived_at
+                    ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)]/15'
+                    : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15'
+                }`}
               >
-                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Удалить
+                {deleting ? (
+                  <Loader2 size={13} className="animate-spin" />
+                ) : book.archived_at ? (
+                  <RotateCcw size={13} />
+                ) : (
+                  <Trash2 size={13} />
+                )}
+                {book.archived_at ? 'Вернуть в каталог' : 'В архив'}
               </button>
             </div>
           )}

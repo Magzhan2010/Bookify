@@ -22,10 +22,19 @@ export async function POST(req) {
     await client.query('BEGIN')
 
     // Проверяем книгу
-    const bookRes = await client.query('SELECT id, title, available_copies FROM books WHERE id = $1', [bookId])
+    const bookRes = await client.query(
+      'SELECT id, title, available_copies, archived_at FROM books WHERE id = $1 FOR UPDATE',
+      [bookId]
+    )
     if (!bookRes.rows[0]) {
       await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Книга не найдена' }, { status: 404 })
+    }
+
+    // Архивные книги не выдаются
+    if (bookRes.rows[0].archived_at) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Книга убрана в архив и сейчас не выдаётся' }, { status: 400 })
     }
 
     // Нельзя запрашивать книгу, если она недоступна

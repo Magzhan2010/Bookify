@@ -7,7 +7,10 @@ export async function GET(req) {
 		if (!q || !q.trim()) {
 			return NextResponse.json([])
 		}
-		const result = await pool.query("SELECT * FROM books WHERE title ILIKE $1 OR author ILIKE $1 LIMIT 5", [`%${q}%`])
+		const result = await pool.query(
+			"SELECT * FROM books WHERE archived_at IS NULL AND (title ILIKE $1 OR author ILIKE $1) ORDER BY title LIMIT 20",
+			[`%${q.trim()}%`]
+		)
 		return NextResponse.json(result.rows)
 	} catch (err) {
 		console.error(err)
