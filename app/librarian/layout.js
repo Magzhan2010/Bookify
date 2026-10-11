@@ -187,10 +187,10 @@ export default function LibrarianLayout({ children }) {
             onClick={() => setSidebarOpen(true)}
             className="p-2 rounded-lg bg-[var(--color-bg-soft)]"
           >
-            <div className="flex flex-col gap-1">
-              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
-              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
-              <span className="w-4 h-[1.5px] bg-[#1d1d1f] rounded-full" />
+            <div className="flex flex-col gap-1 text-[var(--color-text-primary)]">
+              <span className="w-4 h-[1.5px] bg-current rounded-full" />
+              <span className="w-4 h-[1.5px] bg-current rounded-full" />
+              <span className="w-4 h-[1.5px] bg-current rounded-full" />
             </div>
           </button>
           <span className="text-[14px] font-semibold text-[var(--color-text-primary)]">Bookify · Библиотека</span>

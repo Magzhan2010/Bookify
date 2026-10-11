@@ -119,14 +119,15 @@ const Navbar = () => {
             <div className="flex items-center gap-1 ml-2">
               <button
                 onClick={handleProfile}
-                className="w-9 h-9 rounded-full bg-[#1a56db] text-white flex items-center justify-center font-semibold text-[14px] hover:bg-[#1849b8] transition-colors"
+                className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] hover:bg-[var(--color-brand-hover)] transition-colors"
               >
                 {avatarLetter}
               </button>
               <button
                 onClick={handleLogout}
-                className="p-2 rounded-lg text-[#86868b] hover:text-[#1d1d1f] hover:bg-black/[0.04] transition-colors"
+                className="p-2 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-soft)] transition-colors"
                 title="Выйти"
+                aria-label="Выйти"
               >
                 <LogOut size={15} />
               </button>
@@ -135,13 +136,13 @@ const Navbar = () => {
             <>
               <Link
                 href="/login"
-                className="px-4 py-2 text-[14px] font-medium text-[#1d1d1f] hover:text-[#1a56db] transition-colors"
+                className="px-4 py-2 text-[14px] font-medium text-[var(--color-text-primary)] hover:text-[var(--color-brand)] transition-colors"
               >
                 Войти
               </Link>
               <Link
                 href="/register"
-                className="px-4 py-2 rounded-xl bg-[#1a56db] hover:bg-[#1849b8] text-white text-[14px] font-medium transition-colors"
+                className="px-4 py-2 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[14px] font-medium transition-colors"
               >
                 Регистрация
               </Link>
@@ -151,14 +152,15 @@ const Navbar = () => {
 
         <button
           onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 rounded-lg hover:bg-black/[0.04] transition-colors"
-          aria-label="Menu"
+          className="lg:hidden p-2 rounded-lg hover:bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] transition-colors"
+          aria-label="Меню"
+          aria-expanded={mobileOpen}
         >
           {mobileOpen ? <X size={20} /> : (
             <div className="flex flex-col gap-[5px]">
-              <span className="w-5 h-[1.5px] bg-[#1d1d1f] rounded-full" />
-              <span className="w-5 h-[1.5px] bg-[#1d1d1f] rounded-full" />
-              <span className="w-5 h-[1.5px] bg-[#1d1d1f] rounded-full" />
+              <span className="w-5 h-[1.5px] bg-current rounded-full" />
+              <span className="w-5 h-[1.5px] bg-current rounded-full" />
+              <span className="w-5 h-[1.5px] bg-current rounded-full" />
             </div>
           )}
         </button>
@@ -174,22 +176,24 @@ const Navbar = () => {
             initial={{ opacity: 0, y: -8 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -8 }}
-            className="lg:hidden fixed top-[100px] left-0 right-0 bottom-0 bg-white z-40 overflow-y-auto p-6 flex flex-col gap-3"
+            className="lg:hidden fixed top-[100px] left-0 right-0 bottom-0 bg-[var(--color-bg)] z-40 overflow-y-auto p-6 flex flex-col gap-3"
           >
             {user && (
               <button
                 onClick={handleProfile}
-                className="flex items-center gap-3 p-4 rounded-2xl bg-[#f5f5f7] hover:bg-[#ececec] text-[#1d1d1f] text-left"
+                className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-left transition-colors"
               >
-                <div className="w-11 h-11 rounded-full bg-[#1a56db] text-white flex items-center justify-center font-semibold text-lg">
+                <div className="w-11 h-11 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-lg">
                   {avatarLetter}
                 </div>
                 <div>
                   <div className="font-semibold text-[15px]">{user.name}</div>
-                  <div className="text-[12px] text-[#86868b]">{user.email}</div>
+                  <div className="text-[12px] text-[var(--color-text-tertiary)]">{user.email}</div>
                 </div>
               </button>
             )}
+
+            <MobileLink href="/library" icon={<BookMarked size={18} />} router={router} label="Каталог" />
 
             {isStaff && (
               <MobileLink href="/librarian" icon={<BookMarked size={18} />} router={router} label="Библиотека" />
@@ -198,7 +202,7 @@ const Navbar = () => {
             {user && (
               <button
                 onClick={handleLogout}
-                className="mt-2 flex items-center gap-3 p-4 rounded-2xl bg-[#ff3b30]/10 text-[#ff3b30] hover:bg-[#ff3b30]/15"
+                className="mt-2 flex items-center gap-3 p-4 rounded-2xl bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15 transition-colors"
               >
                 <LogOut size={18} /> Выйти
               </button>
@@ -206,8 +210,8 @@ const Navbar = () => {
 
             {!user && (
               <div className="flex gap-2 mt-2">
-                <Link href="/login" className="flex-1 py-3 rounded-xl border border-black/10 text-center font-medium text-[#1d1d1f]">Войти</Link>
-                <Link href="/register" className="flex-1 py-3 rounded-xl bg-[#1a56db] text-white text-center font-medium">Регистрация</Link>
+                <Link href="/login" className="flex-1 py-3 rounded-xl border border-[var(--color-border)] text-center font-medium text-[var(--color-text-primary)]">Войти</Link>
+                <Link href="/register" className="flex-1 py-3 rounded-xl bg-[var(--color-brand)] text-white text-center font-medium">Регистрация</Link>
               </div>
             )}
           </motion.div>
@@ -222,8 +226,8 @@ const NavLink = ({ href, icon, label, active }) => (
     href={href}
     className={`px-3 py-2 text-[14px] font-medium rounded-lg flex items-center gap-1.5 transition-all ${
       active
-        ? 'bg-[#1a56db]/10 text-[#1a56db]'
-        : 'text-[#6e6e73] hover:text-[#1d1d1f] hover:bg-black/[0.04]'
+        ? 'bg-[var(--color-brand-soft)] text-[var(--color-brand)]'
+        : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-soft)]'
     }`}
   >
     {icon}
@@ -234,24 +238,25 @@ const NavLink = ({ href, icon, label, active }) => (
 const MobileLink = ({ href, icon, label, router }) => (
   <button
     onClick={() => router.push(href)}
-    className="flex items-center gap-3 p-4 rounded-2xl bg-[#f5f5f7] hover:bg-[#ececec] text-[#1d1d1f] text-left font-medium"
+    className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-left font-medium transition-colors"
   >
-    <span className="text-[#1a56db]">{icon}</span> {label}
+    <span className="text-[var(--color-brand)]">{icon}</span> {label}
   </button>
 )
 
 const SearchBox = ({ query, setQuery, loading, result, router, compact }) => (
   <div className="relative w-full">
     <div className="relative">
-      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[#86868b] pointer-events-none" />
+      <Search size={15} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] pointer-events-none" />
       <input
         type="text"
-        className={`w-full bg-[#f5f5f7] border border-transparent pl-10 pr-3.5 ${compact ? 'py-2 text-sm' : 'py-2.5'} rounded-xl text-[#1d1d1f] placeholder-[#86868b] outline-none focus:border-[#1a56db]/30 focus:bg-white focus:ring-4 focus:ring-[#1a56db]/10 transition-all`}
+        className={`w-full bg-[var(--color-bg-soft)] border border-transparent pl-10 pr-3.5 ${compact ? 'py-2 text-sm' : 'py-2.5'} rounded-xl text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] outline-none focus:border-[var(--color-brand)]/30 focus:bg-[var(--color-bg-card)] focus:ring-4 focus:ring-[var(--color-brand)]/10 transition-all`}
         value={query}
         onChange={e => setQuery(e.target.value)}
+        placeholder="Поиск книг…"
       />
       {loading && (
-        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[#1a56db]/30 border-t-[#1a56db] rounded-full animate-spin" />
+        <div className="absolute right-3.5 top-1/2 -translate-y-1/2 w-4 h-4 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
       )}
     </div>
     <AnimatePresence>
@@ -260,23 +265,23 @@ const SearchBox = ({ query, setQuery, loading, result, router, compact }) => (
           initial={{ opacity: 0, y: -6 }}
           animate={{ opacity: 1, y: 0 }}
           exit={{ opacity: 0, y: -6 }}
-          className="absolute top-full mt-2 left-0 right-0 bg-white border border-black/10 rounded-2xl overflow-hidden z-50 shadow-[0_8px_24px_rgba(0,0,0,0.08)]"
+          className="absolute top-full mt-2 left-0 right-0 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden z-50 shadow-[var(--shadow-elevated)]"
         >
           <div className="p-2 max-h-72 overflow-y-auto">
             {result.map(book => (
               <button
                 key={book.id}
                 onClick={() => { router.push(`/books/${book.id}`); setQuery('') }}
-                className="w-full flex items-center gap-3 p-2 hover:bg-[#f5f5f7] rounded-xl transition-colors text-left"
+                className="w-full flex items-center gap-3 p-2 hover:bg-[var(--color-bg-soft)] rounded-xl transition-colors text-left text-[var(--color-text-primary)]"
               >
-                <div className="relative w-8 h-11 rounded-[3px] overflow-hidden bg-[#f5f5f7] shrink-0">
+                <div className="relative w-8 h-11 rounded-[3px] overflow-hidden bg-[var(--color-bg-soft)] shrink-0">
                   {book.cover_url && (
                     <Image src={book.cover_url} alt={book.title} fill className="object-cover" sizes="32px" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-[13px] font-medium truncate">{book.title}</p>
-                  <p className="text-[11px] text-[#86868b] truncate">{book.author}</p>
+                  <p className="text-[11px] text-[var(--color-text-tertiary)] truncate">{book.author}</p>
                 </div>
               </button>
             ))}

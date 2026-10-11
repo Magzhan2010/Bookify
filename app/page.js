@@ -440,29 +440,25 @@ const CtaSection = () => (
       whileInView={{ opacity: 1, scale: 1 }}
       viewport={{ once: true }}
       transition={{ duration: 0.5 }}
-      className="max-w-[800px] mx-auto bg-[var(--color-text-primary)] p-12 md:p-20 rounded-[32px] text-center relative overflow-hidden"
+      className="max-w-[800px] mx-auto bg-[var(--color-brand)] p-12 md:p-20 rounded-[32px] text-center relative overflow-hidden"
     >
-      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-[var(--color-brand)]/30 blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-[var(--color-success)]/20 blur-3xl" />
+      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
+      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
 
-      <motion.div
-        animate={{ rotate: [0, 5, -5, 0] }}
-        transition={{ duration: 5, repeat: Infinity }}
-        className="relative z-10 inline-block mb-6 text-6xl"
-      >
+      <div className="relative z-10 inline-block mb-6 text-6xl">
         📚
-      </motion.div>
+      </div>
 
       <h2 className="relative z-10 text-3xl md:text-5xl font-semibold tracking-[-0.025em] mb-4 text-white">
         Готов начать читать?
       </h2>
-      <p className="relative z-10 text-[var(--color-text-on-brand)]/70 mb-10 max-w-md mx-auto text-[17px]">
+      <p className="relative z-10 text-white/80 mb-10 max-w-md mx-auto text-[17px]">
         Регистрация занимает 30 секунд. Первая книга — бесплатно.
       </p>
 
       <Link
         href="/register"
-        className="relative z-10 inline-flex items-center gap-2 px-9 py-3.5 bg-[var(--color-bg-card)] text-[var(--color-text-primary)] text-[16px] font-medium hover:bg-[var(--color-bg-soft)] transition-colors rounded-xl"
+        className="relative z-10 inline-flex items-center gap-2 px-9 py-3.5 bg-white text-[#1a56db] text-[16px] font-medium hover:bg-white/90 transition-colors rounded-xl"
       >
         Создать аккаунт <ArrowRight size={16} />
       </Link>

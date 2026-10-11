@@ -240,12 +240,12 @@ export default function ProfilePage() {
             <div className="h-56">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={monthlyData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f5f5f7" vertical={false} />
-                  <XAxis dataKey="month" tick={{ fill: '#86868b', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <YAxis tick={{ fill: '#86868b', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
+                  <XAxis dataKey="month" tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
+                  <YAxis tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} allowDecimals={false} axisLine={false} tickLine={false} />
                   <Tooltip
                     cursor={{ fill: '#1a56db' }}
-                    contentStyle={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, fontSize: 12 }}
+                    contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 12, fontSize: 12, color: 'var(--color-text-primary)' }} labelStyle={{ color: 'var(--color-text-primary)' }} itemStyle={{ color: 'var(--color-text-secondary)' }}
                   />
                   <Bar dataKey="count" fill="#1a56db" radius={[6, 6, 0, 0]} />
                 </BarChart>
@@ -274,7 +274,7 @@ export default function ProfilePage() {
                            cx="50%" cy="50%" innerRadius={48} outerRadius={85} paddingAngle={2} stroke="none">
                         {genreData.map((_, i) => <Cell key={i} fill={COLORS[i % COLORS.length]} />)}
                       </Pie>
-                      <Tooltip contentStyle={{ background: '#fff', border: '1px solid rgba(0,0,0,0.08)', borderRadius: 12, fontSize: 12 }} />
+                      <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 12, fontSize: 12, color: 'var(--color-text-primary)' }} labelStyle={{ color: 'var(--color-text-primary)' }} itemStyle={{ color: 'var(--color-text-secondary)' }} />
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
