@@ -167,7 +167,7 @@ export default function StudentDetailPage() {
               <h3 className="text-[13px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-3">Статистика</h3>
               <div className="grid grid-cols-2 gap-3">
                 <Stat label="Всего" value={parseInt(stats.total_borrows) || 0} color="var(--color-brand)" />
-                <Stat label="Прочитано" value={parseInt(stats.approved_count) || 0} color="var(--color-success)" />
+                <Stat label="Прочитано" value={parseInt(stats.returned_count) || 0} color="var(--color-success)" />
                 <Stat label="Сейчас" value={parseInt(stats.active_count) || 0} color="var(--color-warning)" />
                 <Stat label="Жанров" value={parseInt(stats.genres_count) || 0} color="var(--color-text-secondary)" />
               </div>

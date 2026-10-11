@@ -37,7 +37,7 @@ export async function GET(req) {
     params.push(className)
   }
   if (active) {
-    conditions.push(`EXISTS (SELECT 1 FROM borrows b WHERE b.user_id = u.id AND b.status IN ('active','overdue','submitted'))`)
+    conditions.push(`EXISTS (SELECT 1 FROM borrows b WHERE b.user_id = u.id AND b.status = 'active')`)
   }
 
   const where = 'WHERE ' + conditions.join(' AND ')
@@ -47,9 +47,9 @@ export async function GET(req) {
       SELECT
         u.id, u.name, u.email, u.class_name, u.phone, u.avatar_url, u.created_at,
         COUNT(b.id) AS total_borrows,
-        COUNT(b.id) FILTER (WHERE b.status IN ('active','overdue','submitted')) AS currently_holding,
+        COUNT(b.id) FILTER (WHERE b.status = 'active') AS currently_holding,
         COUNT(b.id) FILTER (WHERE b.status = 'returned') AS returned_count,
-        COUNT(b.id) FILTER (WHERE b.status IN ('active','overdue') AND b.due_date < NOW()) AS overdue_count,
+        COUNT(b.id) FILTER (WHERE b.status = 'active' AND b.due_date < NOW()) AS overdue_count,
         MAX(b.borrowed_at) AS last_borrowed_at
       FROM users u
       LEFT JOIN borrows b ON b.user_id = u.id

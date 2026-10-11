@@ -27,9 +27,8 @@ export async function GET(req, { params }) {
       `SELECT
          COUNT(*) AS total_borrows,
          COUNT(*) FILTER (WHERE status = 'returned') AS returned_count,
-         COUNT(*) FILTER (WHERE status = 'approved') AS approved_count,
-         COUNT(*) FILTER (WHERE status IN ('active','overdue','submitted')) AS active_count,
-         COUNT(*) FILTER (WHERE status IN ('active','overdue') AND due_date < NOW()) AS overdue_count,
+         COUNT(*) FILTER (WHERE status = 'active') AS active_count,
+         COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count,
          COUNT(DISTINCT bk.genre) AS genres_count
        FROM borrows b
        LEFT JOIN books bk ON bk.id = b.book_id
@@ -141,7 +140,7 @@ export async function DELETE(req, { params }) {
 
   try {
     const active = await pool.query(
-      `SELECT id FROM borrows WHERE user_id = $1 AND status IN ('active','overdue','submitted')`,
+      `SELECT id FROM borrows WHERE user_id = $1 AND status = 'active'`,
       [id]
     )
     if (active.rows[0]) {

@@ -35,41 +35,40 @@ export async function GET(req) {
     return NextResponse.json({ error: 'Не найден' }, { status: 404 })
   }
 
-  // Активные книги
+  // Активные книги.
+  // ВАЖНО: в borrows всего два статуса — 'active' и 'returned'
+  // (CHECK в db/schema.sql). Статусов 'overdue'/'submitted'/'approved' НЕ существует,
+  // поэтому фильтры по ним всегда давали пустоту. Просрочка = status 'active' + due_date < NOW().
   const activeBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
-           books.id as book_id, borrows.due_date, borrows.borrowed_at
+           books.id as book_id, books.genre, borrows.due_date, borrows.borrowed_at,
+           borrows.rating,
+           (borrows.due_date IS NOT NULL AND borrows.due_date < NOW()) AS is_overdue
     FROM borrows
     JOIN books ON borrows.book_id = books.id
-    WHERE borrows.user_id = $1 AND borrows.status IN ('active', 'overdue')
+    WHERE borrows.user_id = $1 AND borrows.status = 'active'
     ORDER BY borrows.borrowed_at DESC
   `, [userId])
 
-  // Книги на проверке
-  const submittedBooks = await pool.query(`
-    SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author, books.id as book_id
-    FROM borrows
-    JOIN books ON borrows.book_id = books.id
-    WHERE borrows.user_id = $1 AND borrows.status = 'submitted'
-  `, [userId])
-
-  // Законченные книги
+  // Законченные книги (сданные). Раньше здесь был status = 'approved' —
+  // такого статуса нет в CHECK-ограничении, поэтому «Прочитано» было всегда 0.
   const finishedBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
            books.id as book_id, borrows.borrowed_at, borrows.returned_at,
-           books.genre
+           borrows.rating, books.genre
     FROM borrows
     JOIN books ON borrows.book_id = books.id
-    WHERE borrows.user_id = $1 AND borrows.status = 'approved'
+    WHERE borrows.user_id = $1 AND borrows.status = 'returned'
     ORDER BY borrows.returned_at DESC
   `, [userId])
 
   // Статистика для дашборда
   const stats = await pool.query(`
     SELECT
-      COUNT(*) FILTER (WHERE status = 'approved') AS books_finished,
-      COUNT(*) FILTER (WHERE status IN ('active', 'submitted', 'overdue')) AS books_active,
-      COUNT(DISTINCT bk.genre) FILTER (WHERE status = 'approved') AS genres_count
+      COUNT(*) FILTER (WHERE status = 'returned') AS books_finished,
+      COUNT(*) FILTER (WHERE status = 'active') AS books_active,
+      COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS books_overdue,
+      COUNT(DISTINCT bk.genre) FILTER (WHERE status = 'returned') AS genres_count
     FROM borrows b
     LEFT JOIN books bk ON bk.id = b.book_id
     WHERE b.user_id = $1
@@ -85,7 +84,7 @@ export async function GET(req) {
   return NextResponse.json({
     user: userRes.rows[0],
     active: activeBooks.rows,
-    submitted: submittedBooks.rows,
+    submitted: [], // статуса 'submitted' в системе нет — оставлено для совместимости
     finished: finishedBooks.rows,
     stats: stats.rows[0],
     reading_goal: readingGoal

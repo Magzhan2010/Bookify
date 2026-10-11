@@ -26,13 +26,15 @@ export async function GET(req) {
     if (overdue) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-               bk.id AS book_id, bk.title, bk.author, bk.cover_url,
+               u.id AS student_id, u.name AS student_name, u.email,
+               u.class_name, u.class_name AS student_class,
+               bk.id AS book_id, bk.title, bk.title AS book_title,
+               bk.author, bk.author AS book_author, bk.cover_url, bk.genre
                EXTRACT(DAY FROM (NOW() - b.due_date))::INT AS overdue_days
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status IN ('active','overdue')
+        WHERE b.status = 'active'
           AND b.due_date < NOW()
         ORDER BY b.due_date ASC
         LIMIT 100
@@ -40,12 +42,14 @@ export async function GET(req) {
     } else if (q) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-               bk.id AS book_id, bk.title, bk.author, bk.cover_url
+               u.id AS student_id, u.name AS student_name, u.email,
+               u.class_name, u.class_name AS student_class,
+               bk.id AS book_id, bk.title, bk.title AS book_title,
+               bk.author, bk.author AS book_author, bk.cover_url, bk.genre
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status IN ('active','overdue','submitted')
+        WHERE b.status = 'active'
           AND (LOWER(bk.title) LIKE LOWER($1) OR LOWER(u.name) LIKE LOWER($1))
         ORDER BY b.borrowed_at DESC
         LIMIT 50
@@ -54,12 +58,14 @@ export async function GET(req) {
     } else if (student) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-               bk.id AS book_id, bk.title, bk.author, bk.cover_url
+               u.id AS student_id, u.name AS student_name, u.email,
+               u.class_name, u.class_name AS student_class,
+               bk.id AS book_id, bk.title, bk.title AS book_title,
+               bk.author, bk.author AS book_author, bk.cover_url, bk.genre
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status IN ('active','overdue','submitted')
+        WHERE b.status = 'active'
           AND LOWER(u.name) LIKE LOWER($1)
         ORDER BY b.borrowed_at DESC
         LIMIT 50
@@ -68,8 +74,10 @@ export async function GET(req) {
     } else {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-               bk.id AS book_id, bk.title, bk.author, bk.cover_url
+               u.id AS student_id, u.name AS student_name, u.email,
+               u.class_name, u.class_name AS student_class,
+               bk.id AS book_id, bk.title, bk.title AS book_title,
+               bk.author, bk.author AS book_author, bk.cover_url, bk.genre
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id

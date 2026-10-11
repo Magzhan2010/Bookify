@@ -20,9 +20,9 @@ export async function GET(req) {
         (SELECT COUNT(*) FROM users WHERE role = 'student') AS total_students,
         (SELECT COUNT(DISTINCT user_id) FROM borrows
            WHERE borrowed_at > NOW() - INTERVAL '30 days') AS active_readers_30d,
-        (SELECT COUNT(*) FROM borrows WHERE status IN ('active','overdue')) AS active_loans,
+        (SELECT COUNT(*) FROM borrows WHERE status = 'active') AS active_loans,
         (SELECT COUNT(*) FROM borrows
-           WHERE status IN ('active','overdue') AND due_date < NOW()) AS overdue_loans
+           WHERE status = 'active' AND due_date < NOW()) AS overdue_loans
     `)
     const t = totals.rows[0]
 
@@ -31,8 +31,8 @@ export async function GET(req) {
       SELECT u.id, u.name, u.class_name,
              COUNT(*) AS total_borrows,
              COUNT(*) FILTER (WHERE status = 'returned') AS returned_count,
-             COUNT(*) FILTER (WHERE status IN ('active','submitted','overdue')) AS currently_holding,
-             COUNT(*) FILTER (WHERE status IN ('active','overdue') AND due_date < NOW()) AS overdue_count
+             COUNT(*) FILTER (WHERE status = 'active') AS currently_holding,
+             COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count
       FROM borrows b
       JOIN users u ON u.id = b.user_id
       WHERE u.role = 'student'
@@ -47,11 +47,13 @@ export async function GET(req) {
              b.due_date,
              EXTRACT(DAY FROM (NOW() - b.due_date))::INT AS overdue_days,
              u.id AS student_id, u.name AS student_name, u.email, u.class_name,
-             bk.id AS book_id, bk.title, bk.author, bk.cover_url
+             u.class_name AS student_class,
+             bk.id AS book_id, bk.title, bk.title AS book_title,
+             bk.author, bk.author AS book_author, bk.cover_url
       FROM borrows b
       JOIN users u ON u.id = b.user_id
       JOIN books bk ON bk.id = b.book_id
-      WHERE b.status IN ('active','overdue') AND b.due_date < NOW()
+      WHERE b.status = 'active' AND b.due_date < NOW()
       ORDER BY b.due_date ASC
       LIMIT 50
     `)
