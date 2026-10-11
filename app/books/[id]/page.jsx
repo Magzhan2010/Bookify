@@ -8,7 +8,7 @@ import { toast } from 'sonner'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
-  Send, Trash2, Sparkles
+  Send, Trash2, Sparkles, Save, X, Edit, AlertTriangle, Check
 } from 'lucide-react'
 
 const Book = () => {
@@ -22,6 +22,12 @@ const Book = () => {
   const [isFavorite, setIsFavorite] = useState(false)
   const [related, setRelated] = useState([])
 
+  // Librarian: edit mode
+  const [editMode, setEditMode] = useState(false)
+  const [editForm, setEditForm] = useState({})
+  const [savingEdit, setSavingEdit] = useState(false)
+  const [deleting, setDeleting] = useState(false)
+
   // Комментарии
   const [comments, setComments] = useState([])
   const [newComment, setNewComment] = useState('')
@@ -34,16 +40,6 @@ const Book = () => {
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
   }, [id])
-
-  // Перед уходом со страницы книги сохраняем scroll библиотеки
-  useEffect(() => {
-    const handleBeforeUnload = () => {
-      // Ничего не делаем — scroll уже сохраняется в library через scroll event
-      // Здесь можно добавить специальную логику если потребуется
-    }
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => window.removeEventListener('beforeunload', handleBeforeUnload)
-  }, [])
 
   useEffect(() => {
     const fetchAll = async () => {
@@ -90,6 +86,21 @@ const Book = () => {
 
         const bookData = await bookRes.json()
         setBook(bookData)
+        setEditForm({
+          title: bookData.title || '',
+          author: bookData.author || '',
+          genre: bookData.genre || '',
+          year: bookData.year || '',
+          description: bookData.description || '',
+          cover_url: bookData.cover_url || '',
+          file_url: bookData.file_url || '',
+          total_copies: bookData.total_copies || 1,
+          isbn: bookData.isbn || '',
+          pages: bookData.pages || '',
+          language: bookData.language || '',
+          difficulty: bookData.difficulty || '',
+          tags: bookData.tags || ''
+        })
 
         if (favRes) {
           try {
@@ -116,20 +127,66 @@ const Book = () => {
     fetchComments()
   }, [id])
 
-  const fetchComments = async () => {
+  const isLibrarian = userRole === 'librarian'
+
+  // === Библиотекарь: сохранить изменения ===
+  const handleSaveEdit = async () => {
+    setSavingEdit(true)
     try {
-      const res = await fetch(`/api/books/comment?bookId=${id}`)
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/books/${id}`, {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(editForm)
+      })
+      const data = await res.json()
       if (res.ok) {
-        const data = await res.json()
-        setComments(data)
-        setCommentsLoaded(true)
+        toast.success('Книга обновлена')
+        setBook(data.book)
+        setEditMode(false)
+      } else {
+        toast.error(data.error || 'Ошибка')
       }
-    } catch (e) {}
+    } catch (e) {
+      toast.error('Ошибка сети')
+    } finally {
+      setSavingEdit(false)
+    }
   }
 
+  // === Библиотекарь: удалить книгу ===
+  const handleDelete = async () => {
+    if (!confirm(`Удалить «${book.title}» навсегда?\n\nЭто нельзя отменить. Все комментарии и избранное будут удалены.`)) return
+
+    setDeleting(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch(`/api/books/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success(`«${data.deleted}» удалена`)
+        setTimeout(() => router.push('/library'), 1000)
+      } else {
+        toast.error(data.error || 'Ошибка')
+        setDeleting(false)
+      }
+    } catch (e) {
+      toast.error('Ошибка сети')
+      setDeleting(false)
+    }
+  }
+
+  // === Ученик: заявка на книгу ===
   const handleRequest = async () => {
     const token = localStorage.getItem('token')
     if (!token) return router.push('/login')
+
     setRequestLoading(true)
     try {
       const res = await fetch('/api/books/request', {
@@ -139,7 +196,9 @@ const Book = () => {
       })
       const data = await res.json()
       if (res.ok) {
-        toast.success('Заявка отправлена')
+        toast.success('Заявка отправлена', {
+          description: 'Библиотекарь увидит её и выдаст книгу'
+        })
         setMyRequest({ ...data.request, book_title: book.title })
       } else {
         toast.error(data.error || 'Ошибка')
@@ -204,7 +263,7 @@ const Book = () => {
   const handleAddComment = async () => {
     const token = localStorage.getItem('token')
     if (!token) return router.push('/login')
-    if (!newComment.trim()) return
+    if (!newComment.trim()) return toast.error('Комментарий пустой')
 
     setCommentLoading(true)
     try {
@@ -229,7 +288,7 @@ const Book = () => {
   }
 
   const handleDeleteComment = async (commentId, commentUserId) => {
-    if (userId !== commentUserId && userRole !== 'librarian') return
+    if (userId !== commentUserId && !isLibrarian) return
     if (!confirm('Удалить комментарий?')) return
 
     const token = localStorage.getItem('token')
@@ -255,7 +314,7 @@ const Book = () => {
 
   const isUnavailable = book.available_copies !== undefined && book.available_copies <= 0 && !myBorrow
   const statusInfo = myBorrow
-    ? { color: 'var(--color-brand)', bg: 'var(--color-brand-soft)]/10', label: 'У тебя на руках', icon: BookOpen, msg: 'Ждём возврата в библиотеку' }
+    ? { color: 'var(--color-brand)', bg: 'var(--color-brand-soft)', label: 'У тебя на руках', icon: BookOpen, msg: 'Ждём возврата в библиотеку' }
     : myRequest?.status === 'approved'
       ? { color: 'var(--color-success)', bg: 'var(--color-success)]/10', label: 'Заявка одобрена', icon: Sparkles, msg: 'Можешь забрать в библиотеке' }
       : myRequest
@@ -265,173 +324,201 @@ const Book = () => {
   return (
     <div className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] pb-20">
       <div className="sticky top-0 z-30 bg-[var(--color-bg-overlay)] backdrop-blur-xl border-b border-[var(--color-border)]">
-        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center">
+        <div className="max-w-[1200px] mx-auto px-4 sm:px-6 h-14 flex items-center justify-between">
           <button
             onClick={() => router.back()}
-            className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] transition-colors"
+            className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors"
           >
             <ArrowLeft size={15} /> Назад
           </button>
+
+          {isLibrarian && (
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => setEditMode(!editMode)}
+                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
+                  editMode
+                    ? 'bg-[var(--color-brand)] text-white'
+                    : 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
+                }`}
+              >
+                <Edit size={13} /> {editMode ? 'Отменить' : 'Редактировать'}
+              </button>
+              <button
+                onClick={handleDelete}
+                disabled={deleting}
+                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15 text-[12px] font-medium transition-colors disabled:opacity-50"
+              >
+                {deleting ? <Loader2 size={13} className="animate-spin" /> : <Trash2 size={13} />} Удалить
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
       <div className="max-w-[1200px] mx-auto px-4 sm:px-6 pt-8">
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="flex flex-col lg:flex-row gap-8 lg:gap-12"
-        >
-          {/* Cover */}
-          <div className="shrink-0 mx-auto lg:mx-0">
-            <div className="relative w-64 aspect-[2/3] rounded-2xl overflow-hidden bg-[var(--color-bg-soft)] shadow-[var(--shadow-elevated)] ring-1 ring-[var(--color-border)]">
-              {book.cover_url ? (
-                <Image src={book.cover_url} alt={book.title} fill className="object-cover" priority sizes="256px" />
-              ) : (
-                <div className="w-full h-full flex items-center justify-center">
-                  <BookOpen size={48} className="text-[var(--color-text-tertiary)]" />
-                </div>
-              )}
-            </div>
-            {book.genre && (
-              <div className="mt-4 text-center">
-                <span className="inline-block px-3 py-1 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[12px] font-medium">
-                  {book.genre}
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Info */}
-          <div className="flex-1 min-w-0">
-            <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.025em] leading-[1.05] mb-3 text-[var(--color-text-primary)]">
-              {book.title}
-            </h1>
-            <p className="text-[19px] text-[var(--color-brand)] font-medium mb-6">{book.author}</p>
-
-            {/* Status banner */}
-            {statusInfo && (
-              <motion.div
-                initial={{ opacity: 0, y: 8 }}
-                animate={{ opacity: 1, y: 0 }}
-                className="mb-6 p-4 flex items-center justify-between"
-                style={{ background: statusInfo.bg, borderRadius: 16 }}
-              >
-                <div>
-                  <div className="flex items-center gap-2 font-semibold mb-0.5" style={{ color: statusInfo.color }}>
-                    <statusInfo.icon size={16} />
-                    {statusInfo.label}
+        {editMode ? (
+          <EditBookForm
+            form={editForm}
+            setForm={setEditForm}
+            onSave={handleSaveEdit}
+            saving={savingEdit}
+          />
+        ) : (
+          <motion.div
+            initial={{ opacity: 0, y: 16 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            className="flex flex-col lg:flex-row gap-8 lg:gap-12"
+          >
+            <div className="shrink-0 mx-auto lg:mx-0">
+              <div className="relative w-64 aspect-[2/3] rounded-2xl overflow-hidden bg-[var(--color-bg-soft)] shadow-[var(--shadow-elevated)] ring-1 ring-[var(--color-border)]">
+                {book.cover_url ? (
+                  <Image src={book.cover_url} alt={book.title} fill className="object-cover" priority sizes="256px" />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <BookOpen size={48} className="text-[var(--color-text-tertiary)]" />
                   </div>
-                  <div className="text-[13px] text-[var(--color-text-secondary)]">{statusInfo.msg}</div>
-                </div>
-                {myRequest?.status === 'pending' && (
-                  <button
-                    onClick={handleCancelRequest}
-                    className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-[12px] font-medium transition-colors flex items-center gap-1"
-                  >
-                    <BellOff size={12} /> Отменить
-                  </button>
                 )}
-              </motion.div>
-            )}
-
-            {/* Actions */}
-            <div className="flex flex-wrap gap-2.5 mb-8">
-              {myBorrow ? (
-                <div className="w-full p-3 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/30">
-                  <div className="flex items-center gap-2 text-[var(--color-brand)] font-medium mb-1">
-                    <BookOpen size={15} /> Книга у тебя
-                  </div>
-                  <div className="text-[12px] text-[var(--color-text-secondary)]">
-                    Ждём возврата в библиотеку
-                  </div>
+              </div>
+              {book.genre && (
+                <div className="mt-4 text-center">
+                  <span className="inline-block px-3 py-1 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[12px] font-medium">
+                    {book.genre}
+                  </span>
                 </div>
-              ) : (
-                <button
-                  onClick={handleRequest}
-                  disabled={requestLoading || isUnavailable}
-                  className="px-5 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+              )}
+            </div>
+
+            <div className="flex-1 min-w-0">
+              <h1 className="text-3xl sm:text-5xl font-semibold tracking-[-0.025em] leading-[1.05] mb-3 text-[var(--color-text-primary)]">
+                {book.title}
+              </h1>
+              <p className="text-[19px] text-[var(--color-brand)] font-medium mb-6">{book.author}</p>
+
+              {statusInfo && (
+                <motion.div
+                  initial={{ opacity: 0, y: 8 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  className="mb-6 p-4 flex items-center justify-between"
+                  style={{ background: statusInfo.bg, borderRadius: 16 }}
                 >
-                  {requestLoading ? (
-                    <Loader2 size={15} className="animate-spin" />
-                  ) : isUnavailable ? (
-                    'Нет в наличии'
-                  ) : (
-                    <><Bell size={15} /> Хочу забрать</>
+                  <div>
+                    <div className="flex items-center gap-2 font-semibold mb-0.5" style={{ color: statusInfo.color }}>
+                      <statusInfo.icon size={16} />
+                      {statusInfo.label}
+                    </div>
+                    <div className="text-[13px] text-[var(--color-text-secondary)]">{statusInfo.msg}</div>
+                  </div>
+                  {myRequest?.status === 'pending' && (
+                    <button
+                      onClick={handleCancelRequest}
+                      className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-[12px] font-medium transition-colors flex items-center gap-1"
+                    >
+                      <BellOff size={12} /> Отменить
+                    </button>
                   )}
-                </button>
+                </motion.div>
               )}
 
-              <button
-                onClick={handleFavorite}
-                disabled={favLoading}
-                className={`px-4 py-2.5 rounded-xl border text-[14px] font-medium flex items-center gap-2 transition-all ${
-                  isFavorite
-                    ? 'bg-[#ff2d55]/10 border-[#ff2d55]/30 text-[#ff2d55]'
-                    : 'bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)]'
-                }`}
-              >
-                {favLoading ? <Loader2 size={14} className="animate-spin" /> : <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />}
-                {isFavorite ? 'В избранном' : 'В избранное'}
-              </button>
+              <div className="flex flex-wrap gap-2.5 mb-8">
+                {!isLibrarian && (
+                  myBorrow ? (
+                    <div className="w-full p-3 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/30">
+                      <div className="flex items-center gap-2 text-[var(--color-brand)] font-medium mb-1">
+                        <BookOpen size={15} /> Книга у тебя
+                      </div>
+                      <div className="text-[12px] text-[var(--color-text-secondary)]">
+                        Ждём возврата в библиотеку
+                      </div>
+                    </div>
+                  ) : (
+                    <button
+                      onClick={handleRequest}
+                      disabled={requestLoading || isUnavailable}
+                      className="px-5 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-medium flex items-center gap-2 disabled:opacity-50 transition-colors"
+                    >
+                      {requestLoading ? (
+                        <Loader2 size={15} className="animate-spin" />
+                      ) : isUnavailable ? (
+                        'Нет в наличии'
+                      ) : (
+                        <><Bell size={15} /> Хочу забрать</>
+                      )}
+                    </button>
+                  )
+                )}
 
-              {book.file_url && (
-                <a
-                  href={book.file_url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] text-[14px] font-medium flex items-center gap-2 transition-all"
+                <button
+                  onClick={handleFavorite}
+                  disabled={favLoading}
+                  className={`px-4 py-2.5 rounded-xl border text-[14px] font-medium flex items-center gap-2 transition-all ${
+                    isFavorite
+                      ? 'bg-[#ff2d55]/10 border-[#ff2d55]/30 text-[#ff2d55]'
+                      : 'bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)]'
+                  }`}
                 >
-                  <Download size={14} /> Скачать PDF
-                </a>
+                  {favLoading ? <Loader2 size={14} className="animate-spin" /> : <Heart size={14} fill={isFavorite ? 'currentColor' : 'none'} />}
+                  {isFavorite ? 'В избранном' : 'В избранное'}
+                </button>
+
+                {book.file_url && (
+                  <a
+                    href={book.file_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] text-[14px] font-medium flex items-center gap-2 transition-all"
+                  >
+                    <Download size={14} /> Скачать PDF
+                  </a>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[var(--color-border)] pt-6">
+                {[
+                  { label: 'Год', value: book.year || '—' },
+                  { label: 'Доступно', value: `${book.available_copies ?? '?'}/${book.total_copies ?? '?'}`, color: (book.available_copies ?? 0) > 0 ? 'var(--color-success)' : 'var(--color-danger)' },
+                  { label: 'Жанр', value: book.genre || '—' },
+                  { label: 'Статус', value: myBorrow ? 'У тебя' : (isUnavailable ? 'Нет в наличии' : 'Доступна'), color: myBorrow ? 'var(--color-brand)' : (isUnavailable ? 'var(--color-danger)' : 'var(--color-success)') }
+                ].map((s, i) => (
+                  <div key={i}>
+                    <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-1">{s.label}</div>
+                    <div className="font-semibold text-[15px]" style={{ color: s.color || 'var(--color-text-primary)' }}>{s.value}</div>
+                  </div>
+                ))}
+              </div>
+
+              {book.tags && (
+                <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
+                  <h3 className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">Теги</h3>
+                  <div className="flex flex-wrap gap-2">
+                    {book.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
+                      <span key={tag} className="px-2.5 py-1 rounded-lg bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[12px] text-[var(--color-text-secondary)]">
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {myBorrow?.due_date && (
+                <div className="mt-6 p-4 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/20 flex items-center gap-3">
+                  <Clock size={16} className="text-[var(--color-brand)]" />
+                  <div className="text-[14px] text-[var(--color-text-primary)]">
+                    <span className="text-[var(--color-text-secondary)]">Вернуть до: </span>
+                    <strong>{new Date(myBorrow.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</strong>
+                  </div>
+                </div>
               )}
             </div>
-
-            {/* Details */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 border-t border-[var(--color-border)] pt-6">
-              {[
-                { label: 'Год', value: book.year || '—' },
-                { label: 'Доступно', value: `${book.available_copies ?? '?'}/${book.total_copies ?? '?'}`, color: (book.available_copies ?? 0) > 0 ? 'var(--color-success)' : 'var(--color-danger)' },
-                { label: 'Жанр', value: book.genre || '—' },
-                { label: 'Статус', value: myBorrow ? 'У тебя' : (isUnavailable ? 'Нет в наличии' : 'Доступна'), color: myBorrow ? 'var(--color-brand)' : (isUnavailable ? 'var(--color-danger)' : 'var(--color-success)') }
-              ].map((s, i) => (
-                <div key={i}>
-                  <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-1">{s.label}</div>
-                  <div className="font-semibold text-[15px]" style={{ color: s.color || 'var(--color-text-primary)' }}>{s.value}</div>
-                </div>
-              ))}
-            </div>
-
-            {/* Tags */}
-            {book.tags && (
-              <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
-                <h3 className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">Теги</h3>
-                <div className="flex flex-wrap gap-2">
-                  {book.tags.split(',').map(t => t.trim()).filter(Boolean).map(tag => (
-                    <span key={tag} className="px-2.5 py-1 rounded-lg bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[12px] text-[var(--color-text-secondary)]">
-                      {tag}
-                    </span>
-                  ))}
-                </div>
-              </div>
-            )}
-
-            {myBorrow?.due_date && (
-              <div className="mt-6 p-4 rounded-xl bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/20 flex items-center gap-3">
-                <Clock size={16} className="text-[var(--color-brand)]" />
-                <div className="text-[14px] text-[var(--color-text-primary)]">
-                  <span className="text-[var(--color-text-secondary)]">Вернуть до: </span>
-                  <strong>{new Date(myBorrow.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })}</strong>
-                </div>
-              </div>
-            )}
-          </div>
-        </motion.div>
+          </motion.div>
+        )}
 
         {/* === КОММЕНТАРИИ === */}
         <motion.section
           initial={{ opacity: 0, y: 16 }}
           animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
           className="mt-12 pt-8 border-t border-[var(--color-border)]"
         >
           <div className="flex items-center gap-2 mb-6">
@@ -450,7 +537,6 @@ const Book = () => {
             </div>
           </div>
 
-          {/* Форма */}
           <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 mb-6">
             <textarea
               value={newComment}
@@ -472,7 +558,6 @@ const Book = () => {
             </div>
           </div>
 
-          {/* Список */}
           {!commentsLoaded ? (
             <div className="flex justify-center py-10">
               <Loader2 size={20} className="animate-spin text-[var(--color-text-tertiary)]" />
@@ -494,17 +579,16 @@ const Book = () => {
               <AnimatePresence>
                 {comments.map((c, i) => {
                   const isOwn = c.user_id === userId
-                  const canDelete = isOwn || userRole === 'librarian'
-
+                  const canDelete = isOwn || isLibrarian
                   return (
                     <motion.div
                       key={c.id}
-                      initial={{ opacity: 0, y: 10, scale: 0.98 }}
-                      animate={{ opacity: 1, y: 0, scale: 1 }}
+                      initial={{ opacity: 0, y: 10 }}
+                      animate={{ opacity: 1, y: 0 }}
                       exit={{ opacity: 0, scale: 0.95 }}
                       transition={{ duration: 0.3, delay: Math.min(i * 0.05, 0.3) }}
-                      className={`bg-[var(--color-bg-card)] border rounded-2xl p-4 transition-all hover:shadow-[var(--shadow-soft)] ${
-                        c.is_pinned ? 'border-[var(--color-brand)]/30 bg-[var(--color-brand-soft)]/30' : 'border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
+                      className={`bg-[var(--color-bg-card)] border rounded-2xl p-4 transition-all hover:shadow-[var(--shadow-soft)] hover:border-[var(--color-border-strong)] ${
+                        c.is_pinned ? 'bg-[var(--color-brand-soft)]/30 border-[var(--color-brand)]/30' : 'border-[var(--color-border)]'
                       }`}
                     >
                       <div className="flex items-start gap-3">
@@ -515,7 +599,7 @@ const Book = () => {
                           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className="font-semibold text-[14px] text-[var(--color-text-primary)]">{c.user_name}</span>
                             {c.user_class && (
-                              <span className="text-[11px] px-1.5 py-0.5 rounded bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] font-medium">
+                              <span className="px-1.5 py-0.5 rounded bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] text-[10px] font-medium">
                                 {c.user_class}
                               </span>
                             )}
@@ -552,7 +636,7 @@ const Book = () => {
         </motion.section>
 
         {/* Похожие книги */}
-        {related.length > 0 && (
+        {!editMode && related.length > 0 && (
           <motion.div
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
@@ -595,5 +679,155 @@ const Book = () => {
     </div>
   )
 }
+
+// === ФОРМА РЕДАКТИРОВАНИЯ (для библиотекаря) ===
+const EditBookForm = ({ form, setForm, onSave, saving }) => {
+  const update = (k, v) => setForm({ ...form, [k]: v })
+
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6 sm:p-8"
+    >
+      <div className="flex items-center gap-3 mb-6">
+        <div className="w-10 h-10 rounded-xl bg-[var(--color-brand-soft)] flex items-center justify-center">
+          <Edit size={20} className="text-[var(--color-brand)]" />
+        </div>
+        <div>
+          <h2 className="text-xl font-semibold text-[var(--color-text-primary)]">Редактирование книги</h2>
+          <p className="text-[12px] text-[var(--color-text-tertiary)]">Изменения сохранятся в БД и Google Sheets</p>
+        </div>
+      </div>
+
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Название *">
+            <input
+              type="text"
+              value={form.title}
+              onChange={e => update('title', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Автор *">
+            <input
+              type="text"
+              value={form.author}
+              onChange={e => update('author', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Field label="Жанр">
+            <input
+              type="text"
+              value={form.genre || ''}
+              onChange={e => update('genre', e.target.value)}
+              placeholder="Классика"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Год">
+            <input
+              type="text"
+              value={form.year || ''}
+              onChange={e => update('year', e.target.value)}
+              placeholder="1967"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Язык">
+            <input
+              type="text"
+              value={form.language || ''}
+              onChange={e => update('language', e.target.value)}
+              placeholder="Русский"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Сложность">
+            <input
+              type="text"
+              value={form.difficulty || ''}
+              onChange={e => update('difficulty', e.target.value)}
+              placeholder="Средний"
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Field label="Экземпляров всего">
+            <input
+              type="number"
+              min="1"
+              value={form.total_copies}
+              onChange={e => update('total_copies', parseInt(e.target.value) || 1)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+          <Field label="Страниц">
+            <input
+              type="number"
+              min="0"
+              value={form.pages || ''}
+              onChange={e => update('pages', e.target.value)}
+              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+            />
+          </Field>
+        </div>
+
+        <Field label="Описание">
+          <textarea
+            rows={3}
+            value={form.description || ''}
+            onChange={e => update('description', e.target.value)}
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-none"
+          />
+        </Field>
+
+        <Field label="URL обложки">
+          <input
+            type="url"
+            value={form.cover_url || ''}
+            onChange={e => update('cover_url', e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <Field label="URL PDF">
+          <input
+            type="url"
+            value={form.file_url || ''}
+            onChange={e => update('file_url', e.target.value)}
+            placeholder="https://..."
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <div className="pt-4 border-t border-[var(--color-border)] flex gap-3">
+          <button
+            onClick={onSave}
+            disabled={saving}
+            className="flex-1 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+          >
+            {saving ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> Сохранить</>}
+          </button>
+        </div>
+      </div>
+    </motion.div>
+  )
+}
+
+const Field = ({ label, children, type }) => (
+  <div>
+    <label className="block text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1.5 uppercase tracking-wider">{label}</label>
+    {children}
+  </div>
+)
 
 export default Book
