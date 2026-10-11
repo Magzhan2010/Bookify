@@ -24,11 +24,12 @@ export async function PATCH(req, { params }) {
   const { id } = await params
   const data = await req.json()
 
-  // Разрешённые поля для обновления
+  // Разрешённые поля для обновления.
+  // ВАЖНО: 'language' и 'difficulty' НЕ включаем — таких колонок в books нет,
+  // они хранятся внутри tags (см. app/api/books/route.js POST).
   const allowed = [
     'title', 'author', 'genre', 'year', 'description',
-    'cover_url', 'file_url', 'total_copies', 'isbn', 'pages', 'tags',
-    'language', 'difficulty'
+    'cover_url', 'file_url', 'total_copies', 'isbn', 'pages', 'tags'
   ]
 
   const fields = []
@@ -38,9 +39,10 @@ export async function PATCH(req, { params }) {
   for (const key of allowed) {
     if (data[key] !== undefined) {
       fields.push(`${key} = $${i++}`)
-      // Конвертируем числа
+      // Конвертируем числа (NaN → null, чтобы не сломать INT-колонку)
       if (['total_copies', 'pages'].includes(key)) {
-        values.push(data[key] === '' || data[key] === null ? null : parseInt(data[key]))
+        const num = parseInt(data[key])
+        values.push(Number.isNaN(num) ? null : num)
       } else {
         values.push(data[key] === '' ? null : data[key])
       }
@@ -59,9 +61,10 @@ export async function PATCH(req, { params }) {
       [id]
     )
     if (current.rows[0]) {
-      const oldAvail = current.rows[0].available_copies
-      const oldTotal = current.rows[0].total_copies
-      const newTotal = parseInt(data.total_copies) || 1
+      const oldAvail = current.rows[0].available_copies ?? 0
+      const oldTotal = current.rows[0].total_copies ?? 0
+      const parsed = parseInt(data.total_copies)
+      const newTotal = Number.isNaN(parsed) ? oldTotal : Math.max(1, parsed)
       // Дельта
       const delta = newTotal - oldTotal
       const newAvail = Math.max(0, Math.min(newTotal, oldAvail + delta))

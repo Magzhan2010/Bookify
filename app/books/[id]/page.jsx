@@ -11,6 +11,35 @@ import {
   Send, Trash2, Sparkles, Save, X, Edit
 } from 'lucide-react'
 
+// === ВСПОМОГАТЕЛЬНОЕ ДЛЯ ФОРМЫ РЕДАКТИРОВАНИЯ ===
+// В таблице books нет колонок language/difficulty — они хранятся в tags.
+// Поэтому при открытии формы мы достаём их из tags, а при сохранении — собираем обратно.
+const LANGUAGES = ['Русский', 'Английский', 'Казахский']
+const DIFFICULTY_KEYS = ['сложн', 'средн', 'лёгк', 'легк']
+
+function splitTags(tags, genre) {
+  const list = (tags || '')
+    .split(',')
+    .map(t => t.trim())
+    .filter(Boolean)
+    // жанр в tags дублирует колонку genre — убираем, чтобы не задваивался
+    .filter(t => !genre || t.toLowerCase() !== genre.toLowerCase())
+
+  return {
+    language: list.find(t => LANGUAGES.includes(t)) || '',
+    difficulty: list.find(t => {
+      const l = t.toLowerCase()
+      return DIFFICULTY_KEYS.some(k => l.includes(k))
+    }) || '',
+    // теги, которые не являются ни языком, ни сложностью — сохраняем как есть
+    rest: list.filter(t => {
+      if (LANGUAGES.includes(t)) return false
+      const l = t.toLowerCase()
+      return !DIFFICULTY_KEYS.some(k => l.includes(k))
+    })
+  }
+}
+
 const Field = ({ label, children, type }) => (
   <div>
     <label className="block text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1.5 uppercase tracking-wider">{label}</label>
@@ -19,7 +48,7 @@ const Field = ({ label, children, type }) => (
 )
 
 // === ФОРМА РЕДАКТИРОВАНИЯ (для библиотекаря) ===
-const EditBookForm = ({ form, setForm, onSave, saving }) => {
+const EditBookForm = ({ form, setForm, onSave, onCancel, saving }) => {
   const update = (k, v) => setForm({ ...form, [k]: v })
 
   return (
@@ -147,6 +176,21 @@ const EditBookForm = ({ form, setForm, onSave, saving }) => {
           />
         </Field>
 
+        <Field label="Доп. теги (через запятую)">
+          <input
+            type="text"
+            value={form.tags || ''}
+            onChange={e => update('tags', e.target.value)}
+            placeholder="Классика, must-read"
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <p className="text-[11px] text-[var(--color-text-tertiary)] leading-relaxed">
+          «Жанр», «Язык», «Сложность» и доп. теги сохраняются в одном поле тегов —
+          по нему каталог определяет уровень сложности.
+        </p>
+
         <div className="pt-4 border-t border-[var(--color-border)] flex gap-3">
           <button
             onClick={onSave}
@@ -154,6 +198,13 @@ const EditBookForm = ({ form, setForm, onSave, saving }) => {
             className="flex-1 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 size={16} className="animate-spin" /> : <><Save size={16} /> Сохранить</>}
+          </button>
+          <button
+            onClick={onCancel}
+            disabled={saving}
+            className="px-5 py-3 rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-50 transition-colors"
+          >
+            <X size={16} /> Отмена
           </button>
         </div>
       </div>
@@ -186,6 +237,23 @@ const Book = () => {
 
   const router = useRouter()
   const { id } = useParams()
+
+  // Загружает комментарии к книге.
+  // ВАЖНО: эта функция обязана быть объявлена — раньше её потеряли при
+  // рефакторинге, и страница падала с "fetchComments is not defined".
+  const fetchComments = async () => {
+    try {
+      const res = await fetch(`/api/books/comment?bookId=${id}`)
+      if (res.ok) {
+        const data = await res.json()
+        setComments(Array.isArray(data) ? data : [])
+      }
+    } catch (e) {
+      console.error('Comments load error:', e)
+    } finally {
+      setCommentsLoaded(true)
+    }
+  }
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: 'instant' })
@@ -241,6 +309,7 @@ const Book = () => {
 
         const bookData = await bookRes.json()
         setBook(bookData)
+        const parsedTags = splitTags(bookData.tags, bookData.genre)
         setEditForm({
           title: bookData.title || '',
           author: bookData.author || '',
@@ -252,9 +321,9 @@ const Book = () => {
           total_copies: bookData.total_copies || 1,
           isbn: bookData.isbn || '',
           pages: bookData.pages || '',
-          language: bookData.language || '',
-          difficulty: bookData.difficulty || '',
-          tags: bookData.tags || ''
+          language: parsedTags.language,
+          difficulty: parsedTags.difficulty,
+          tags: parsedTags.rest.join(', ')
         })
 
         if (favRes) {
@@ -286,21 +355,57 @@ const Book = () => {
 
   // === Библиотекарь: сохранить изменения ===
   const handleSaveEdit = async () => {
+    if (!editForm.title?.trim() || !editForm.author?.trim()) {
+      return toast.error('Название и автор обязательны')
+    }
+
     setSavingEdit(true)
     try {
       const token = localStorage.getItem('token')
+
+      // language/difficulty — не колонки, а часть tags (как при добавлении книги)
+      const tagParts = [
+        editForm.genre,
+        editForm.language,
+        editForm.difficulty,
+        editForm.tags
+      ]
+        .map(v => (v || '').trim())
+        .filter(Boolean)
+
+      const payload = {
+        title: editForm.title.trim(),
+        author: editForm.author.trim(),
+        genre: editForm.genre.trim() || 'Без раздела',
+        year: editForm.year.trim(),
+        description: editForm.description.trim(),
+        cover_url: editForm.cover_url.trim(),
+        file_url: editForm.file_url.trim(),
+        total_copies: Math.max(1, parseInt(editForm.total_copies) || 1),
+        isbn: editForm.isbn.trim(),
+        pages: editForm.pages === '' ? '' : parseInt(editForm.pages) || 0,
+        tags: tagParts.join(', ')
+      }
+
       const res = await fetch(`/api/books/${id}`, {
         method: 'PATCH',
         headers: {
           Authorization: `Bearer ${token}`,
           'Content-Type': 'application/json'
         },
-        body: JSON.stringify(editForm)
+        body: JSON.stringify(payload)
       })
       const data = await res.json()
       if (res.ok) {
         toast.success('Книга обновлена')
         setBook(data.book)
+        const parsed = splitTags(data.book.tags, data.book.genre)
+        setEditForm(prev => ({
+          ...prev,
+          language: parsed.language,
+          difficulty: parsed.difficulty,
+          tags: parsed.rest.join(', ')
+        }))
         setEditMode(false)
       } else {
         toast.error(data.error || 'Ошибка')
@@ -517,6 +622,7 @@ const Book = () => {
             form={editForm}
             setForm={setEditForm}
             onSave={handleSaveEdit}
+            onCancel={() => setEditMode(false)}
             saving={savingEdit}
           />
         ) : (

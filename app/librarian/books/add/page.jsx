@@ -22,8 +22,14 @@ export default function AddBookPage() {
     file_url: '',
     total_copies: 1,
     language: '',
+    difficulty: '',
     tags: ''
   })
+  const EMPTY_FORM = {
+    title: '', author: '', genre: '', year: '', description: '',
+    cover_url: '', file_url: '', total_copies: 1, language: '',
+    difficulty: '', tags: ''
+  }
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
 
@@ -235,7 +241,7 @@ export default function AddBookPage() {
                   </button>
                   <button
                     onClick={() => {
-                      setForm({ title: '', author: '', genre: '', year: '', description: '', cover_url: '', file_url: '', total_copies: 1, language: '', tags: '' })
+                      setForm(EMPTY_FORM)
                       setResult(null)
                     }}
                     className="text-[12px] px-3 py-1.5 rounded-lg bg-[var(--color-brand-soft)] text-[var(--color-brand)] transition-colors"
