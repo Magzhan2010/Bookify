@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
-import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
+import { Mail, Lock, ArrowRight, ArrowUpRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '../../components/ThemeContext'
 
@@ -107,6 +107,18 @@ export default function Login() {
             <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-tertiary)] font-medium">DLS Library</div>
           </div>
         </Link>
+
+        <div className="text-center -mt-6 mb-8">
+          <a
+            href="https://dls.edu.kz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] transition-colors"
+          >
+            dls.edu.kz
+            <ArrowUpRight size={13} />
+          </a>
+        </div>
 
         <div className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] p-9 shadow-[var(--shadow-soft)]">
           <h1 className="text-[28px] font-semibold tracking-tight mb-1 text-[var(--color-text-primary)]">

@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 
@@ -161,6 +161,14 @@ export default function LibrarianLayout({ children }) {
             >
               <Library size={14} /> Открыть каталог
             </Link>
+            <a
+              href="https://dls.edu.kz"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="w-full flex items-center justify-center gap-2 py-2 rounded-lg text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-soft)] transition-colors text-[13px] font-medium mb-2"
+            >
+              Сайт школы <ArrowUpRight size={13} />
+            </a>
             <button
               onClick={handleLogout}
               className="w-full flex items-center justify-center gap-2 py-2 rounded-lg bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15 transition-colors text-[13px] font-medium"

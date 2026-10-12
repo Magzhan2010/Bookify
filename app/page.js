@@ -7,7 +7,7 @@ import { useRef } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
 import {
   BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
-  ArrowRight, Library, ShieldCheck, Zap, Heart, Clock,
+  ArrowRight, ArrowUpRight, Library, ShieldCheck, Zap, Heart, Clock,
   ArrowDownToLine, BookMarked, Award, ChevronDown, Star
 } from 'lucide-react'
 
@@ -477,6 +477,20 @@ const FooterSection = () => (
           © 2026 <span className="text-[var(--color-text-primary)] font-medium">Bookify</span> · Divergents Leadership School
         </div>
       </div>
+
+      {/* Ссылки на сайт школы */}
+      <div className="flex items-center gap-4">
+        <a
+          href="https://dls.edu.kz"
+          target="_blank"
+          rel="noopener noreferrer"
+          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/40 transition-colors"
+        >
+          Сайт школы
+          <ArrowUpRight size={14} />
+        </a>
+      </div>
+
       <div className="flex flex-col items-center sm:items-end gap-1">
         <div className="text-[12px] text-[var(--color-text-tertiary)]">
           Разработано: <span className="text-[var(--color-brand)] font-semibold">Zhenis Magzhan</span>
