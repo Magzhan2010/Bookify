@@ -1,7 +1,7 @@
 import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
-import { ThemeProvider, ThemeToggle } from '../components/ThemeContext';
+import { ThemeProvider } from '../components/ThemeContext';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -43,9 +43,6 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col antialiased bg-[var(--color-bg)] text-[var(--color-text-primary)]">
         <ThemeProvider>
           {children}
-          <div className="fixed bottom-4 right-4 z-50 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-full p-2 shadow-[var(--shadow-elevated)]">
-            <ThemeToggle />
-          </div>
         </ThemeProvider>
         <Toaster
           position="top-center"

@@ -8,6 +8,7 @@ import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
   Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle
 } from 'lucide-react'
+import { ThemeToggle } from '../../components/ThemeContext'
 
 const navItems = [
   { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
@@ -103,16 +104,17 @@ export default function LibrarianLayout({ children }) {
         }`}
       >
         <div className="flex flex-col h-full">
-          <div className="px-6 py-5 border-b border-[var(--color-border)]">
-            <Link href="/librarian" className="flex items-center gap-3">
-              <div className="w-9 h-9 rounded-xl bg-[var(--color-brand)] flex items-center justify-center">
+          <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between gap-2">
+            <Link href="/librarian" className="flex items-center gap-3 min-w-0">
+              <div className="w-9 h-9 rounded-xl bg-[var(--color-brand)] flex items-center justify-center shrink-0">
                 <BookOpen size={17} className="text-white" />
               </div>
-              <div>
+              <div className="min-w-0">
                 <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">Bookify</div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-brand)] font-medium">Библиотека</div>
               </div>
             </Link>
+            <ThemeToggle size="md" />
           </div>
 
           <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">

@@ -7,6 +7,7 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { Mail, Lock, ArrowRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { ThemeToggle } from '../../components/ThemeContext'
 
 export default function Login() {
   const [email, setEmail] = useState('')
@@ -87,6 +88,10 @@ export default function Login() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-soft)] flex items-center justify-center px-4 py-12">
+      {/* Переключатель темы — правый верхний угол */}
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
+        <ThemeToggle size="lg" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

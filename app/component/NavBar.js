@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Search, X, LogOut, BookMarked } from 'lucide-react'
+import { ThemeToggle } from '../../components/ThemeContext'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
@@ -115,6 +116,9 @@ const Navbar = () => {
             />
           )}
 
+          {/* Переключатель темы — на видном месте, справа в шапке */}
+          <ThemeToggle size="md" className="ml-1" />
+
           {user ? (
             <div className="flex items-center gap-1 ml-2">
               <button
@@ -150,20 +154,23 @@ const Navbar = () => {
           )}
         </div>
 
-        <button
-          onClick={() => setMobileOpen(!mobileOpen)}
-          className="lg:hidden p-2 rounded-lg hover:bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] transition-colors"
-          aria-label="Меню"
-          aria-expanded={mobileOpen}
-        >
-          {mobileOpen ? <X size={20} /> : (
-            <div className="flex flex-col gap-[5px]">
-              <span className="w-5 h-[1.5px] bg-current rounded-full" />
-              <span className="w-5 h-[1.5px] bg-current rounded-full" />
-              <span className="w-5 h-[1.5px] bg-current rounded-full" />
-            </div>
-          )}
-        </button>
+        <div className="flex items-center gap-1.5 lg:hidden">
+          <ThemeToggle size="md" />
+          <button
+            onClick={() => setMobileOpen(!mobileOpen)}
+            className="p-2.5 rounded-xl hover:bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] transition-colors"
+            aria-label="Меню"
+            aria-expanded={mobileOpen}
+          >
+            {mobileOpen ? <X size={20} /> : (
+              <div className="flex flex-col gap-[5px]">
+                <span className="w-5 h-[1.5px] bg-current rounded-full" />
+                <span className="w-5 h-[1.5px] bg-current rounded-full" />
+                <span className="w-5 h-[1.5px] bg-current rounded-full" />
+              </div>
+            )}
+          </button>
+        </div>
       </div>
 
       <div className="lg:hidden px-4 pb-3">

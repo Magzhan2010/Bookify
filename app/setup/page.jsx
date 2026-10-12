@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
+import { ThemeToggle } from '../../components/ThemeContext'
 import Link from 'next/link'
 import Image from 'next/image'
 import { Database, CheckCircle, AlertCircle, Loader2, ArrowRight, RefreshCw } from 'lucide-react'
@@ -46,6 +47,10 @@ export default function SetupPage() {
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-soft)] flex items-center justify-center px-4 py-12">
+      {/* Переключатель темы — правый верхний угол */}
+      <div className="fixed top-4 right-4 sm:top-6 sm:right-6 z-50">
+        <ThemeToggle size="lg" />
+      </div>
       <motion.div
         initial={{ opacity: 0, y: 16 }}
         animate={{ opacity: 1, y: 0 }}

@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { ThemeToggle } from '../../../components/ThemeContext'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
@@ -222,6 +223,7 @@ const Book = () => {
   const [favLoading, setFavLoading] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
   const [related, setRelated] = useState([])
+  const [loadError, setLoadError] = useState(null)
 
   // Librarian: edit mode
   const [editMode, setEditMode] = useState(false)
@@ -389,6 +391,12 @@ const Book = () => {
         ])
 
         const bookData = await bookRes.json()
+        if (!bookRes.ok) {
+          setLoadError(bookData.error || 'Книга не найдена')
+          setBook(null)
+          return
+        }
+        setLoadError(null)
         setBook(bookData)
         const parsedTags = splitTags(bookData.tags, bookData.genre)
         setEditForm({
@@ -427,7 +435,12 @@ const Book = () => {
             }
           } catch (e) {}
         }
-      } catch (err) { console.error(err) }
+      } catch (err) {
+        // Сеть/БД недоступны — показываем экран ошибки, а не вечный спиннер
+        console.error(err)
+        setLoadError('Не удалось загрузить книгу')
+        setBook(null)
+      }
     }
 
     fetchAll()
@@ -678,10 +691,39 @@ const Book = () => {
     }
   }
 
+  // Пока грузим — спиннер. Если загрузка провалилась (404/500) — экран ошибки
+  // с кнопками «Повторить» и «Вернуться в каталог».
+  // Раньше здесь был бесконечный спиннер без единого элемента управления.
   if (!book) {
     return (
-      <div className="min-h-screen bg-[var(--color-bg)] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
+      <div className="min-h-screen bg-[var(--color-bg)] flex flex-col items-center justify-center px-6 text-center">
+        {loadError ? (
+          <>
+            <div className="w-14 h-14 rounded-2xl bg-[var(--color-danger)]/10 flex items-center justify-center mb-4">
+              <BookOpen size={24} className="text-[var(--color-danger)]" />
+            </div>
+            <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-1">{loadError}</h1>
+            <p className="text-[13px] text-[var(--color-text-secondary)] mb-6 max-w-sm">
+              Возможно, книгу убрали в архив или ссылка устарела.
+            </p>
+            <div className="flex gap-2">
+              <button
+                onClick={() => router.push('/library')}
+                className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium hover:bg-[var(--color-bg-soft)] transition-colors"
+              >
+                В каталог
+              </button>
+              <button
+                onClick={() => { setLoadError(null); router.refresh() }}
+                className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] text-white text-[13px] font-medium hover:bg-[var(--color-brand-hover)] transition-colors"
+              >
+                Повторить
+              </button>
+            </div>
+          </>
+        ) : (
+          <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
+        )}
       </div>
     )
   }
@@ -706,52 +748,57 @@ const Book = () => {
             <ArrowLeft size={15} /> Назад
           </button>
 
-          {isLibrarian && (
-            <div className="flex items-center gap-2">
-              <button
-                onClick={() => setIssueOpen(true)}
-                disabled={book.archived_at || book.available_copies <= 0}
-                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                title={
-                  book.archived_at
-                    ? 'Книга в архиве'
-                    : book.available_copies <= 0
-                      ? 'Все экземпляры на руках'
-                      : 'Выдать книгу ученику'
-                }
-              >
-                <Send size={13} /> Выдать
-              </button>
-              <button
-                onClick={() => setEditMode(!editMode)}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
-                  editMode
-                    ? 'bg-[var(--color-brand)] text-white'
-                    : 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
-                }`}
-              >
-                <Edit size={13} /> {editMode ? 'Отменить' : 'Редактировать'}
-              </button>
-              <button
-                onClick={book.archived_at ? handleRestore : handleArchive}
-                disabled={deleting}
-                className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
-                  book.archived_at
-                    ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)]/15'
-                    : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15'
-                }`}
-              >
-                {deleting ? (
-                  <Loader2 size={13} className="animate-spin" />
-                ) : book.archived_at ? (
-                  <RotateCcw size={13} />
-                ) : (
-                  <Trash2 size={13} />
-                )}
-                {book.archived_at ? 'Вернуть в каталог' : 'В архив'}
-              </button>
-            </div>
-          )}
+          <div className="flex items-center gap-2">
+            {isLibrarian && (
+              <>
+                <button
+                  onClick={() => setIssueOpen(true)}
+                  disabled={book.archived_at || book.available_copies <= 0}
+                  className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[12px] font-medium transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                  title={
+                    book.archived_at
+                      ? 'Книга в архиве'
+                      : book.available_copies <= 0
+                        ? 'Все экземпляры на руках'
+                        : 'Выдать книгу ученику'
+                  }
+                >
+                  <Send size={13} /> Выдать
+                </button>
+                <button
+                  onClick={() => setEditMode(!editMode)}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${
+                    editMode
+                      ? 'bg-[var(--color-brand)] text-white'
+                      : 'bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] hover:bg-[var(--color-border)]'
+                  }`}
+                >
+                  <Edit size={13} /> {editMode ? 'Отменить' : 'Редактировать'}
+                </button>
+                <button
+                  onClick={book.archived_at ? handleRestore : handleArchive}
+                  disabled={deleting}
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors disabled:opacity-50 ${
+                    book.archived_at
+                      ? 'bg-[var(--color-success)]/10 text-[var(--color-success)] hover:bg-[var(--color-success)]/15'
+                      : 'bg-[var(--color-danger)]/10 text-[var(--color-danger)] hover:bg-[var(--color-danger)]/15'
+                  }`}
+                >
+                  {deleting ? (
+                    <Loader2 size={13} className="animate-spin" />
+                  ) : book.archived_at ? (
+                    <RotateCcw size={13} />
+                  ) : (
+                    <Trash2 size={13} />
+                  )}
+                  {book.archived_at ? 'Вернуть в каталог' : 'В архив'}
+                </button>
+              </>
+            )}
+
+            {/* Переключатель темы — справа в шапке, виден и ученику, и библиотекарю */}
+            <ThemeToggle size="md" className="ml-1" />
+          </div>
         </div>
       </div>
 

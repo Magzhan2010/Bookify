@@ -4,6 +4,7 @@ import { motion, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useRef } from 'react'
+import { ThemeToggle } from '../components/ThemeContext'
 import {
   BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
   ArrowRight, Library, ShieldCheck, Zap, Heart, Clock,
@@ -55,6 +56,7 @@ export default function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            <ThemeToggle size="md" />
             <Link href="/login" className="hidden sm:block px-4 py-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
               Войти
             </Link>
