@@ -15,8 +15,8 @@ export const metadata = {
   description:
     "Онлайн платформа библиотеки Divergents Leadership School. Арендуй книги онлайн, веди статистику чтения, открывай новые жанры.",
   icons: {
-    icon: "/lb_logo.png",
-    apple: "/lb_logo.png"
+    icon: "/bookify-mark.svg",
+    apple: "/bookify-mark.svg"
   }
 };
 

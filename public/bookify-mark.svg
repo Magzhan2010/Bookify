@@ -1,0 +1,19 @@
+<svg width="40" height="40" viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <linearGradient id="bkBg" x1="0" y1="0" x2="40" y2="40" gradientUnits="userSpaceOnUse">
+      <stop stop-color="#2f6bea"/>
+      <stop offset="1" stop-color="#1546b8"/>
+    </linearGradient>
+  </defs>
+
+  <rect width="40" height="40" rx="9.5" fill="url(#bkBg)"/>
+
+  <!-- Открытая книга -->
+  <g transform="translate(8 8)" stroke="#ffffff" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 7.2v13.6"/>
+    <path d="M3.2 17.4a1 1 0 0 1-1-1V4.6a1 1 0 0 1 1-1h4.6A4.4 4.4 0 0 1 12 7.6a4.4 4.4 0 0 1 4.2-4h4.6a1 1 0 0 1 1 1v11.8a1 1 0 0 1-1 1h-5.8a3 3 0 0 0-3 2.8 3 3 0 0 0-3-2.8z"/>
+  </g>
+
+  <!-- Закладка -->
+  <path d="M25.6 8.4h2.2v7.4l-1.1-1.2-1.1 1.2V8.4z" fill="#ffffff" opacity="0.95"/>
+</svg>

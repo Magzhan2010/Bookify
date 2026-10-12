@@ -46,11 +46,11 @@ export default function LandingPage() {
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <motion.div
-              whileHover={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 0.5 }}
-              className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--color-bg-card)] ring-1 ring-[var(--color-border)] shadow-sm"
+              whileHover={{ scale: 1.05 }}
+              transition={{ duration: 0.2 }}
+              className="rounded-xl shadow-sm"
             >
-              <Image src="/lb_logo.png" width={40} height={40} alt="DLS" className="object-contain" />
+              <Image src="/bookify-mark.svg" width={40} height={40} alt="Bookify" className="rounded-xl" />
             </motion.div>
             <div className="font-semibold text-[17px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
           </Link>
@@ -472,7 +472,7 @@ const FooterSection = () => (
   <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-soft)] py-10">
     <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
       <div className="flex items-center gap-3">
-        <Image src="/lb_logo.png" width={28} height={28} alt="DLS" className="opacity-70" />
+        <Image src="/bookify-mark.svg" width={28} height={28} alt="Bookify" className="rounded-md opacity-70" />
         <div className="text-[13px] text-[var(--color-text-secondary)]">
           © 2026 <span className="text-[var(--color-text-primary)] font-medium">Bookify</span> · Divergents Leadership School
         </div>
