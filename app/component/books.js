@@ -3,6 +3,7 @@
 import { useRouter } from "next/navigation"
 import { motion } from 'framer-motion'
 import { CheckCircle, BookOpen } from 'lucide-react'
+import StarRating from '../../components/ui/StarRating'
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -142,6 +143,18 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
                 {book.title}
               </h3>
               <p className="text-[12px] text-[var(--color-text-tertiary)] line-clamp-1 mb-2">{book.author}</p>
+
+              {/* Рейтинг книги */}
+              {book.rating_count > 0 && (
+                <div className="mb-2">
+                  <StarRating
+                    value={parseFloat(book.rating_avg) || 0}
+                    count={book.rating_count}
+                    size="sm"
+                    readonly
+                  />
+                </div>
+              )}
 
               <div className="flex items-center gap-1.5 flex-wrap">
                 {book.genre && (

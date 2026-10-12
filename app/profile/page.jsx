@@ -6,18 +6,20 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   BookOpen, Heart, CheckCircle, Clock, Target,
-  Trophy, Library, X, Sparkles, BellOff
+  Trophy, Library, X, Sparkles, BellOff, Settings, User, KeyRound, Save
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
   CartesianGrid, PieChart, Pie, Cell
 } from 'recharts'
+import { Button, Input, Card } from '../../components/ui'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
   { key: 'requests', label: 'Заявки', icon: Library },
   { key: 'finished', label: 'Прочитано', icon: CheckCircle },
-  { key: 'favorites', label: 'Избранное', icon: Heart }
+  { key: 'favorites', label: 'Избранное', icon: Heart },
+  { key: 'settings', label: 'Настройки', icon: Settings }
 ]
 
 const COLORS = ['#1a56db', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5856d6', '#ff2d55', '#5ac8fa']
@@ -123,7 +125,31 @@ export default function ProfilePage() {
   if (loading) {
     return (
       <div className="min-h-screen bg-[var(--color-bg-card)] flex items-center justify-center">
-        <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[#1a56db] rounded-full animate-spin" />
+        <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  // Раньше здесь был `return null` — при истёкшем токене пользователь
+  // видел просто белую страницу без единого элемента управления
+  if (!userData) {
+    return (
+      <div className="min-h-screen bg-[var(--color-bg-soft)] flex flex-col items-center justify-center px-6 text-center">
+        <div className="w-14 h-14 rounded-[var(--radius-lg)] bg-[var(--color-bg-card)] flex items-center justify-center mb-4">
+          <User size={24} className="text-[var(--color-text-tertiary)]" />
+        </div>
+        <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-1">
+          Нужно войти в аккаунт
+        </h1>
+        <p className="text-[13px] text-[var(--color-text-secondary)] mb-6 max-w-sm">
+          Профиль доступен только авторизованным пользователям.
+        </p>
+        <div className="flex gap-2">
+          <Button variant="secondary" onClick={() => router.push('/')}>
+            На главную
+          </Button>
+          <Button onClick={() => router.push('/login')}>Войти</Button>
+        </div>
       </div>
     )
   }
@@ -389,6 +415,10 @@ export default function ProfilePage() {
               onRemove={removeFavorite}
             />
           )}
+
+          {activeTab === 'settings' && (
+            <SettingsPanel user={userData} onUpdated={setUserData} />
+          )}
         </motion.div>
       </main>
 
@@ -429,6 +459,232 @@ export default function ProfilePage() {
           </motion.div>
         </motion.div>
       )}
+    </div>
+  )
+}
+
+/**
+ * Панель настроек: свои данные и смена пароля.
+ * Раньше эндпоинта для этого не было вообще — ученик не мог поменять
+ * себе ни имя, ни телефон, ни пароль.
+ */
+const SettingsPanel = ({ user, onUpdated }) => {
+  const [name, setName] = useState(user?.name || '')
+  const [className, setClassName] = useState(user?.class_name || '')
+  const [phone, setPhone] = useState(user?.phone || '')
+  const [savingProfile, setSavingProfile] = useState(false)
+  const [profileError, setProfileError] = useState('')
+
+  const [oldPassword, setOldPassword] = useState('')
+  const [newPassword, setNewPassword] = useState('')
+  const [repeatPassword, setRepeatPassword] = useState('')
+  const [savingPass, setSavingPass] = useState(false)
+  const [passError, setPassError] = useState('')
+
+  useEffect(() => {
+    setName(user?.name || '')
+    setClassName(user?.class_name || '')
+    setPhone(user?.phone || '')
+  }, [user])
+
+  const saveProfile = async (e) => {
+    e.preventDefault()
+    setProfileError('')
+    if (!name.trim()) {
+      setProfileError('Имя не может быть пустым')
+      return
+    }
+    setSavingProfile(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/profile', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ name, className, phone })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Ошибка')
+      onUpdated?.({ ...user, ...data.user })
+      toast.success('Профиль обновлён')
+    } catch (err) {
+      setProfileError(err.message)
+    } finally {
+      setSavingProfile(false)
+    }
+  }
+
+  const changePassword = async (e) => {
+    e.preventDefault()
+    setPassError('')
+
+    if (newPassword.length < 6) {
+      setPassError('Новый пароль должен быть не короче 6 символов')
+      return
+    }
+    if (newPassword !== repeatPassword) {
+      setPassError('Новые пароли не совпадают')
+      return
+    }
+
+    setSavingPass(true)
+    try {
+      const token = localStorage.getItem('token')
+      const res = await fetch('/api/profile/password', {
+        method: 'PATCH',
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ oldPassword, newPassword })
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Ошибка')
+
+      // Сервер вернул новый токен — сохраняем, иначе придётся снова логиниться
+      if (data.token) localStorage.setItem('token', data.token)
+
+      setOldPassword('')
+      setNewPassword('')
+      setRepeatPassword('')
+      toast.success('Пароль изменён')
+    } catch (err) {
+      setPassError(err.message)
+    } finally {
+      setSavingPass(false)
+    }
+  }
+
+  return (
+    <div className="grid gap-4 lg:grid-cols-2 items-start">
+      {/* Личные данные */}
+      <Card padding="lg">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-brand-soft)] flex items-center justify-center">
+            <User size={18} className="text-[var(--color-brand)]" />
+          </div>
+          <div>
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+              Личные данные
+            </h3>
+            <p className="text-[12px] text-[var(--color-text-tertiary)]">
+              Имя и класс видит библиотекарь
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={saveProfile} className="space-y-4">
+          <Input
+            label="Имя"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            required
+            placeholder="Как тебя зовут"
+          />
+
+          <Input
+            label="Класс"
+            value={className}
+            onChange={e => setClassName(e.target.value)}
+            placeholder="Например, 10-А"
+            hint={user?.role === 'librarian' ? 'Библиотекарям класс не нужен' : undefined}
+          />
+
+          <Input
+            label="Телефон"
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            placeholder="+7 (___) ___-__-__"
+            hint="Чтобы библиотекарь мог быстро связаться по поводу долга"
+          />
+
+          <Input
+            label="Email"
+            value={user?.email || ''}
+            disabled
+            hint="Email — это логин, его нельзя изменить"
+          />
+
+          {profileError && (
+            <p className="text-[12px] text-[var(--color-danger)]">{profileError}</p>
+          )}
+
+          <Button type="submit" loading={savingProfile} icon={Save} fullWidth>
+            Сохранить
+          </Button>
+        </form>
+      </Card>
+
+      {/* Пароль */}
+      <Card padding="lg">
+        <div className="flex items-center gap-3 mb-5">
+          <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-soft)] flex items-center justify-center">
+            <KeyRound size={18} className="text-[var(--color-text-secondary)]" />
+          </div>
+          <div>
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">
+              Смена пароля
+            </h3>
+            <p className="text-[12px] text-[var(--color-text-tertiary)]">
+              Нужен текущий пароль для подтверждения
+            </p>
+          </div>
+        </div>
+
+        <form onSubmit={changePassword} className="space-y-4">
+          <Input
+            label="Текущий пароль"
+            type="password"
+            value={oldPassword}
+            onChange={e => setOldPassword(e.target.value)}
+            required
+            autoComplete="current-password"
+            placeholder="••••••"
+          />
+
+          <Input
+            label="Новый пароль"
+            type="password"
+            value={newPassword}
+            onChange={e => setNewPassword(e.target.value)}
+            required
+            minLength={6}
+            autoComplete="new-password"
+            hint="Минимум 6 символов"
+          />
+
+          <Input
+            label="Повтори новый пароль"
+            type="password"
+            value={repeatPassword}
+            onChange={e => setRepeatPassword(e.target.value)}
+            required
+            autoComplete="new-password"
+            error={
+              repeatPassword && repeatPassword !== newPassword
+                ? 'Пароли не совпадают'
+                : ''
+            }
+          />
+
+          {passError && (
+            <p className="text-[12px] text-[var(--color-danger)]">{passError}</p>
+          )}
+
+          <Button
+            type="submit"
+            variant="secondary"
+            loading={savingPass}
+            icon={KeyRound}
+            fullWidth
+            disabled={!oldPassword || !newPassword || !repeatPassword}
+          >
+            Изменить пароль
+          </Button>
+        </form>
+      </Card>
     </div>
   )
 }

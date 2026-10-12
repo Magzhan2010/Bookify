@@ -6,8 +6,9 @@ import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
   Library, Search, Loader2, BookOpen, Users, X,
-  ChevronLeft, ChevronRight, LayoutGrid, Rows3, Plus, Archive, RotateCcw
+  ChevronLeft, ChevronRight, Plus, RotateCcw
 } from 'lucide-react'
+import { Button, EmptyState, SkeletonRows } from '../../../components/ui'
 
 const PAGE_SIZE = 25
 
@@ -156,12 +157,13 @@ export default function LibrarianBooksPage() {
             </p>
           </div>
         </div>
-        <button
+        <Button
           onClick={() => router.push('/librarian/books/add')}
-          className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium flex items-center gap-2 transition-colors"
+          icon={Plus}
+          size="sm"
         >
-          <Plus size={15} /> Добавить книгу
-        </button>
+          Добавить книгу
+        </Button>
       </div>
 
       {/* Сводка по текущей выборке */}
@@ -242,39 +244,28 @@ export default function LibrarianBooksPage() {
 
       {/* Ошибка */}
       {error && (
-        <div className="p-6 rounded-2xl bg-[var(--color-danger)]/10 border border-[var(--color-danger)]/30 text-center">
-          <p className="text-[var(--color-danger)] text-[14px] font-medium mb-3">{error}</p>
-          <button
-            onClick={load}
-            className="px-4 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium"
-          >
-            Повторить
-          </button>
-        </div>
+        <EmptyState
+          variant="error"
+          title="Не удалось загрузить список"
+          description={error}
+          actionLabel="Повторить"
+          onAction={load}
+        />
       )}
 
       {/* Загрузка */}
-      {!error && loading && (
-        <div className="flex justify-center py-16">
-          <Loader2 size={24} className="animate-spin text-[var(--color-text-tertiary)]" />
-        </div>
-      )}
+      {!error && loading && <SkeletonRows count={8} />}
 
       {/* Пусто */}
       {!error && !loading && books.length === 0 && (
-        <div className="py-16 text-center bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
-          <Library size={28} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
-          <p className="text-[var(--color-text-secondary)] text-[14px] mb-1">Ничего не найдено</p>
-          <p className="text-[12px] text-[var(--color-text-tertiary)] mb-4">
-            Попробуй другой запрос или сбрось фильтры
-          </p>
-          <button
-            onClick={() => { setSearch(''); setGenre('Все'); setStatus('all'); setPage(1) }}
-            className="px-4 py-2 rounded-xl bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[13px] font-medium"
-          >
-            Сбросить фильтры
-          </button>
-        </div>
+        <EmptyState
+          variant="no-results"
+          icon={Library}
+          title="Ничего не найдено"
+          description="Попробуй другой запрос или сбрось фильтры"
+          actionLabel="Сбросить фильтры"
+          onAction={() => { setSearch(''); setGenre('Все'); setStatus('all'); setPage(1) }}
+        />
       )}
 
       {/* Таблица */}
@@ -409,20 +400,24 @@ export default function LibrarianBooksPage() {
                 Страница {page} из {meta.pages}
               </span>
               <div className="flex gap-2">
-                <button
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  icon={ChevronLeft}
                   onClick={() => setPage(p => Math.max(1, p - 1))}
                   disabled={page <= 1}
-                  className="px-3 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium disabled:opacity-40 flex items-center gap-1"
                 >
-                  <ChevronLeft size={14} /> Назад
-                </button>
-                <button
+                  Назад
+                </Button>
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  iconRight={ChevronRight}
                   onClick={() => setPage(p => Math.min(meta.pages, p + 1))}
                   disabled={page >= meta.pages}
-                  className="px-3 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium disabled:opacity-40 flex items-center gap-1"
                 >
-                  Вперёд <ChevronRight size={14} />
-                </button>
+                  Вперёд
+                </Button>
               </div>
             </div>
           )}

@@ -90,3 +90,74 @@ export async function GET(req) {
     reading_goal: readingGoal
   })
 }
+
+/**
+ * PATCH /api/profile
+ * Пользователь меняет свои данные: имя, класс, телефон.
+ * Пароль — отдельным запросом (PATCH /api/profile/password), там нужна проверка старого.
+ *
+ * Свою роль и email менять нельзя: роль выдаёт библиотекарь,
+ * email служит логином.
+ */
+export async function PATCH(req) {
+  const auth = req.headers.get('authorization')
+  if (!auth) {
+    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+  }
+  const token = auth.split(' ')[1]
+  if (!token || !process.env.JWT_SECRET) {
+    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
+  }
+
+  let payload
+  try {
+    payload = jwt.verify(token, process.env.JWT_SECRET)
+  } catch (err) {
+    return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 })
+  }
+
+  try {
+    const { name, className, phone } = await req.json()
+    const fields = []
+    const values = []
+    let i = 1
+
+    if (name !== undefined) {
+      if (!String(name).trim()) {
+        return NextResponse.json({ error: 'Имя не может быть пустым' }, { status: 400 })
+      }
+      fields.push(`name = $${i++}`)
+      values.push(String(name).trim().slice(0, 120))
+    }
+    if (className !== undefined) {
+      fields.push(`class_name = $${i++}`)
+      values.push(String(className).trim().slice(0, 40) || null)
+    }
+    if (phone !== undefined) {
+      fields.push(`phone = $${i++}`)
+      values.push(String(phone).trim().slice(0, 40) || null)
+    }
+
+    if (fields.length === 0) {
+      return NextResponse.json({ error: 'Нечего обновлять' }, { status: 400 })
+    }
+
+    fields.push(`updated_at = NOW()`)
+    values.push(payload.id)
+
+    const res = await pool.query(
+      `UPDATE users SET ${fields.join(', ')} WHERE id = $${i}
+       RETURNING id, name, email, role, class_name, phone, avatar_url`,
+      values
+    )
+
+    if (!res.rows[0]) {
+      return NextResponse.json({ error: 'Пользователь не найден' }, { status: 404 })
+    }
+
+    return NextResponse.json({ success: true, user: res.rows[0] })
+  } catch (err) {
+    console.error('Profile update error:', err)
+    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+  }
+}

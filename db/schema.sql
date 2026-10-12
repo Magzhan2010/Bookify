@@ -119,6 +119,20 @@ CREATE TABLE IF NOT EXISTS reading_goals (
   UNIQUE (user_id, year)
 );
 
+-- BOOK_RATINGS: оценка книги учеником (1-5)
+-- Одна оценка на пару ученик+книга, при повторной — обновляется
+CREATE TABLE IF NOT EXISTS book_ratings (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
+  value INT NOT NULL CHECK (value BETWEEN 1 AND 5),
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  UNIQUE (user_id, book_id)
+);
+
+CREATE INDEX IF NOT EXISTS idx_ratings_book ON book_ratings(book_id);
+
 -- ============================================================
 -- VIEW: все активные займы с данными
 -- ============================================================

@@ -8,14 +8,29 @@ export async function GET(req) {
   await ensureSchema()
 
   // Архивные книги не показываем в каталоге
-  const LIVE = 'archived_at IS NULL'
+  const LIVE = 'bk.archived_at IS NULL'
+
+  // Средний рейтинг книги — один агрегат на весь список,
+  // чтобы не делать запрос на каждую карточку
+  const RATING_AGG = `
+    LEFT JOIN (
+      SELECT book_id,
+             ROUND(AVG(value)::numeric, 2) AS rating_avg,
+             COUNT(*)::int AS rating_count
+      FROM book_ratings GROUP BY book_id
+    ) rt ON rt.book_id = bk.id
+  `
+
+  const SELECT_BOOKS = `SELECT bk.*,
+           COALESCE(rt.rating_avg, 0)::float AS rating_avg,
+           COALESCE(rt.rating_count, 0)::int AS rating_count`
 
   // 1. Все жанры для фильтра
   if (searchParams.get('allGenres') === 'true') {
     const result = await pool.query(
-      `SELECT DISTINCT genre FROM books
-       WHERE ${LIVE} AND genre IS NOT NULL AND genre != ''
-       ORDER BY genre ASC`
+      `SELECT DISTINCT bk.genre FROM books bk
+       WHERE ${LIVE} AND bk.genre IS NOT NULL AND bk.genre != ''
+       ORDER BY bk.genre ASC`
     )
     return NextResponse.json(result.rows.map(r => r.genre))
   }
@@ -23,7 +38,7 @@ export async function GET(req) {
   // 2. Все книги для админки
   if (searchParams.get('allBooks') === 'true') {
     const result = await pool.query(
-      `SELECT * FROM books WHERE ${LIVE} ORDER BY created_at DESC`
+      `SELECT bk.* FROM books bk WHERE ${LIVE} ORDER BY bk.created_at DESC`
     )
     return NextResponse.json(result.rows)
   }
@@ -40,16 +55,16 @@ export async function GET(req) {
   const buildSearch = (params) => {
     if (!search) return ''
     params.push(`%${search}%`)
-    return ` AND (title ILIKE $${params.length} OR author ILIKE $${params.length})`
+    return ` AND (bk.title ILIKE $${params.length} OR bk.author ILIKE $${params.length})`
   }
 
   if (countOnly) {
     const params = []
-    let sql = `SELECT COUNT(*) AS total FROM books WHERE ${LIVE}`
+    let sql = `SELECT COUNT(*) AS total FROM books bk WHERE ${LIVE}`
 
     if (isFiltered) {
       params.push(genre, genre + ' / %', '% / ' + genre, '% / ' + genre + ' / %')
-      sql += ` AND (genre = $1 OR genre LIKE $2 OR genre LIKE $3 OR genre LIKE $4)`
+      sql += ` AND (bk.genre = $1 OR bk.genre LIKE $2 OR bk.genre LIKE $3 OR bk.genre LIKE $4)`
     }
     sql += buildSearch(params)
 
@@ -63,27 +78,28 @@ export async function GET(req) {
 
   if (isFiltered) {
     params.push(genre, genre + ' / %', '% / ' + genre, '% / ' + genre + ' / %')
-    let sql = `SELECT * FROM books
+    let sql = `${SELECT_BOOKS}
+       FROM books bk ${RATING_AGG}
        WHERE ${LIVE}
-         AND (genre = $1 OR genre LIKE $2 OR genre LIKE $3 OR genre LIKE $4)`
+         AND (bk.genre = $1 OR bk.genre LIKE $2 OR bk.genre LIKE $3 OR bk.genre LIKE $4)`
     sql += buildSearch(params)
     params.push(limit, offset)
     limitIdx = params.length - 1
     offsetIdx = params.length
     const result = await pool.query(
-      `${sql} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      `${sql} ORDER BY bk.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       params
     )
     return NextResponse.json(result.rows)
   }
 
-  let sql = `SELECT * FROM books WHERE ${LIVE}`
+  let sql = `${SELECT_BOOKS} FROM books bk ${RATING_AGG} WHERE ${LIVE}`
   sql += buildSearch(params)
   params.push(limit, offset)
   limitIdx = params.length - 1
   offsetIdx = params.length
   const result = await pool.query(
-    `${sql} ORDER BY created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    `${sql} ORDER BY bk.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
     params
   )
   return NextResponse.json(result.rows)

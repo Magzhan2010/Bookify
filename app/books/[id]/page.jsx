@@ -6,6 +6,8 @@ import { useParams, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '../../../components/ThemeContext'
+import StarRating from '../../../components/ui/StarRating'
+import { plural } from '../../../lib/ui'
 import {
   ArrowLeft, Heart, BookOpen, Download,
   Bell, BellOff, Loader2, Clock, Star, MessageCircle,
@@ -224,6 +226,8 @@ const Book = () => {
   const [isFavorite, setIsFavorite] = useState(false)
   const [related, setRelated] = useState([])
   const [loadError, setLoadError] = useState(null)
+  const [token, setToken] = useState(null)
+  const [rating, setRating] = useState({ my_value: null, avg_value: 0, count: 0 })
 
   // Librarian: edit mode
   const [editMode, setEditMode] = useState(false)
@@ -345,6 +349,7 @@ const Book = () => {
   useEffect(() => {
     const fetchAll = async () => {
       const token = localStorage.getItem('token')
+      setToken(token)
 
       if (token) {
         // parseJwt использует atob — client-only. Импортируем динамически.
@@ -445,7 +450,70 @@ const Book = () => {
 
     fetchAll()
     fetchComments()
+    fetchRating()
   }, [id])
+
+  const fetchRating = async () => {
+    try {
+      const t = localStorage.getItem('token')
+      const res = await fetch(`/api/books/${id}/rating`, {
+        headers: t ? { Authorization: `Bearer ${t}` } : {}
+      })
+      if (res.ok) {
+        const d = await res.json()
+        setRating({
+          my_value: d.my_value ?? null,
+          avg_value: parseFloat(d.avg_value) || 0,
+          count: d.count || 0
+        })
+      }
+    } catch (e) {
+      // рейтинг не критичен для показа страницы
+    }
+  }
+
+  // === Оценка книги ===
+  const handleRate = async (value) => {
+    const t = localStorage.getItem('token')
+    if (!t) return toast.error('Войди, чтобы оценить книгу')
+
+    const prev = rating
+    // мгновенный отклик под курсором, запрос — следом
+    setRating(r => ({
+      ...r,
+      my_value: value || null,
+      avg_value: value
+        ? r.count > 0
+          ? (r.avg_value * r.count + value) / (r.count + 1)
+          : value
+        : r.avg_value,
+      count: value ? r.count + 1 : Math.max(0, r.count - 1)
+    }))
+
+    try {
+      const res = await fetch(`/api/books/${id}/rating`, {
+        method: 'POST',
+        headers: {
+          Authorization: `Bearer ${t}`,
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({ value })
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setRating(prev)
+        return toast.error(data.error || 'Не удалось сохранить оценку')
+      }
+      setRating({
+        my_value: data.my_value ?? null,
+        avg_value: parseFloat(data.avg_value) || 0,
+        count: data.count || 0
+      })
+    } catch (e) {
+      setRating(prev)
+      toast.error('Ошибка сети')
+    }
+  }
 
   const isLibrarian = userRole === 'librarian'
 
@@ -934,6 +1002,54 @@ const Book = () => {
                   </div>
                 ))}
               </div>
+
+              {/* === ОЦЕНКА КНИГИ === */}
+                <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
+                  <div className="flex flex-wrap items-center justify-between gap-3">
+                    <div>
+                      <h3 className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">
+                        Оценка книги
+                      </h3>
+                      <div className="flex items-center gap-3">
+                        <StarRating
+                          value={rating.my_value || 0}
+                          size="lg"
+                          readonly={!token}
+                          onChange={handleRate}
+                        />
+                        {rating.count > 0 && (
+                          <span className="text-[13px] text-[var(--color-text-secondary)]">
+                            {rating.avg_value.toFixed(1)}
+                            <span className="text-[var(--color-text-tertiary)]">
+                              {' '}· {rating.count}{' '}
+                              {plural(rating.count, 'оценка', 'оценки', 'оценок')}
+                            </span>
+                          </span>
+                        )}
+                      </div>
+                    </div>
+
+                    {rating.my_value > 0 && (
+                      <button
+                        onClick={() => handleRate(0)}
+                        className="text-[12px] text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors"
+                      >
+                        Убрать оценку
+                      </button>
+                    )}
+                  </div>
+
+                  {!token && (
+                    <p className="text-[12px] text-[var(--color-text-tertiary)] mt-2">
+                      Войди, чтобы оценить книгу
+                    </p>
+                  )}
+                  {rating.my_value > 0 && (
+                    <p className="text-[12px] text-[var(--color-text-tertiary)] mt-2">
+                      Твоя оценка сохранена
+                    </p>
+                  )}
+                </div>
 
               {book.tags && (
                 <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
