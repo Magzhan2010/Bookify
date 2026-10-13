@@ -50,7 +50,7 @@ export default function LandingPage() {
               transition={{ duration: 0.2 }}
               className="rounded-xl shadow-sm"
             >
-              <Image src="/bookify-mark.svg" width={40} height={40} alt="Bookify" className="rounded-xl" />
+              <Image src="/bookify-mark.svg" width={40} height={40} alt="Bookify" priority className="rounded-xl" />
             </motion.div>
             <div className="font-semibold text-[17px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
           </Link>

@@ -99,7 +99,7 @@ export default function Login() {
         className="w-full max-w-[420px]"
       >
         <Link href="/" className="flex items-center justify-center gap-3 mb-10">
-          <Image src="/bookify-mark.svg" width={56} height={56} alt="Bookify" className="rounded-[14px] shrink-0" />
+          <Image src="/bookify-mark.svg" width={56} height={56} alt="Bookify" priority className="rounded-[14px] shrink-0" />
           <div className="text-left">
             <div className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">Bookify</div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-tertiary)] font-medium">БИБЛИОТЕКА</div>
