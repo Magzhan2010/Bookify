@@ -107,15 +107,13 @@ export default function LibrarianLayout({ children }) {
         <div className="flex flex-col h-full">
           <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between gap-2">
             <Link href="/librarian" className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 shrink-0 overflow-hidden rounded-[10px]">
-                <Image
-                  src="/lb_logo.png"
-                  width={36}
-                  height={36}
-                  alt="Bookify"
-                  className="w-full h-full object-cover"
-                />
-              </div>
+              <Image
+                src="/lb_logo.png"
+                width={44}
+                height={44}
+                alt="Bookify"
+                className="w-11 h-11 shrink-0 object-contain"
+              />
               <div className="min-w-0">
                 <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">Bookify</div>
                 <div className="text-[10px] uppercase tracking-wider text-[var(--color-brand)] font-medium">Библиотека</div>

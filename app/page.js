@@ -46,11 +46,17 @@ export default function LandingPage() {
         <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-3 group">
             <motion.div
-              whileHover={{ rotate: [0, -10, 10, 0] }}
-              transition={{ duration: 0.5 }}
-              className="w-10 h-10 rounded-xl overflow-hidden bg-[var(--color-bg-card)] ring-1 ring-[var(--color-border)] shadow-sm"
+              whileHover={{ scale: 1.04 }}
+              transition={{ duration: 0.2 }}
+              className="shrink-0"
             >
-              <Image src="/lb_logo.png" width={40} height={40} alt="DLS" className="object-contain" />
+              <Image
+                src="/lb_logo.png"
+                width={52}
+                height={52}
+                alt="Bookify"
+                className="w-13 h-13 object-contain"
+              />
             </motion.div>
             <div className="font-semibold text-[17px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
           </Link>

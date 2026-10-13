@@ -99,9 +99,13 @@ export default function Login() {
         className="w-full max-w-[420px]"
       >
         <Link href="/" className="flex items-center justify-center gap-3 mb-10">
-          <div className="w-14 h-14 rounded-2xl overflow-hidden bg-[var(--color-bg-card)] ring-1 ring-[var(--color-border)]">
-            <Image src="/lb_logo.png" width={56} height={56} alt="DLS" className="object-contain" />
-          </div>
+          <Image
+              src="/lb_logo.png"
+              width={68}
+              height={68}
+              alt="Bookify"
+              className="w-17 h-17 shrink-0 object-contain"
+            />
           <div className="text-left">
             <div className="text-xl font-semibold tracking-tight text-[var(--color-text-primary)]">Bookify</div>
             <div className="text-[10px] uppercase tracking-[0.2em] text-[var(--color-text-tertiary)] font-medium">DLS Library</div>
