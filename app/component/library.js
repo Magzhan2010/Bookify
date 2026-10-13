@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter, useSearchParams } from "next/navigation"
-import { useEffect, useState, useRef, useMemo } from 'react'
+import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, BookOpen, CheckCircle, Plus, ChevronDown } from 'lucide-react'
 
@@ -50,65 +50,63 @@ export default function Library() {
     })
   }, [router])
 
-  // === Управление скроллом (ручное вместо автоматического браузером) ===
-  useEffect(() => {
-    // Отключаем автоматическое восстановление scroll браузером
-    if ('scrollRestoration' in window.history) {
-      window.history.scrollRestoration = 'manual'
-    }
+  // === Позиция каталога для возврата «назад» ===
+  // Раньше здесь вручную отключался history.scrollRestoration и скролл
+  // восстанавливался через sessionStorage. Из-за этого кнопка «Назад» из
+  // карточки книги всегда кидала в самое начало каталога.
+  //
+  // Теперь скролл восстанавливает сам браузер/Next. Но из-за бесконечной
+  // подгрузки после возврата список снова состоял бы из 12 книг, страница
+  // была бы короткой и восстанавливать было бы некуда. Поэтому запоминаем,
+  // сколько страниц успело подгрузиться, и запрашиваем их одним запросом.
+  const SCROLL_KEY = 'bookify:library:state'
 
-    // Восстанавливаем scroll при возврате с другой страницы
-    const restoreScroll = () => {
-      try {
-        const saved = sessionStorage.getItem('bookify:scroll:library')
-        if (saved) {
-          const pos = parseInt(saved)
-          if (!isNaN(pos) && pos > 0) {
-            // Несколько попыток для надежности
-            const tryRestore = (attempt = 0) => {
-              if (attempt > 5) return
-              requestAnimationFrame(() => {
-                window.scrollTo(0, pos)
-                if (Math.abs(window.scrollY - pos) > 5 && attempt < 5) {
-                  setTimeout(() => tryRestore(attempt + 1), 50)
-                }
-              })
-            }
-            tryRestore()
-          }
-        }
-      } catch (e) {}
-    }
-
-    // Сохраняем при unmount и периодически при скролле
-    const saveScroll = () => {
-      try {
-        sessionStorage.setItem('bookify:scroll:library', String(window.scrollY))
-      } catch (e) {}
-    }
-
-    // Пытаемся восстановиться при mount
-    setTimeout(restoreScroll, 50)
-
-    // Также пробуем после pageshow (на случай bfcache)
-    window.addEventListener('pageshow', restoreScroll)
-
-    // Throttled scroll listener для сохранения
-    let raf
-    const throttled = () => {
-      cancelAnimationFrame(raf)
-      raf = requestAnimationFrame(saveScroll)
-    }
-    window.addEventListener('scroll', throttled, { passive: true })
-
-    return () => {
-      // Сохраняем последнюю позицию при unmount
-      saveScroll()
-      window.removeEventListener('scroll', throttled)
-      window.removeEventListener('pageshow', restoreScroll)
-      cancelAnimationFrame(raf)
+  const readSavedState = useCallback(() => {
+    try {
+      const raw = sessionStorage.getItem(SCROLL_KEY)
+      return raw ? JSON.parse(raw) : null
+    } catch (e) {
+      return null
     }
   }, [])
+
+  const saveLoadedPages = useCallback((count, genre, query) => {
+    try {
+      sessionStorage.setItem(
+        SCROLL_KEY,
+        JSON.stringify({ pages: count, genre, query, y: Math.round(window.scrollY) })
+      )
+    } catch (e) {}
+  }, [])
+
+  // Запоминаем текущую прокрутку, чтобы подстраховать браузер: он
+  // пытается восстановить её ДО загрузки книг, когда страница ещё короткая
+  useEffect(() => {
+    let raf
+    const onScroll = () => {
+      cancelAnimationFrame(raf)
+      raf = requestAnimationFrame(() => {
+        const saved = readSavedState()
+        saveLoadedPages(saved?.pages || 1, activeGenre, searchQuery)
+      })
+    }
+    window.addEventListener('scroll', onScroll, { passive: true })
+    return () => {
+      window.removeEventListener('scroll', onScroll)
+      cancelAnimationFrame(raf)
+    }
+  }, [activeGenre, searchQuery, readSavedState, saveLoadedPages])
+
+  // После подгрузки книг: если браузер не смог вернуть нас на место
+  // (остались вверху) — возвращаем сами
+  const [restoredY, setRestoredY] = useState(0)
+
+  useEffect(() => {
+    if (loading || !restoredY) return
+    if (window.scrollY < 100 && restoredY > 200) {
+      window.scrollTo({ top: restoredY, behavior: 'instant' })
+    }
+  }, [loading, restoredY])
 
   // === Профиль ===
   useEffect(() => {
@@ -155,12 +153,13 @@ export default function Library() {
 
   // === Загрузка книг ===
   // searchQuery — применённый поисковый запрос (в state.search с дебаунсом)
-  const fetchBooks = async (pageNum, isNewSearch) => {
+  const fetchBooks = async (pageNum, isNewSearch, extraLimit = 0) => {
     if (isNewSearch) setLoading(true)
     try {
       const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
       const searchParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''
-      const url = `/api/books?page=${pageNum}${genreParam}${searchParam}`
+      const limitParam = extraLimit ? `&limit=${extraLimit}` : ''
+      const url = `/api/books?page=${pageNum}${genreParam}${searchParam}${limitParam}`
       const data = await (await fetch(url)).json()
 
       if (isNewSearch) {
@@ -172,7 +171,9 @@ export default function Library() {
         })
       }
 
-      if (!Array.isArray(data) || data.length < 12) setHasMore(false)
+      const received = Array.isArray(data) ? data.length : 0
+      if (received < (extraLimit || 12)) setHasMore(false)
+      if (extraLimit) setPage(Math.max(1, Math.ceil(received / 12)))
     } catch (err) {
       console.error(err)
     } finally {
@@ -183,7 +184,26 @@ export default function Library() {
   useEffect(() => {
     setPage(1)
     setHasMore(true)
-    fetchBooks(1, true)
+
+    // Если мы тут уже были с этим фильтром/поиском — вернём столько книг,
+    // сколько было подгружено, чтобы страница была нужной длины и браузер
+    // вернул нас на ту же прокрутку, а не в начало
+    const saved = readSavedState()
+    const sameView =
+      saved &&
+      (saved.genre || 'Все') === activeGenre &&
+      (saved.query || '') === searchQuery &&
+      saved.pages > 1
+
+    const restoreLimit = sameView ? Math.min(60, saved.pages * 12) : 0
+
+    setRestoredY(sameView ? (saved.y || 0) : 0)
+
+    fetchBooks(1, true, restoreLimit)
+
+    // Запоминаем, сколько страниц подгрузилось
+    if (restoreLimit) saveLoadedPages(saved.pages, activeGenre, searchQuery)
+
     const genreParam = activeGenre === 'Все' ? '' : `&genre=${encodeURIComponent(activeGenre)}`
     const searchParam = searchQuery ? `&q=${encodeURIComponent(searchQuery)}` : ''
     fetch(`/api/books?countOnly=true${genreParam}${searchParam}`)
@@ -210,7 +230,13 @@ export default function Library() {
   }, [loading, hasMore])
 
   useEffect(() => {
-    if (page > 1) fetchBooks(page)
+    if (page > 1) {
+      fetchBooks(page).then(() => {
+        // Запоминаем, сколько страниц подгрузилось — по этому числу
+        // при возврате «назад» восстановим нужную длину списка
+        saveLoadedPages(page, activeGenre, searchQuery)
+      })
+    }
   }, [page])
 
   // === Клик по жанру — обновляет URL (без push, чтобы не ломать историю) ===

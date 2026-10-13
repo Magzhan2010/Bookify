@@ -46,7 +46,11 @@ export async function GET(req) {
   const search = (searchParams.get('q') || '').trim()
   const countOnly = searchParams.get('countOnly') === 'true'
   const page = parseInt(searchParams.get('page')) || 1
-  const limit = 12
+  // limit можно увеличить, чтобы одной разом вернуть несколько страниц каталога -
+  // это нужно, чтобы при возврате «назад» страница была достаточно длинной
+  // и браузер смог восстановить позицию скролла
+  const rawLimit = parseInt(searchParams.get('limit'))
+  const limit = Math.min(60, Math.max(1, rawLimit || 12))
   const offset = (page - 1) * limit
   const genre = searchParams.get('genre')
   const isFiltered = genre && genre !== 'Все'
