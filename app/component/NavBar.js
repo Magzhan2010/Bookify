@@ -96,7 +96,7 @@ const Navbar = () => {
     >
       <div className="max-w-[1300px] mx-auto px-4 sm:px-6 h-14 md:h-16 flex justify-between items-center">
         <Link href="/" className="flex items-center gap-2.5">
-          <Image src="/bookify-mark.svg" width={32} height={32} alt="Bookify" priority className="rounded-lg shrink-0" />
+          <Image src="/bookify-mark.svg" width={32} height={32} alt="Bookify" className="rounded-lg shrink-0" />
           <div className="font-semibold text-[16px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
         </Link>
 
