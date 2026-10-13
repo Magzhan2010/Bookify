@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -106,8 +107,14 @@ export default function LibrarianLayout({ children }) {
         <div className="flex flex-col h-full">
           <div className="px-6 py-5 border-b border-[var(--color-border)] flex items-center justify-between gap-2">
             <Link href="/librarian" className="flex items-center gap-3 min-w-0">
-              <div className="w-9 h-9 rounded-xl bg-[var(--color-brand)] flex items-center justify-center shrink-0">
-                <BookOpen size={17} className="text-white" />
+              <div className="w-9 h-9 shrink-0 overflow-hidden rounded-[10px]">
+                <Image
+                  src="/lb_logo.png"
+                  width={36}
+                  height={36}
+                  alt="Bookify"
+                  className="w-full h-full object-cover"
+                />
               </div>
               <div className="min-w-0">
                 <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">Bookify</div>
