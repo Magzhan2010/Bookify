@@ -8,7 +8,9 @@
     "start": "next start",
     "lint": "eslint",
     "db:setup": "node scripts/setup-db.js",
-    "db:import": "node scripts/import-books.js"
+    "db:import": "node scripts/import-from-sheets.js",
+    "students:register": "node scripts/register-students.js",
+    "students:reset-passwords": "node scripts/reset-default-passwords.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

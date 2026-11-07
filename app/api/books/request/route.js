@@ -11,7 +11,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Если ученик уже взял эту книгу — ошибка.
  */
 export async function POST(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { bookId } = await req.json()
@@ -90,7 +90,7 @@ export async function POST(req) {
  * Список своих заявок (ученик видит свои).
  */
 export async function GET(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   try {
@@ -115,7 +115,7 @@ export async function GET(req) {
  * Body: { requestId }
  */
 export async function DELETE(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { requestId } = await req.json()

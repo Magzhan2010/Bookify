@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../lib/db'
-import { requireAuth, detectRoleFromEmail } from '../../../../lib/auth'
+import { requireAuth } from '../../../../lib/auth'
 
 /**
  * GET /api/librarian/students
@@ -13,7 +13,7 @@ import { requireAuth, detectRoleFromEmail } from '../../../../lib/auth'
  *   active=true  — только с активными займами
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)
@@ -48,7 +48,7 @@ export async function GET(req) {
         u.id, u.name, u.email, u.class_name, u.phone, u.avatar_url, u.created_at,
         COUNT(b.id) AS total_borrows,
         COUNT(b.id) FILTER (WHERE b.status = 'active') AS currently_holding,
-        COUNT(b.id) FILTER (WHERE b.status = 'returned') AS returned_count,
+        COUNT(b.id) FILTER (WHERE b.status <> 'active') AS returned_count,
         COUNT(b.id) FILTER (WHERE b.status = 'active' AND b.due_date < NOW()) AS overdue_count,
         MAX(b.borrowed_at) AS last_borrowed_at
       FROM users u
@@ -72,7 +72,7 @@ export async function GET(req) {
  * Body: { name, email, password, className?, phone? }
  */
 export async function POST(req) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { name, email, password, className, phone } = await req.json()
@@ -97,7 +97,8 @@ export async function POST(req) {
     }
 
     const hash = await bcrypt.hash(password, 10)
-    const role = detectRoleFromEmail(email)
+    // Через этот эндпоинт создаются только ученики — независимо от домена почты
+    const role = 'student'
 
     const insert = await pool.query(
       `INSERT INTO users (name, email, password, role, class_name, phone)

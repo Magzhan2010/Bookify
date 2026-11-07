@@ -8,7 +8,7 @@ import { requireAuth } from '../../../../../lib/auth'
  * Полная информация об ученике + вся история займов.
  */
 export async function GET(req, { params }) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -26,7 +26,7 @@ export async function GET(req, { params }) {
     const statsRes = await pool.query(
       `SELECT
          COUNT(*) AS total_borrows,
-         COUNT(*) FILTER (WHERE status = 'returned') AS returned_count,
+         COUNT(*) FILTER (WHERE status <> 'active') AS returned_count,
          COUNT(*) FILTER (WHERE status = 'active') AS active_count,
          COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count,
          COUNT(DISTINCT bk.genre) AS genres_count
@@ -81,7 +81,7 @@ export async function GET(req, { params }) {
  * - Себя библиотекарь править может (имя/телефон/пароль).
  */
 export async function PATCH(req, { params }) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -132,6 +132,8 @@ export async function PATCH(req, { params }) {
       }
       fields.push(`password = $${i++}`)
       values.push(await bcrypt.hash(password, 10))
+      // Сброс пароля библиотекарем выкидывает ученика со всех устройств
+      fields.push(`token_version = token_version + 1`)
     }
 
     if (fields.length === 0) {
@@ -168,7 +170,7 @@ export async function PATCH(req, { params }) {
  * Удалить ученика. Только если у него нет активных займов.
  */
 export async function DELETE(req, { params }) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params

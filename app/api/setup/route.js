@@ -24,10 +24,12 @@ export async function GET() {
       books: parseInt(res.rows[0].books)
     })
   } catch (err) {
+    // Текст ошибки БД (адрес хоста, имя пользователя и т.п.) — только в логи
+    console.error('[setup] Ошибка проверки БД:', err.message)
     return NextResponse.json({
       ready: false,
-      error: err.message,
-      hint: 'БД недоступна. Проверь DATABASE_URL в .env.local'
+      error: 'БД недоступна',
+      hint: 'Проверь DATABASE_URL в .env.local'
     }, { status: 500 })
   }
 }
@@ -37,6 +39,7 @@ export async function POST() {
     await ensureSchema()
     return NextResponse.json({ success: true })
   } catch (err) {
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    console.error('[setup] Ошибка применения схемы:', err.message)
+    return NextResponse.json({ error: 'Не удалось применить схему БД' }, { status: 500 })
   }
 }

@@ -1,28 +1,11 @@
-import jwt from "jsonwebtoken"
 import { NextResponse } from "next/server"
 import pool from '../../../lib/db'
+import { requireAuth } from '../../../lib/auth'
 
 export async function GET(req) {
-  const auth = req.headers.get('authorization')
-  if (!auth) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
-  }
-  const token = auth.split(' ')[1]
-
-  const secret = process.env.JWT_SECRET
-  if (!secret) {
-    return NextResponse.json({ error: 'JWT_SECRET не задан' }, { status: 500 })
-  }
-
-  let payload
-  try {
-    payload = jwt.verify(token, secret)
-  } catch (err) {
-    if (err.name === 'TokenExpiredError') {
-      return NextResponse.json({ error: 'Токен истёк' }, { status: 401 })
-    }
-    return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 })
-  }
+  const guard = await requireAuth(req)
+  if (!guard.ok) return guard.response
+  const payload = guard.payload
 
   const userId = payload.id
 
@@ -36,9 +19,9 @@ export async function GET(req) {
   }
 
   // Активные книги.
-  // ВАЖНО: в borrows всего два статуса — 'active' и 'returned'
-  // (CHECK в db/schema.sql). Статусов 'overdue'/'submitted'/'approved' НЕ существует,
-  // поэтому фильтры по ним всегда давали пустоту. Просрочка = status 'active' + due_date < NOW().
+  // Статусы borrows: active → returned (сдал) → reviewed (написал отзыв)
+  // → approved (библиотекарь принял отзыв, книга на личной полке).
+  // Просрочка = status 'active' + due_date < NOW().
   const activeBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
            books.id as book_id, books.genre, borrows.due_date, borrows.borrowed_at,
@@ -50,25 +33,39 @@ export async function GET(req) {
     ORDER BY borrows.borrowed_at DESC
   `, [userId])
 
-  // Законченные книги (сданные). Раньше здесь был status = 'approved' —
-  // такого статуса нет в CHECK-ограничении, поэтому «Прочитано» было всегда 0.
+  // Книги, которые ученик прочитал (ждёт отзыва или уже одобрено)
+  const submittedBooks = await pool.query(`
+    SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author, books.id as book_id,
+           borrows.returned_at, borrows.rating, reviews.status as review_status,
+           reviews.review_note, reviews.content as review_content
+    FROM borrows
+    JOIN books ON borrows.book_id = books.id
+    LEFT JOIN book_reviews reviews ON reviews.borrow_id = borrows.id
+    WHERE borrows.user_id = $1 AND borrows.status IN ('returned', 'reviewed')
+    ORDER BY borrows.returned_at DESC
+  `, [userId])
+
+  // Личная полка — прочитанные и одобренные книги
   const finishedBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
            books.id as book_id, borrows.borrowed_at, borrows.returned_at,
-           borrows.rating, books.genre
+           books.genre, borrows.rating, reviews.content as review_content,
+           reviews.created_at as review_at
     FROM borrows
     JOIN books ON borrows.book_id = books.id
-    WHERE borrows.user_id = $1 AND borrows.status = 'returned'
+    LEFT JOIN book_reviews reviews ON reviews.borrow_id = borrows.id
+    WHERE borrows.user_id = $1 AND borrows.status = 'approved'
     ORDER BY borrows.returned_at DESC
   `, [userId])
 
   // Статистика для дашборда
   const stats = await pool.query(`
     SELECT
-      COUNT(*) FILTER (WHERE status = 'returned') AS books_finished,
+      COUNT(*) FILTER (WHERE status = 'approved') AS books_finished,
       COUNT(*) FILTER (WHERE status = 'active') AS books_active,
       COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS books_overdue,
-      COUNT(DISTINCT bk.genre) FILTER (WHERE status = 'returned') AS genres_count
+      COUNT(*) FILTER (WHERE status IN ('returned', 'reviewed')) AS books_to_review,
+      COUNT(DISTINCT bk.genre) FILTER (WHERE status = 'approved') AS genres_count
     FROM borrows b
     LEFT JOIN books bk ON bk.id = b.book_id
     WHERE b.user_id = $1
@@ -81,11 +78,25 @@ export async function GET(req) {
   )
   const readingGoal = goalRes.rows[0]?.goal || 12
 
+  // Личная полка прочитанных книг (approved)
+  const shelfBooks = await pool.query(`
+    SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
+           books.id as book_id, books.genre, borrows.rating,
+           borrows.returned_at, borrows.borrowed_at,
+           reviews.content as review_content, reviews.created_at as review_at
+    FROM borrows
+    JOIN books ON borrows.book_id = books.id
+    LEFT JOIN book_reviews reviews ON reviews.borrow_id = borrows.id
+    WHERE borrows.user_id = $1 AND borrows.status = 'approved'
+    ORDER BY borrows.returned_at DESC
+  `, [userId])
+
   return NextResponse.json({
     user: userRes.rows[0],
     active: activeBooks.rows,
-    submitted: [], // статуса 'submitted' в системе нет — оставлено для совместимости
+    submitted: submittedBooks.rows, // сданные книги, которые ждут отзыва или его проверки
     finished: finishedBooks.rows,
+    shelf: shelfBooks.rows,
     stats: stats.rows[0],
     reading_goal: readingGoal
   })
@@ -100,21 +111,9 @@ export async function GET(req) {
  * email служит логином.
  */
 export async function PATCH(req) {
-  const auth = req.headers.get('authorization')
-  if (!auth) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
-  }
-  const token = auth.split(' ')[1]
-  if (!token || !process.env.JWT_SECRET) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
-  }
-
-  let payload
-  try {
-    payload = jwt.verify(token, process.env.JWT_SECRET)
-  } catch (err) {
-    return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 })
-  }
+  const guard = await requireAuth(req)
+  if (!guard.ok) return guard.response
+  const payload = guard.payload
 
   try {
     const { name, className, phone } = await req.json()

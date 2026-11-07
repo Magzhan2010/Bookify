@@ -18,7 +18,7 @@ export async function GET(req, { params }) {
 }
 
 export async function PATCH(req, { params }) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -96,7 +96,7 @@ export async function PATCH(req, { params }) {
 }
 
 export async function DELETE(req, { params }) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params

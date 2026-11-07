@@ -15,7 +15,7 @@ import { requireAuth } from '../../../../lib/auth'
  *   поэтому повторный запрос больше не накручивает счётчик.
  */
 export async function POST(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const client = await pool.connect()

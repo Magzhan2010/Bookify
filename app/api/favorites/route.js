@@ -1,29 +1,12 @@
 import { NextResponse } from "next/server"
-import jwt from "jsonwebtoken"
 import pool from '../../../lib/db'
+import { requireAuth } from '../../../lib/auth'
 
 export async function POST(req) {
 	const { bookId } = await req.json()
-	const auth = req.headers.get('authorization')
-	if (!auth) {
-		return NextResponse.json({ error: "Токена нету" }, { status: 401 })
-	}
-	const token = auth.split(' ')[1]
-
-	const secret = process.env.JWT_SECRET
-	if (!secret) {
-		return NextResponse.json({ error: "JWT_SECRET не задан" }, { status: 500 })
-	}
-
-	let payload
-	try {
-		payload = jwt.verify(token, secret)
-	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
-			return NextResponse.json({ error: "Токен истёк, войдите заново" }, { status: 401 })
-		}
-		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
-	}
+	const guard = await requireAuth(req)
+	if (!guard.ok) return guard.response
+	const payload = guard.payload
 
 	const userId = payload.id
 
@@ -37,26 +20,9 @@ export async function POST(req) {
 
 export async function DELETE(req) {
 	const { bookId } = await req.json()
-	const auth = req.headers.get("authorization")
-	if (!auth) {
-		return NextResponse.json({ error: "Токена нету" }, { status: 401 })
-	}
-	const token = auth.split(" ")[1]
-
-	const secret = process.env.JWT_SECRET
-	if (!secret) {
-		return NextResponse.json({ error: "JWT_SECRET не задан" }, { status: 500 })
-	}
-
-	let payload
-	try {
-		payload = jwt.verify(token, secret)
-	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
-			return NextResponse.json({ error: "Токен истёк, войдите заново" }, { status: 401 })
-		}
-		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
-	}
+	const guard = await requireAuth(req)
+	if (!guard.ok) return guard.response
+	const payload = guard.payload
 
 	const userId = payload.id
 	await pool.query("DELETE FROM favorites WHERE user_id = $1 AND book_id = $2", [userId, bookId])
@@ -64,26 +30,9 @@ export async function DELETE(req) {
 }
 
 export async function GET(req) {
-	const auth = req.headers.get('authorization')
-	if (!auth) {
-		return NextResponse.json({ error: "Токена нету" }, { status: 401 })
-	}
-	const token = auth.split(" ")[1]
-
-	const secret = process.env.JWT_SECRET
-	if (!secret) {
-		return NextResponse.json({ error: "JWT_SECRET не задан" }, { status: 500 })
-	}
-
-	let payload
-	try {
-		payload = jwt.verify(token, secret)
-	} catch (err) {
-		if (err.name === 'TokenExpiredError') {
-			return NextResponse.json({ error: "Токен истёк, войдите заново" }, { status: 401 })
-		}
-		return NextResponse.json({ error: "Недействительный токен" }, { status: 401 })
-	}
+	const guard = await requireAuth(req)
+	if (!guard.ok) return guard.response
+	const payload = guard.payload
 
 	const userId = payload.id
 	const result = await pool.query("SELECT books.* FROM books JOIN favorites ON books.id = favorites.book_id WHERE favorites.user_id = $1", [userId])

@@ -1,42 +1,31 @@
 /**
  * Регистрация учеников из списка.
- * Запуск: node scripts/register-students.js
+ *
+ * Запуск: node scripts/register-students.js [путь-к-csv]
+ * По умолчанию читает private/students.csv
+ *
+ * Формат CSV (разделитель ; или ,), первая строка — заголовок:
+ *   Имя;Класс
+ *   Serikov Arman;7
+ *   Nurlanova Aru;8
+ *
+ * БЕЗОПАСНОСТЬ:
+ * - Список учеников больше НЕ хранится в коде: репозиторий публичный,
+ *   а имена детей — персональные данные. Папка private/ в .gitignore.
+ * - Раньше всем ставился общий пароль student123. Зная имя ученика
+ *   (оно было в коде) и правило построения email, в любой аккаунт мог
+ *   войти кто угодно. Теперь каждому генерируется свой пароль, а логины
+ *   с паролями сохраняются в private/credentials-<дата>.csv для раздачи.
  */
 
 require('dotenv').config({ path: __dirname + '/../.env.local' })
+const fs = require('fs')
+const path = require('path')
 const bcrypt = require('bcryptjs')
 const { Client } = require('pg')
+const { generatePassword, saveCredentials, PRIVATE_DIR } = require('./lib/passwords')
 
-const STUDENTS = [
-  'Adamov Musa', 'Abdilbar Khalid', 'Aitmukhanbetov Nariman', 'Amanzhol Kudaibergen',
-  'Anarbai Azamat', 'Duisenbai Shamshyrak', 'Kabdolla Makhmud', 'Kabidolda Amir',
-  'Kasymkan Bizhigit', 'Nurlan Nurali', 'Olzhabek Abilmansur', 'Orynbai Madiyar',
-  'Rakhimgazinov Alizhan', 'Sabyrov Sarkhan', 'Saken Abdurakhman', 'Serikov Sultan',
-  'Sidagulov Ikhsan', 'Toktarov Azimkhan', 'Tusupov Emir', 'Zeinbek Abdurakhman',
-  'Zhomart Asanali', 'Zhumakas Abylai',
-  'Abdilbar Ilshat', 'Aitmukhanbetov Nur', 'Akylbaev Makzhan', 'Amangeldi Arnur',
-  'Bairamov Ali', 'Baltas Nurzharyk', 'Bakytzhan Abdurrakhim', 'Daulet Aslan',
-  'Duman Abdurrakhim', 'Zharbul Erulan', 'Zhetpisov Nurali', 'Kumarbekov Aisultan',
-  'Makhmudov Ibrahim', 'Mukashev Danial', 'Nurlan Ansar', 'Osman Dinmukhammed',
-  'Talgat Abulkhair', 'Temirbolat Nurali', 'Turlybek Akhmad', 'Daniyaruly Alan', 'Aydyn Ilyas',
-  'Akan Muslim', 'Amangeldi Khasan', 'Bimukhanov Altair', 'Bulatov Mukhammad',
-  'Baltas Nurtore', 'Zhailaukhan Adilet', 'Zholdabek Sulyaiman', 'Kabdolla Mukhammed',
-  'Kairat Abulkhair-khan', 'Kanaev Nurlan', 'Kasym Arnur', 'Kenei Adilkhan',
-  'Kombaturov Zhangir', 'Konguev Alinur', 'Nurgali Yusuf', 'Raimanov Ersultan',
-  'Sagyngaliev Abdurrakhman', 'Salavat Iskander', 'Saurbekov Baizhigit', 'Serikuly Damir',
-  'Farkhatuly Dinmukhammed', 'Yusufali Ali',
-  'Abdikadir Olzhas', 'Bagaev Ersultan', 'Elusimov Dauren', 'Ertai Ernar',
-  'Zheksenbai Dinmukhammed', 'Zhenis Magzhan', 'Kalabaev Beknur', 'Kalelov Bekarys',
-  'Kulzhan Diyar', 'Mamedali Margulan', 'Naitik Dinmukhammed', 'Orynbai Abylai',
-  'Romazan Elzhan', 'Samet Nursayat', 'Sandibek Sagadat', 'Serik Ziyada',
-  'Sidagulov Akhmet', 'Shaidenov Muslim', 'Shaimurat Erasyl', 'Shekerkhan Elnur',
-  'Azhdurliev Bakbergen', 'Argymbaev Arys', 'Elusimov Alan', 'Zhailaukhan Alibek',
-  'Zhenis Alikhan', 'Zhumamurat Tole', 'Zhumasil Meirzhan', 'Kadyrkhan Mansur',
-  'Mekebai Arkhat', 'Mustafin Ikhsan', 'Omirzak Bekasyl', 'Sariev Aibek',
-  'Tursynov Nurly', 'Ygzan Samalyk'
-]
-
-const DEFAULT_PASSWORD = 'student123'
+const csvPath = process.argv[2] || path.join(PRIVATE_DIR, 'students.csv')
 
 function emailify(name) {
   return name.toLowerCase()
@@ -45,70 +34,67 @@ function emailify(name) {
     .replace(/\s+/g, '.')
 }
 
+function readStudents(file) {
+  if (!fs.existsSync(file)) {
+    console.error(`❌ Не найден файл со списком учеников: ${file}`)
+    console.error('   Создай его по образцу (Имя;Класс) — см. комментарий в начале скрипта.')
+    process.exit(1)
+  }
+  const lines = fs.readFileSync(file, 'utf8').replace(/^﻿/, '').split(/\r?\n/)
+  return lines
+    .slice(1)
+    .map(l => l.trim())
+    .filter(Boolean)
+    .map(l => {
+      const [name, cls] = l.split(/[;,]/).map(x => (x || '').trim().replace(/^"|"$/g, ''))
+      return { name, class_name: cls || null }
+    })
+    .filter(s => s.name)
+}
+
 ;(async () => {
+  const students = readStudents(csvPath)
+  console.log(`📄 В файле: ${students.length} учеников`)
+
   const c = new Client({ connectionString: process.env.DATABASE_URL })
   await c.connect()
   console.log('✅ Подключено к БД')
 
-  // Используем SET LOCAL для ускорения batch insert
-  await c.query("SET LOCAL synchronous_commit = OFF")
-
-  const existing = await c.query(`SELECT email FROM users WHERE role = 'student'`)
+  const existing = await c.query(`SELECT LOWER(email) AS email FROM users`)
   const existingEmails = new Set(existing.rows.map(r => r.email))
-  console.log(`📊 Уже в БД: ${existingEmails.size}`)
 
-  const hash = await bcrypt.hash(DEFAULT_PASSWORD, 10)
-
-  const toInsert = []
-  for (const name of STUDENTS) {
-    const parts = name.split(/\s+/)
+  const created = []
+  for (const s of students) {
+    const parts = s.name.split(/\s+/)
     let email = `${emailify(parts[0])}.${emailify(parts[1] || '')}@dls.school`
-    email = email.replace(/\.+$/, '').replace(/\.\@/, '@')
-    if (!existingEmails.has(email)) {
-      toInsert.push({ name, email })
+    email = email.replace(/\.+$/, '').replace(/\.@/, '@')
+
+    if (existingEmails.has(email.toLowerCase())) {
+      console.log(`  ⏭  ${s.name} — уже есть (${email})`)
+      continue
     }
-  }
 
-  console.log(`📝 Будет добавлено: ${toInsert.length}`)
-
-  let added = 0
-  const startTime = Date.now()
-
-  // Один большой INSERT вместо пачек
-  if (toInsert.length > 0) {
-    const placeholders = toInsert.map((_, n) =>
-      `($${n * 3 + 1}, $${n * 3 + 2}, $${n * 3 + 3})`
-    ).join(',')
-    const values = toInsert.flatMap(s => [s.name, s.email, hash])
-
+    const password = generatePassword()
+    const hash = await bcrypt.hash(password, 10)
     try {
-      const result = await c.query(
+      await c.query(
         `INSERT INTO users (name, email, password, role, class_name)
-         OVERRIDING SYSTEM VALUE
-         SELECT name, email, password, 'student'::text, NULL::text FROM (VALUES ${placeholders}) AS v(name, email, password)`,
-        values
+         VALUES ($1, $2, $3, 'student', $4)`,
+        [s.name, email, hash, s.class_name]
       )
-      // Это не сработает, переделаем
-    } catch (e) {}
-
-    // Fallback — одиночные INSERT (быстрее на удалённой БД)
-    for (const s of toInsert) {
-      try {
-        await c.query(
-          `INSERT INTO users (name, email, password, role, class_name) VALUES ($1, $2, $3, 'student', NULL)`,
-          [s.name, s.email, hash]
-        )
-        added++
-      } catch (err) {
-        console.log(`  ❌ ${s.name}: ${err.message}`)
-      }
+      existingEmails.add(email.toLowerCase())
+      created.push({ ...s, email, password })
+    } catch (err) {
+      console.log(`  ❌ ${s.name}: ${err.message}`)
     }
   }
-
-  const elapsed = ((Date.now() - startTime) / 1000).toFixed(1)
-  console.log(`\n✅ Готово за ${elapsed}с: создано ${added}`)
-  console.log(`🔑 Пароль для всех: ${DEFAULT_PASSWORD}`)
-  console.log(`💡 Библиотекарь может назначить класс через /librarian/students/[id]`)
 
   await c.end()
+
+  console.log(`\n✅ Создано: ${created.length}`)
+  if (created.length > 0) {
+    const file = saveCredentials(created, 'new-students')
+    console.log(`🔑 Логины и пароли: ${file}`)
+    console.log('   Раздай ученикам и удали файл после раздачи. В git он не попадёт.')
+  }
 })().catch(e => { console.error('❌ Ошибка:', e.message); process.exit(1) })

@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'sonner'
 import {
   BookOpen, Heart, CheckCircle, Clock, Target,
-  Trophy, Library, X, Sparkles, BellOff, Settings, User, KeyRound, Save
+  Trophy, Library, X, Sparkles, BellOff, PenLine, Star, Send, Award, Loader2,
+  Settings, User, KeyRound, Save
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -17,7 +18,8 @@ import { Button, Input, Card } from '../../components/ui'
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
   { key: 'requests', label: 'Заявки', icon: Library },
-  { key: 'finished', label: 'Прочитано', icon: CheckCircle },
+  { key: 'to_review', label: 'Ждут отзыва', icon: PenLine },
+  { key: 'shelf', label: 'Моя полка', icon: Trophy },
   { key: 'favorites', label: 'Избранное', icon: Heart },
   { key: 'settings', label: 'Настройки', icon: Settings }
 ]
@@ -29,7 +31,8 @@ export default function ProfilePage() {
   const [userData, setUserData] = useState(null)
   const [active, setActive] = useState([])
   const [requests, setRequests] = useState([])
-  const [finished, setFinished] = useState([])
+  const [toReview, setToReview] = useState([])
+  const [shelf, setShelf] = useState([])
   const [favorites, setFavorites] = useState([])
   const [stats, setStats] = useState(null)
   const [readingGoal, setReadingGoal] = useState(12)
@@ -38,15 +41,27 @@ export default function ProfilePage() {
   const [showGoalModal, setShowGoalModal] = useState(false)
   const [goalInput, setGoalInput] = useState(12)
 
+  // Баллы
+  const [points, setPoints] = useState({ total: 0, available: 0, spent: 0 })
+  const [pointsHistory, setPointsHistory] = useState([])
+  const [pointRules, setPointRules] = useState([])
+
+  // Модалка отзыва
+  const [reviewModal, setReviewModal] = useState(null) // { borrow_id, title, cover_url }
+  const [reviewText, setReviewText] = useState('')
+  const [reviewRating, setReviewRating] = useState(5)
+  const [reviewLoading, setReviewLoading] = useState(false)
+
   const fetchAll = async () => {
     const t = localStorage.getItem('token')
     if (!t) return router.push('/login')
 
     try {
-      const [profile, fav, req] = await Promise.all([
+      const [profile, fav, req, pts] = await Promise.all([
         fetch('/api/profile', { headers: { Authorization: `Bearer ${t}` } }),
         fetch('/api/favorites', { headers: { Authorization: `Bearer ${t}` } }),
-        fetch('/api/books/request', { headers: { Authorization: `Bearer ${t}` } })
+        fetch('/api/books/request', { headers: { Authorization: `Bearer ${t}` } }),
+        fetch('/api/profile/points', { headers: { Authorization: `Bearer ${t}` } })
       ])
 
       if (!profile.ok) throw new Error('Не удалось загрузить профиль')
@@ -54,7 +69,8 @@ export default function ProfilePage() {
       const p = await profile.json()
       setUserData(p.user)
       setActive(p.active || [])
-      setFinished(p.finished || [])
+      setShelf(p.shelf || [])
+      setToReview(p.submitted || [])
       setStats(p.stats)
       setReadingGoal(p.reading_goal || 12)
 
@@ -64,6 +80,12 @@ export default function ProfilePage() {
       }
       if (req.ok) {
         setRequests(await req.json())
+      }
+      if (pts.ok) {
+        const pd = await pts.json()
+        setPoints(pd.balance || { total: 0, available: 0, spent: 0 })
+        setPointsHistory(pd.history || [])
+        setPointRules(pd.rules || [])
       }
     } catch (err) {
       console.error(err)
@@ -104,6 +126,47 @@ export default function ProfilePage() {
       toast.success(`Цель: ${goalInput} книг`)
     } catch (err) {
       toast.error('Не удалось обновить цель')
+    }
+  }
+
+  // === Отзыв о прочитанной книге ===
+  const openReviewModal = (book) => {
+    setReviewModal(book)
+    // Отклонённый отзыв открываем с прежним текстом — ученик его дорабатывает
+    setReviewText(book.review_status === 'rejected' ? (book.review_content || '') : '')
+    setReviewRating(book.rating || 5)
+  }
+
+  const submitReview = async () => {
+    if (!reviewModal) return
+    if (reviewText.trim().length < 50) {
+      return toast.error('Напиши минимум 50 символов')
+    }
+
+    setReviewLoading(true)
+    try {
+      const t = localStorage.getItem('token')
+      const res = await fetch('/api/books/review', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${t}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          borrowId: reviewModal.borrow_id,
+          rating: reviewRating,
+          content: reviewText
+        })
+      })
+      const data = await res.json()
+      if (res.ok) {
+        toast.success('Отзыв отправлен!', { description: '+5 баллов после одобрения библиотекаря' })
+        setReviewModal(null)
+        fetchAll()
+      } else {
+        toast.error(data.error || 'Ошибка')
+      }
+    } catch (err) {
+      toast.error('Ошибка сети')
+    } finally {
+      setReviewLoading(false)
     }
   }
 
@@ -159,9 +222,10 @@ export default function ProfilePage() {
   const finishedCount = parseInt(stats?.books_finished || 0)
   const genresCount = parseInt(stats?.genres_count || 0)
   const progress = readingGoal ? Math.min(100, Math.round((finishedCount / readingGoal) * 100)) : 0
+  const prizesCount = pointsHistory.filter(h => h.spent).length
 
-  const monthlyData = buildMonthlyData(finished)
-  const genreData = buildGenreData(finished)
+  const monthlyData = buildMonthlyData(shelf)
+  const genreData = buildGenreData(shelf)
 
   return (
     <div className="min-h-screen bg-[var(--color-bg-card)] text-[var(--color-text-primary)]">
@@ -197,13 +261,73 @@ export default function ProfilePage() {
               </p>
 
               <div className="flex flex-wrap gap-2">
-                <Badge icon={Trophy} label={`${finishedCount} прочитано`} color="#1a56db" />
+                <Badge icon={Trophy} label={`${shelf.length} прочитано`} color="#1a56db" />
                 <Badge icon={Library} label={`${genresCount} жанров`} color="#34c759" />
                 <Badge icon={BookOpen} label={`${active.length} сейчас`} color="#ff9500" />
                 <Badge icon={Heart} label={`${favorites.length} в избранном`} color="#ff2d55" />
               </div>
             </div>
           </div>
+        </motion.div>
+
+        {/* === БАЛЛЫ === */}
+        <motion.div
+          initial={{ opacity: 0, y: 12 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.12, duration: 0.4 }}
+          className="bg-gradient-to-br from-[#1a56db] to-[#0f3fa8] rounded-[24px] p-6 sm:p-7 mb-6 text-white shadow-[0_8px_30px_rgba(26,86,219,0.25)] relative overflow-hidden"
+        >
+          <div className="absolute -top-16 -right-16 w-56 h-56 bg-white/10 rounded-full blur-2xl" />
+          <div className="absolute -bottom-20 -left-10 w-48 h-48 bg-[#4ecdc4]/20 rounded-full blur-2xl" />
+
+          <div className="relative flex flex-col sm:flex-row sm:items-center justify-between gap-5">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.15em] opacity-75 font-medium mb-1.5">
+                Твои баллы
+              </div>
+              <div className="flex items-baseline gap-2">
+                <span className="text-5xl font-bold tracking-tight">{points.available || 0}</span>
+                <span className="text-lg opacity-75 font-medium">баллов</span>
+              </div>
+              <div className="text-[13px] opacity-80 mt-1.5">
+                Читай книги · Копи баллы · Получай призы
+              </div>
+            </div>
+
+            <div className="grid grid-cols-3 gap-2 sm:gap-3">
+              <PointsStat label="Всего" value={points.total} />
+              <PointsStat label="Потрачено" value={points.spent} />
+              <PointsStat label="Призов" value={prizesCount} highlight />
+            </div>
+          </div>
+
+          {pointsHistory.length > 0 && (
+            <div className="relative mt-5 pt-5 border-t border-white/15">
+              <div className="text-[11px] uppercase tracking-wider opacity-70 font-medium mb-3">
+                История начислений
+              </div>
+              <div className="space-y-1.5 max-h-40 overflow-y-auto">
+                {pointsHistory.map(h => (
+                  <div key={h.id} className="flex items-center gap-3 text-[13px]">
+                    <div className="w-11 shrink-0 text-right font-bold text-[#ffd66b]">
+                      +{h.points}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="truncate opacity-95">{h.description || h.reason}</div>
+                    </div>
+                    {h.book_title && (
+                      <div className="text-[11px] opacity-60 truncate max-w-[120px] hidden sm:block">
+                        {h.book_title}
+                      </div>
+                    )}
+                    <div className="text-[10px] opacity-50 shrink-0">
+                      {new Date(h.created_at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
         </motion.div>
 
         <motion.div
@@ -324,8 +448,10 @@ export default function ProfilePage() {
             const count =
               tab.key === 'reading' ? active.length :
               tab.key === 'requests' ? requests.length :
-              tab.key === 'finished' ? finished.length :
-              favorites.length
+              tab.key === 'to_review' ? toReview.filter(b => b.review_status !== 'pending').length :
+              tab.key === 'shelf' ? shelf.length :
+              tab.key === 'favorites' ? favorites.length :
+              null
             return (
               <button
                 key={tab.key}
@@ -338,9 +464,11 @@ export default function ProfilePage() {
               >
                 <Icon size={14} />
                 {tab.label}
-                <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${activeTab === tab.key ? 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)]' : 'text-[var(--color-text-tertiary)]'}`}>
-                  {count}
-                </span>
+                {count !== null && (
+                  <span className={`px-1.5 py-0.5 rounded-md text-[10px] font-medium ${activeTab === tab.key ? 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)]' : 'text-[var(--color-text-tertiary)]'}`}>
+                    {count}
+                  </span>
+                )}
               </button>
             )
           })}
@@ -401,11 +529,129 @@ export default function ProfilePage() {
             )
           )}
 
-          {activeTab === 'finished' && (
-            <BookGrid
-              books={finished}
-              emptyText="Прочитанных книг пока нет"
-            />
+          {/* === ЖДУТ ОТЗЫВА === */}
+          {activeTab === 'to_review' && (
+            toReview.length === 0 ? (
+              <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+                <PenLine size={28} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
+                <p className="text-[var(--color-text-primary)] font-medium mb-1">Нет книг для отзыва</p>
+                <p className="text-[13px] text-[var(--color-text-tertiary)]">
+                  Верни книгу из библиотеки — и напиши отзыв, получи +5 баллов
+                </p>
+              </div>
+            ) : (
+              <div className="space-y-3">
+                {toReview.map(b => (
+                  <div key={b.borrow_id} className="flex items-center gap-4 p-4 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl">
+                    <div className="w-14 shrink-0">
+                      <div className="relative aspect-[2/3] rounded-lg bg-[var(--color-bg-soft)] overflow-hidden">
+                        {b.cover_url && <img src={b.cover_url} className="w-full h-full object-cover" />}
+                      </div>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{b.title}</div>
+                      <div className="text-[12px] text-[var(--color-text-tertiary)] truncate mb-1.5">{b.author}</div>
+                      {b.review_status === 'pending' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--color-warning)]/15 text-[var(--color-warning)] text-[11px] font-medium">
+                          <Clock size={10} /> Отзыв отправлен, ждём проверки
+                        </span>
+                      ) : b.review_status === 'approved' ? (
+                        <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full bg-[var(--color-success)]/15 text-[var(--color-success)] text-[11px] font-medium">
+                          <CheckCircle size={10} /> Отзыв одобрен (+5 баллов)
+                        </span>
+                      ) : b.review_status === 'rejected' ? (
+                        <div className="space-y-2">
+                          <div className="px-3 py-2 rounded-lg bg-[var(--color-danger)]/10 text-[12px] text-[var(--color-danger)]">
+                            <span className="font-semibold">Нужно доработать</span>
+                            {b.review_note ? `: ${b.review_note}` : ''}
+                          </div>
+                          <button
+                            onClick={() => openReviewModal(b)}
+                            className="px-3 py-1.5 rounded-lg bg-[var(--color-brand)] text-white text-[12px] font-medium hover:bg-[var(--color-brand-hover)] transition-colors flex items-center gap-1.5"
+                          >
+                            <PenLine size={12} /> Переписать отзыв
+                          </button>
+                        </div>
+                      ) : (
+                        <button
+                          onClick={() => openReviewModal(b)}
+                          className="px-3 py-1.5 rounded-lg bg-[var(--color-brand)] text-white text-[12px] font-medium hover:bg-[var(--color-brand-hover)] transition-colors flex items-center gap-1.5"
+                        >
+                          <PenLine size={12} /> Написать отзыв (+5 баллов)
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )
+          )}
+
+          {/* === МОЯ ПОЛКА === */}
+          {activeTab === 'shelf' && (
+            shelf.length === 0 ? (
+              <div className="text-center py-16 bg-[var(--color-bg-card)] border border-dashed border-[var(--color-border)] rounded-2xl">
+                <Trophy size={32} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
+                <p className="text-[var(--color-text-primary)] font-medium mb-1">Полка пока пуста</p>
+                <p className="text-[13px] text-[var(--color-text-tertiary)]">
+                  Прочитай книгу, напиши отзыв — и она окажется здесь навсегда
+                </p>
+              </div>
+            ) : (
+              <>
+                <div className="flex items-center justify-between mb-4">
+                  <p className="text-[13px] text-[var(--color-text-secondary)]">
+                    Ты прочитал <strong className="text-[var(--color-text-primary)]">{shelf.length}</strong> книг
+                  </p>
+                  <div className="flex gap-1.5">
+                    <Badge icon={Star} label={`${genresCount} жанров`} color="#34c759" />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-4">
+                  {shelf.map((b, i) => (
+                    <motion.div
+                      key={b.borrow_id}
+                      initial={{ opacity: 0, y: 12 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      transition={{ delay: i * 0.04 }}
+                      className="group bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl overflow-hidden hover:border-[var(--color-brand)]/40 hover:shadow-[var(--shadow-soft)] transition-all"
+                    >
+                      <div
+                        className="relative aspect-[2/3] bg-[var(--color-bg-soft)] cursor-pointer overflow-hidden"
+                        onClick={() => router.push(`/books/${b.book_id}`)}
+                      >
+                        {b.cover_url && (
+                          <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
+                        )}
+                        {b.rating && (
+                          <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-sm text-[10px] font-bold text-[#ffd66b]">
+                            {b.rating} ★
+                          </div>
+                        )}
+                        {b.genre && (
+                          <div className="absolute bottom-2 left-2 right-2">
+                            <span className="inline-block px-1.5 py-0.5 rounded-md bg-black/60 backdrop-blur-sm text-[9px] font-medium text-white uppercase tracking-wider">
+                              {b.genre.split(' / ')[0]}
+                            </span>
+                          </div>
+                        )}
+                      </div>
+                      <div className="p-3">
+                        <div className="font-semibold text-[13px] line-clamp-2 text-[var(--color-text-primary)] mb-0.5">
+                          {b.title}
+                        </div>
+                        <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{b.author}</div>
+                        {b.review_content && (
+                          <div className="mt-2 pt-2 border-t border-[var(--color-border)] text-[11px] text-[var(--color-text-secondary)] italic line-clamp-3 leading-relaxed">
+                            «{b.review_content}»
+                          </div>
+                        )}
+                      </div>
+                    </motion.div>
+                  ))}
+                </div>
+              </>
+            )
           )}
 
           {activeTab === 'favorites' && (
@@ -421,6 +667,118 @@ export default function ProfilePage() {
           )}
         </motion.div>
       </main>
+
+      {/* === МОДАЛКА ОТЗЫВА === */}
+      {reviewModal && (
+        <motion.div
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          className="fixed inset-0 z-50 bg-black/40 backdrop-blur-sm flex items-center justify-center p-4"
+          onClick={() => setReviewModal(null)}
+        >
+          <motion.div
+            initial={{ opacity: 0, scale: 0.95, y: 16 }}
+            animate={{ opacity: 1, scale: 1, y: 0 }}
+            onClick={e => e.stopPropagation()}
+            className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] w-full max-w-lg p-6 sm:p-7 shadow-[0_20px_60px_rgba(0,0,0,0.2)] max-h-[90vh] overflow-y-auto"
+          >
+            <div className="flex items-start gap-3 mb-5">
+              <div className="w-14 shrink-0">
+                <div className="relative aspect-[2/3] rounded-lg bg-[var(--color-bg-soft)] overflow-hidden">
+                  {reviewModal.cover_url && (
+                    <img src={reviewModal.cover_url} className="w-full h-full object-cover" />
+                  )}
+                </div>
+              </div>
+              <div className="flex-1 min-w-0">
+                <div className="text-[11px] uppercase tracking-wider text-[var(--color-brand)] font-medium mb-1">
+                  Отзыв о книге
+                </div>
+                <h3 className="text-[17px] font-semibold text-[var(--color-text-primary)] leading-tight mb-1 line-clamp-2">
+                  {reviewModal.title}
+                </h3>
+                {reviewModal.author && (
+                  <div className="text-[12px] text-[var(--color-text-tertiary)]">{reviewModal.author}</div>
+                )}
+              </div>
+              <button
+                onClick={() => setReviewModal(null)}
+                className="p-1.5 rounded-lg text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)] hover:bg-[var(--color-bg-soft)] transition-colors"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            {/* Рейтинг */}
+            <div className="mb-4">
+              <label className="block text-[12px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-2">
+                Оценка
+              </label>
+              <div className="flex gap-1.5">
+                {[1, 2, 3, 4, 5].map(s => (
+                  <button
+                    key={s}
+                    onClick={() => setReviewRating(s)}
+                    className={`text-3xl transition-transform hover:scale-110 ${
+                      s <= reviewRating ? 'text-[#ff9500]' : 'text-[var(--color-border)]'
+                    }`}
+                  >
+                    {s <= reviewRating ? '★' : '☆'}
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            {/* Текст отзыва */}
+            <div className="mb-4">
+              <label className="block text-[12px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-2">
+                Расскажи своими словами
+              </label>
+              <textarea
+                value={reviewText}
+                onChange={e => setReviewText(e.target.value)}
+                rows={6}
+                maxLength={2000}
+                autoFocus
+                placeholder="Что эта книга изменила в тебе? Какая мысль запомнилась больше всего? Где пригодится?"
+                className="w-full bg-[var(--color-bg-soft)] border border-transparent rounded-xl p-3.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-brand)]/40 focus:bg-[var(--color-bg-card)] transition-all resize-none leading-relaxed"
+              />
+              <div className="flex items-center justify-between mt-1.5">
+                <span className={`text-[11px] ${reviewText.trim().length >= 50 ? 'text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)]'}`}>
+                  {reviewText.trim().length >= 50
+                    ? '✓ Можно отправлять'
+                    : `Ещё ${50 - reviewText.trim().length} символов`}
+                </span>
+                <span className="text-[11px] text-[var(--color-text-tertiary)]">{reviewText.length}/2000</span>
+              </div>
+            </div>
+
+            {/* Предупреждение про ИИ */}
+            <div className="mb-5 p-3 rounded-xl bg-[var(--color-warning)]/10 border border-[var(--color-warning)]/20 flex items-start gap-2.5">
+              <Sparkles size={15} className="text-[var(--color-warning)] shrink-0 mt-0.5" />
+              <p className="text-[12px] text-[var(--color-text-secondary)] leading-relaxed">
+                Пиши своими словами. Если списать с ИИ — баллы не засчитаются.
+              </p>
+            </div>
+
+            <button
+              onClick={submitReview}
+              disabled={reviewLoading || reviewText.trim().length < 50}
+              className="w-full py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
+            >
+              {reviewLoading ? (
+                <Loader2 size={16} className="animate-spin" />
+              ) : (
+                <>
+                  <Send size={16} /> Отправить отзыв
+                  <span className="opacity-70 font-normal">+5 баллов</span>
+                </>
+              )}
+            </button>
+          </motion.div>
+        </motion.div>
+      )}
 
       {showGoalModal && (
         <motion.div
@@ -786,3 +1144,10 @@ function buildGenreData(finished) {
   })
   return Object.entries(map).map(([genre, count]) => ({ genre, count })).sort((a, b) => b.count - a.count)
 }
+
+const PointsStat = ({ label, value, highlight }) => (
+  <div className={`text-center px-3 py-2.5 rounded-xl ${highlight ? 'bg-white/20' : 'bg-white/10'}`}>
+    <div className="text-xl font-bold">{value || 0}</div>
+    <div className="text-[10px] uppercase tracking-wider opacity-75 font-medium mt-0.5">{label}</div>
+  </div>
+)

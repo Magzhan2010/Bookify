@@ -34,7 +34,7 @@ export async function GET(req) {
  * Body: { bookId, content }
  */
 export async function POST(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { bookId, content } = await req.json()
@@ -72,7 +72,7 @@ export async function POST(req) {
  * Удаляет свой комментарий.
  */
 export async function DELETE(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

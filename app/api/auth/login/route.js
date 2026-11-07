@@ -17,22 +17,18 @@ export async function POST(req) {
     await ensureSchema()
 
     const result = await pool.query(
-      `SELECT id, name, email, password, role, class_name, avatar_url
+      `SELECT id, name, email, password, role, class_name, avatar_url, token_version
        FROM users WHERE LOWER(email) = LOWER($1)`,
       [email]
     )
     const user = result.rows[0]
-    if (!user) {
-      return NextResponse.json(
-        { error: 'Пользователь не найден' },
-        { status: 400 }
-      )
-    }
 
-    const valid = await bcrypt.compare(password, user.password)
-    if (!valid) {
+    // Одинаковый ответ для «нет такого email» и «неверный пароль»:
+    // иначе по разным сообщениям можно перебором выяснить, чьи адреса есть в системе.
+    const valid = user ? await bcrypt.compare(String(password), user.password) : false
+    if (!user || !valid) {
       return NextResponse.json(
-        { error: 'Неверный пароль' },
+        { error: 'Неверный email или пароль' },
         { status: 400 }
       )
     }
@@ -94,9 +90,7 @@ export async function POST(req) {
       }, { status: 500 })
     }
 
-    return NextResponse.json({
-      error: 'Ошибка сервера',
-      hint: msg.substring(0, 150)
-    }, { status: 500 })
+    // Текст исключения наружу не отдаём — он остаётся в логах сервера
+    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
   }
 }

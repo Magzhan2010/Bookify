@@ -7,7 +7,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Получить цель чтения на год.
  */
 export async function GET(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)
@@ -29,7 +29,7 @@ export async function GET(req) {
  * Body: { goal, year? }
  */
 export async function POST(req) {
-  const guard = requireAuth(req)
+  const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
 
   const { goal, year } = await req.json()

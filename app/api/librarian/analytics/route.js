@@ -7,7 +7,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Комплексная аналитика для дашборда библиотекаря.
  */
 export async function GET(req) {
-  const guard = requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   try {
@@ -30,7 +30,7 @@ export async function GET(req) {
     const topReaders = await pool.query(`
       SELECT u.id, u.name, u.class_name,
              COUNT(*) AS total_borrows,
-             COUNT(*) FILTER (WHERE status = 'returned') AS returned_count,
+             COUNT(*) FILTER (WHERE status <> 'active') AS returned_count,
              COUNT(*) FILTER (WHERE status = 'active') AS currently_holding,
              COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count
       FROM borrows b
@@ -73,7 +73,7 @@ export async function GET(req) {
     const timeline = await pool.query(`
       SELECT DATE(borrowed_at) AS day,
              COUNT(*) AS borrows_count,
-             COUNT(*) FILTER (WHERE status = 'returned') AS returns_count
+             COUNT(*) FILTER (WHERE status <> 'active') AS returns_count
       FROM borrows
       WHERE borrowed_at > NOW() - INTERVAL '30 days'
       GROUP BY DATE(borrowed_at)

@@ -1,7 +1,7 @@
 import bcrypt from 'bcryptjs'
-import jwt from 'jsonwebtoken'
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
+import { requireAuth, signToken } from '../../../../lib/auth'
 
 /**
  * PATCH /api/profile/password
@@ -9,26 +9,14 @@ import pool from '../../../../lib/db'
  *
  * Смена своего пароля. Требует ВЕРНЫЙ старый пароль, чтобы чужой телефон
  * или оставленная без присмотра сессия не дали захватить аккаунт.
- * После смены пароля выдаём новый токен — старый остаётся валидным до
- * истечения, поэтому клиент обязан перезаписать его в localStorage.
+ * После смены пароля token_version увеличивается: все старые токены
+ * (на других устройствах, у того, кто подсмотрел пароль) сразу перестают
+ * работать. Текущему устройству выдаём новый токен — клиент сохраняет его.
  */
 export async function PATCH(req) {
-  const auth = req.headers.get('authorization')
-  if (!auth) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
-  }
-  const token = auth.split(' ')[1]
-  const secret = process.env.JWT_SECRET
-  if (!token || !secret) {
-    return NextResponse.json({ error: 'Не авторизован' }, { status: 401 })
-  }
-
-  let payload
-  try {
-    payload = jwt.verify(token, secret)
-  } catch (err) {
-    return NextResponse.json({ error: 'Недействительный токен' }, { status: 401 })
-  }
+  const guard = await requireAuth(req)
+  if (!guard.ok) return guard.response
+  const payload = guard.payload
 
   try {
     const { oldPassword, newPassword } = await req.json()
@@ -69,21 +57,15 @@ export async function PATCH(req) {
     }
 
     const hash = await bcrypt.hash(String(newPassword), 10)
-    await pool.query(
-      'UPDATE users SET password = $1, updated_at = NOW() WHERE id = $2',
+    const updated = await pool.query(
+      `UPDATE users
+          SET password = $1, token_version = token_version + 1, updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, name, role, token_version`,
       [hash, payload.id]
     )
 
-    // Новый токен с тем же payload — клиент перезапишет его после смены
-    const newToken = jwt.sign(
-      {
-        id: userRes.rows[0].id,
-        role: userRes.rows[0].role,
-        name: userRes.rows[0].name
-      },
-      secret,
-      { expiresIn: '30d' }
-    )
+    const newToken = signToken(updated.rows[0])
 
     return NextResponse.json({ success: true, token: newToken })
   } catch (err) {
