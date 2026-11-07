@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { BONUSES, tierForPages } from '../../../../../lib/points'
 
 /**
  * PATCH /api/librarian/reviews/[id]
  * Библиотекарь одобряет или отклоняет отзыв.
- * Body: { action: 'approve' | 'reject', note?, bonusPoints? }
+ * Body: { action: 'approve' | 'reject', note?, bonuses?: ['video','tedx'], pagesRead? }
  *
  * При approve:
  * - отзыв → approved
  * - заём → approved (книга в "прочитанные", личная полка)
- * - начисляются баллы: +5 за отзыв + бонус за страницы (если указано количество страниц)
+ * - начисляются баллы: +5 за отзыв, за объём книги, бонусы за видео/TEDx
  */
 export async function PATCH(req, { params }) {
   const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
-  const { action, note, bonusPoints, pagesRead } = await req.json()
+  const { action, note, bonuses, pagesRead } = await req.json()
 
   if (!['approve', 'reject'].includes(action)) {
     return NextResponse.json({ error: 'Неизвестное действие' }, { status: 400 })
@@ -77,65 +78,35 @@ export async function PATCH(req, { params }) {
       [review.borrow_id]
     )
 
-    // === Начисление баллов ===
+    // === Начисление баллов (правила — в lib/points.js) ===
     let totalPoints = 0
     const awarded = []
-
-    // +5 за отзыв
-    await client.query(
-      `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-       VALUES ($1, 5, 'review', 'Написал отзыв о книге', $2, $3, $4)`,
-      [review.user_id, review.borrow_id, review.book_id, guard.payload.id]
-    )
-    totalPoints += 5
-    awarded.push({ reason: 'Отзыв', points: 5 })
-
-    // Баллы за страницы (по количеству страниц в книге или переданному значению)
-    const pages = parseInt(pagesRead) || parseInt(review.book_pages) || 0
-    if (pages >= 500) {
+    const award = async (points, reason, description) => {
       await client.query(
         `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-         VALUES ($1, 20, 'pages_500_plus', 'Прочитал 500+ страниц', $2, $3, $4)`,
-        [review.user_id, review.borrow_id, review.book_id, guard.payload.id]
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [review.user_id, points, reason, description, review.borrow_id, review.book_id, guard.payload.id]
       )
-      totalPoints += 20
-      awarded.push({ reason: '500+ страниц', points: 20 })
-    } else if (pages >= 301) {
-      await client.query(
-        `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-         VALUES ($1, 15, 'pages_301_400', 'Прочитал 301-400 страниц', $2, $3, $4)`,
-        [review.user_id, review.borrow_id, review.book_id, guard.payload.id]
-      )
-      totalPoints += 15
-      awarded.push({ reason: '301-400 страниц', points: 15 })
-    } else if (pages >= 201) {
-      await client.query(
-        `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-         VALUES ($1, 10, 'pages_201_300', 'Прочитал 201-300 страниц', $2, $3, $4)`,
-        [review.user_id, review.borrow_id, review.book_id, guard.payload.id]
-      )
-      totalPoints += 10
-      awarded.push({ reason: '201-300 страниц', points: 10 })
-    } else if (pages >= 100) {
-      await client.query(
-        `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-         VALUES ($1, 5, 'pages_100_200', 'Прочитал 100-200 страниц', $2, $3, $4)`,
-        [review.user_id, review.borrow_id, review.book_id, guard.payload.id]
-      )
-      totalPoints += 5
-      awarded.push({ reason: '100-200 страниц', points: 5 })
+      totalPoints += points
+      awarded.push({ reason: description, points })
     }
 
-    // Дополнительный бонус от библиотекаря (видео/TEDx)
-    if (bonusPoints && parseInt(bonusPoints) > 0) {
-      const bp = parseInt(bonusPoints)
-      await client.query(
-        `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
-         VALUES ($1, $2, 'bonus', $3, $4, $5, $6)`,
-        [review.user_id, bp, note || 'Дополнительный бонус от библиотекаря', review.borrow_id, review.book_id, guard.payload.id]
-      )
-      totalPoints += bp
-      awarded.push({ reason: note || 'Бонус', points: bp })
+    // За отзыв
+    await award(BONUSES.review.points, 'review', BONUSES.review.title)
+
+    // За объём книги (страницы из карточки книги или указанные библиотекарем)
+    const tier = tierForPages(parseInt(pagesRead) || parseInt(review.book_pages) || 0)
+    if (tier) {
+      await award(tier.points, tier.code, `Прочитал книгу: ${tier.label}`)
+    }
+
+    // Бонусы за видео / TEDx — библиотекарь отмечает галочками.
+    // bonusPoints (старое поле: число) больше не принимается — только известные бонусы.
+    const extra = Array.isArray(bonuses) ? bonuses : []
+    for (const code of ['video', 'tedx']) {
+      if (extra.includes(code)) {
+        await award(BONUSES[code].points, code, BONUSES[code].title)
+      }
     }
 
     await client.query('COMMIT')

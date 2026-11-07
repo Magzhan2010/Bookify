@@ -5,6 +5,8 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useRef } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
+import CoinCard from '../components/game/CoinCard'
+import { PagesTable, BonusList, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import {
   BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
   ArrowRight, ArrowUpRight, Library, ShieldCheck, Zap, Heart, Clock,
@@ -25,21 +27,17 @@ export default function LandingPage() {
   return (
     <main className="min-h-screen bg-[var(--color-bg-card)] text-[var(--color-text-primary)] overflow-x-hidden">
 
-      {/* === Animated mesh-gradient background === */}
-      <div className="fixed inset-0 -z-10 overflow-hidden pointer-events-none">
-        <motion.div
-          animate={{ x: [0, 30, 0], y: [0, -20, 0] }}
-          transition={{ duration: 20, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute top-0 left-1/4 w-[600px] h-[600px] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, var(--color-brand), transparent 60%)', opacity: 0.06 }}
-        />
-        <motion.div
-          animate={{ x: [0, -40, 0], y: [0, 30, 0] }}
-          transition={{ duration: 25, repeat: Infinity, ease: 'easeInOut' }}
-          className="absolute bottom-0 right-1/4 w-[500px] h-[500px] rounded-full blur-3xl"
-          style={{ background: 'radial-gradient(circle, var(--color-success), transparent 60%)', opacity: 0.05 }}
-        />
-      </div>
+      {/* === Фон: статичный градиент. Раньше два размытых круга 600px
+           анимировались бесконечно — это грузило видеокарту и давало лаги
+           при прокрутке на слабых ноутбуках и телефонах. === */}
+      <div
+        className="fixed inset-0 -z-10 pointer-events-none"
+        style={{
+          background:
+            'radial-gradient(600px circle at 25% 0%, color-mix(in srgb, var(--color-brand) 7%, transparent), transparent 70%),' +
+            'radial-gradient(500px circle at 75% 100%, color-mix(in srgb, var(--color-success) 6%, transparent), transparent 70%)'
+        }}
+      />
 
       {/* === NAV === */}
       <nav className="fixed top-0 w-full z-50 bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]">
@@ -62,6 +60,9 @@ export default function LandingPage() {
           </Link>
 
           <div className="flex items-center gap-2">
+            <a href="#program" className="hidden md:block px-3 py-2 text-[14px] font-semibold text-[var(--color-brand)] hover:opacity-80 transition-opacity">
+              Призы за чтение
+            </a>
             <ThemeToggle size="md" />
             <Link href="/login" className="hidden sm:block px-4 py-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
               Войти
@@ -81,6 +82,9 @@ export default function LandingPage() {
 
       {/* === STATS BAND === */}
       <StatsBand />
+
+      {/* === ПРОГРАММА: ЧИТАЙ — КОПИ — ПОЛУЧАЙ === */}
+      <ProgramSection />
 
       {/* === FEATURES === */}
       <FeaturesSection />
@@ -436,6 +440,85 @@ const LibrarianSection = () => (
             </div>
           </div>
         </motion.div>
+      </div>
+    </div>
+  </section>
+)
+
+const PROGRAM_STEPS = [
+  { n: 1, title: 'Читай', text: 'Бери книги в библиотеке через Bookify. Каждая прочитанная книга приносит монеты.' },
+  { n: 2, title: 'Понимай', text: 'Напиши отзыв своими словами — он показывает, что ты разобрался в книге.' },
+  { n: 3, title: 'Делись', text: 'Сними видео о книге или выступи на TEDx — это самые большие бонусы.' }
+]
+
+const ProgramSection = () => (
+  <section id="program" className="py-24 md:py-32 px-6 scroll-mt-16">
+    <div className="max-w-[1100px] mx-auto">
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-80px' }}
+        transition={{ duration: 0.5 }}
+        className="relative rounded-[32px] bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-7 md:p-12 overflow-hidden mb-10"
+      >
+        <div className="text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand)] mb-4">
+          Новая программа чтения для всех учеников
+        </div>
+        <h2 className="text-[40px] md:text-[68px] font-extrabold leading-[0.95] tracking-tight text-[#1f2a5c] dark:text-white">
+          READ<span className="text-[var(--color-brand)]">.</span> THINK<span className="text-[var(--color-brand)]">.</span> SPEAK<span className="text-[var(--color-brand)]">.</span>
+          <br />
+          CREATE<span className="text-[var(--color-brand)]">.</span>{' '}
+          <span className="inline-block -rotate-2 px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
+        </h2>
+        <p className="mt-6 text-[17px] md:text-[20px] text-[var(--color-text-secondary)] max-w-xl">
+          Читай книги — получай баллы-карточки и обменивай их на призы.
+        </p>
+        <div className="hidden lg:block absolute right-10 top-10 rotate-6 space-y-3">
+          <CoinCard value={25} size="lg" />
+          <CoinCard value={15} size="md" className="-ml-12" />
+          <CoinCard value={5} size="sm" className="ml-24" />
+        </div>
+      </motion.div>
+
+      <div className="grid md:grid-cols-3 gap-4 mb-14">
+        {PROGRAM_STEPS.map(s => (
+          <div key={s.n} className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-6">
+            <div className="w-10 h-10 rounded-full bg-[#1f2a5c] text-[#ffc93c] text-[18px] font-extrabold flex items-center justify-center mb-4">{s.n}</div>
+            <div className="text-[20px] font-extrabold text-[var(--color-text-primary)] mb-1.5">{s.title}</div>
+            <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">{s.text}</p>
+          </div>
+        ))}
+      </div>
+
+      <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Система баллов</h3>
+      <div className="grid lg:grid-cols-2 gap-4 mb-6">
+        <PagesTable />
+        <BonusList />
+      </div>
+      <div className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-5 md:p-6 mb-14">
+        <div className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-1">Баллы приходят карточками</div>
+        <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
+          Все карточки собираются в профиле ученика — как коллекция.
+        </p>
+        <div className="flex flex-wrap gap-3">
+          {[5, 10, 15, 20, 25].map(v => <CoinCard key={v} value={v} size="md" />)}
+        </div>
+      </div>
+
+      <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Призы</h3>
+      <div className="mb-8">
+        <PrizesPreview />
+      </div>
+
+      <AiWarning />
+
+      <div className="mt-10 flex flex-wrap gap-3 justify-center">
+        <Link href="/register" className="px-7 py-3.5 rounded-xl bg-[var(--color-brand)] text-white text-[15px] font-semibold hover:bg-[var(--color-brand-hover)] transition-colors inline-flex items-center gap-2">
+          Начать копить монеты <ArrowRight size={16} />
+        </Link>
+        <Link href="/login" className="px-7 py-3.5 rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] text-[15px] font-semibold border border-[var(--color-border)] hover:bg-[var(--color-bg-card)] transition-colors">
+          У меня уже есть аккаунт
+        </Link>
       </div>
     </div>
   </section>

@@ -41,9 +41,10 @@ export default function LibrarianDashboard() {
   const [loading, setLoading] = useState(true)
   const [reviews, setReviews] = useState([])
   const [reviewAction, setReviewAction] = useState(null)
-  const [bonusPoints, setBonusPoints] = useState('')
-  const [reviewNote, setReviewNote] = useState('')
-  const [showReviews, setShowReviews] = useState(false)
+  // Бонусы и заметка — отдельно для каждого отзыва (раньше поле было общим на все)
+  const [bonusSel, setBonusSel] = useState({})
+  const [notes, setNotes] = useState({})
+  const [showReviews, setShowReviews] = useState(true)
 
   const fetchAnalytics = async () => {
     try {
@@ -73,6 +74,7 @@ export default function LibrarianDashboard() {
 
   const handleReviewAction = async (reviewId, action) => {
     // Без причины ученик не поймёт, что исправить
+    const reviewNote = notes[reviewId] || ''
     if (action === 'reject' && !reviewNote.trim()) {
       toast.error('Напиши в заметке, что ученику исправить')
       return
@@ -89,7 +91,7 @@ export default function LibrarianDashboard() {
         body: JSON.stringify({
           action,
           note: reviewNote || null,
-          bonusPoints: parseInt(bonusPoints) || 0
+          bonuses: bonusSel[reviewId] || []
         })
       })
       const data = await res.json()
@@ -101,8 +103,8 @@ export default function LibrarianDashboard() {
         } else {
           toast.success('Отзыв отклонён', { description: 'Ученик может переписать' })
         }
-        setBonusPoints('')
-        setReviewNote('')
+        setBonusSel(prev => ({ ...prev, [reviewId]: [] }))
+        setNotes(prev => ({ ...prev, [reviewId]: '' }))
         fetchReviews()
         fetchAnalytics()
       } else {
@@ -254,18 +256,33 @@ export default function LibrarianDashboard() {
 
                 <div className="flex flex-col sm:flex-row gap-2">
                   <div className="flex-1 flex flex-col sm:flex-row gap-2">
-                    <input
-                      type="number"
-                      placeholder="Бонус (0, 10, 20)"
-                      value={bonusPoints}
-                      onChange={e => setBonusPoints(e.target.value)}
-                      className="w-full sm:w-32 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[var(--color-brand)]"
-                    />
+                    <div className="flex gap-1.5 shrink-0">
+                      {[{ code: 'video', label: 'Видео', pts: 10 }, { code: 'tedx', label: 'TEDx', pts: 15 }].map(bn => {
+                        const on = (bonusSel[r.id] || []).includes(bn.code)
+                        return (
+                          <button
+                            key={bn.code}
+                            type="button"
+                            onClick={() => setBonusSel(prev => {
+                              const cur = prev[r.id] || []
+                              return { ...prev, [r.id]: on ? cur.filter(c => c !== bn.code) : [...cur, bn.code] }
+                            })}
+                            className={`px-2.5 py-2 rounded-lg text-[12px] font-semibold border transition-colors ${
+                              on
+                                ? 'bg-[#ffc93c] border-[#ffc93c] text-[#1f2a5c]'
+                                : 'bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)]'
+                            }`}
+                          >
+                            {bn.label} +{bn.pts}
+                          </button>
+                        )
+                      })}
+                    </div>
                     <input
                       type="text"
-                      placeholder="Заметка (видео / TEDx / причина)"
-                      value={reviewNote}
-                      onChange={e => setReviewNote(e.target.value)}
+                      placeholder="Заметка (причина отклонения обязательна)"
+                      value={notes[r.id] || ''}
+                      onChange={e => setNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
                       className="flex-1 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[var(--color-brand)]"
                     />
                   </div>

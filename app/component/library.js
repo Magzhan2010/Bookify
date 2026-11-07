@@ -114,10 +114,12 @@ export default function Library() {
       const token = localStorage.getItem('token')
       if (!token) return
       try {
-        const res = await fetch('/api/profile', { headers: { Authorization: `Bearer ${token}` } })
+        // Лёгкий эндпоинт: только id книг (раньше грузился весь профиль)
+        const res = await fetch('/api/profile/books', { headers: { Authorization: `Bearer ${token}` } })
+        if (!res.ok) return
         const data = await res.json()
-        setMyFinishedId((data.finished || []).map(b => Number(b.book_id)))
-        setMyReadingId((data.active || []).map(b => Number(b.book_id)))
+        setMyFinishedId((data.finished || []).map(Number))
+        setMyReadingId((data.reading || []).map(Number))
         setMyShelf(data.finished?.length || 0)
       } catch (err) {}
     }
@@ -223,7 +225,8 @@ export default function Library() {
     const currentRef = observerRef.current
     const observer = new IntersectionObserver(
       entries => { if (entries[0].isIntersecting) setPage(p => p + 1) },
-      { threshold: 1.0 }
+      // Подгружаем заранее, за ~600px до конца списка — без «ожидания» внизу
+      { rootMargin: '600px 0px', threshold: 0 }
     )
     if (currentRef) observer.observe(currentRef)
     return () => { if (currentRef) observer.unobserve(currentRef) }

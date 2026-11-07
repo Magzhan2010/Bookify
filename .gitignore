@@ -45,3 +45,12 @@ books-data.json
 
 # личные данные учеников и выданные пароли — никогда не коммитить
 /private/
+
+# личные и рабочие файлы — не для публичного репозитория
+/Кампания/
+/_project.pdf
+/scripts/add-rules.js
+/scripts/copy-pdf.js
+/scripts/find-pdf.js
+/scripts/patch-*.js
+/scripts/read-pdf.js

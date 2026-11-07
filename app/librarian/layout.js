@@ -7,13 +7,14 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 
 const navItems = [
   { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
   { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
+  { href: '/librarian/orders', label: 'Призы', icon: Gift, badge: 'orders' },
   { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
   { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
   { href: '/librarian/books', label: 'Книги', icon: Library },
@@ -31,6 +32,7 @@ export default function LibrarianLayout({ children }) {
   const [ready, setReady] = useState(false)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
+  const [pendingOrders, setPendingOrders] = useState(0)
 
   // Счётчик ожидающих заявок в меню
   useEffect(() => {
@@ -41,12 +43,19 @@ export default function LibrarianLayout({ children }) {
     let alive = true
     const load = async () => {
       try {
-        const res = await fetch('/api/librarian/requests?status=pending', {
-          headers: { Authorization: `Bearer ${token}` }
-        })
-        if (!res.ok) return
-        const data = await res.json()
-        if (alive) setPendingCount(Array.isArray(data) ? data.length : 0)
+        const headers = { Authorization: `Bearer ${token}` }
+        const [reqRes, ordRes] = await Promise.all([
+          fetch('/api/librarian/requests?status=pending', { headers }),
+          fetch('/api/librarian/orders?status=pending', { headers })
+        ])
+        if (reqRes.ok) {
+          const data = await reqRes.json()
+          if (alive) setPendingCount(Array.isArray(data) ? data.length : 0)
+        }
+        if (ordRes.ok) {
+          const data = await ordRes.json()
+          if (alive) setPendingOrders(data?.counts?.pending || 0)
+        }
       } catch (e) {
         // тихо игнорируем — счётчик не критичен
       }
@@ -126,7 +135,10 @@ export default function LibrarianLayout({ children }) {
             {navItems.map(item => {
               const Icon = item.icon
               const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
-              const badge = item.badge === 'requests' && pendingCount > 0 ? pendingCount : null
+              const badgeValue =
+                item.badge === 'requests' ? pendingCount :
+                item.badge === 'orders' ? pendingOrders : 0
+              const badge = badgeValue > 0 ? badgeValue : null
               return (
                 <Link
                   key={item.href}

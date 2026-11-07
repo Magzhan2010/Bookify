@@ -1,0 +1,236 @@
+'use client'
+
+import Link from 'next/link'
+import Image from 'next/image'
+import { usePathname, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import {
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight
+} from 'lucide-react'
+import { ThemeToggle } from '../ThemeContext'
+import { GameProvider, useGame } from './GameContext'
+import { parseJwt } from '../../lib/jwt'
+
+const NAV = [
+  { href: '/library', label: 'Каталог', short: 'Книги', icon: Library },
+  { href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound },
+  { href: '/shop', label: 'Магазин призов', short: 'Магазин', icon: ShoppingBag, badge: 'shop' },
+  { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy },
+  { href: '/game', label: 'Как это работает', short: 'Правила', icon: Gamepad2 }
+]
+
+/**
+ * Оболочка ученического раздела: боковое меню на компьютере,
+ * нижняя панель на телефоне, игровой баланс всегда на виду.
+ */
+export default function StudentShell({ children }) {
+  const router = useRouter()
+  const [user, setUser] = useState(null)
+  const [checked, setChecked] = useState(false)
+
+  useEffect(() => {
+    const token = localStorage.getItem('token')
+    const payload = token ? parseJwt(token) : null
+    if (!payload) {
+      localStorage.removeItem('token')
+      router.replace('/login')
+      return
+    }
+    setUser(payload)
+    setChecked(true)
+  }, [router])
+
+  if (!checked) {
+    return (
+      <div className="min-h-screen flex items-center justify-center">
+        <div className="w-8 h-8 border-2 border-[var(--color-brand)]/30 border-t-[var(--color-brand)] rounded-full animate-spin" />
+      </div>
+    )
+  }
+
+  const isStudent = user?.role === 'student'
+
+  return (
+    <GameProvider enabled={isStudent}>
+      <div className="min-h-screen">
+        <Sidebar user={user} isStudent={isStudent} />
+        <div className="lg:pl-[256px] pb-20 lg:pb-0 min-w-0">
+          {children}
+        </div>
+        <BottomNav isStudent={isStudent} />
+      </div>
+    </GameProvider>
+  )
+}
+
+function useActive() {
+  const pathname = usePathname() || ''
+  return href => pathname === href || pathname.startsWith(href + '/') ||
+    (href === '/library' && pathname.startsWith('/books/'))
+}
+
+function Sidebar({ user, isStudent }) {
+  const router = useRouter()
+  const isActive = useActive()
+  const { summary } = useGame()
+
+  const logout = () => {
+    localStorage.removeItem('token')
+    router.push('/')
+  }
+
+  return (
+    <aside className="hidden lg:flex fixed inset-y-0 left-0 w-[256px] z-40 flex-col bg-[var(--color-bg-card)] border-r border-[var(--color-border)]">
+      <Link href="/library" className="flex items-center gap-2.5 px-5 h-16 border-b border-[var(--color-border)] shrink-0">
+        <Image src="/lb_logo.png" width={40} height={40} alt="Bookify" className="w-10 h-10 object-contain" />
+        <div>
+          <div className="font-semibold text-[15px] leading-tight text-[var(--color-text-primary)]">Bookify</div>
+          <div className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-brand)]">Read · Think · Lead</div>
+        </div>
+      </Link>
+
+      {isStudent && <PointsWidget summary={summary} />}
+
+      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
+        {NAV.map(item => {
+          const Icon = item.icon
+          const active = isActive(item.href)
+          const badge = item.badge === 'shop' && summary?.affordable_prizes > 0 ? summary.affordable_prizes : null
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              prefetch
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
+                active
+                  ? 'bg-[var(--color-brand)] text-white'
+                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'
+              }`}
+            >
+              <Icon size={17} />
+              <span className="flex-1">{item.label}</span>
+              {badge && (
+                <span
+                  title="Призов, на которые уже хватает баллов"
+                  className={`min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                    active ? 'bg-white text-[var(--color-brand)]' : 'bg-[#ffc93c] text-[#1f2a5c]'
+                  }`}
+                >
+                  {badge}
+                </span>
+              )}
+            </Link>
+          )
+        })}
+
+        {user?.role === 'librarian' && (
+          <Link
+            href="/librarian"
+            className="mt-3 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--color-brand)] bg-[var(--color-brand)]/8 hover:bg-[var(--color-brand)]/12 transition-colors"
+          >
+            <BookMarked size={17} />
+            <span className="flex-1">Панель библиотекаря</span>
+          </Link>
+        )}
+      </nav>
+
+      <div className="p-3 border-t border-[var(--color-border)] space-y-2 shrink-0">
+        <div className="flex items-center gap-2.5 px-2">
+          <div className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] shrink-0">
+            {user?.name?.charAt(0).toUpperCase() || '?'}
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[13px] font-semibold truncate text-[var(--color-text-primary)]">{user?.name}</div>
+            <div className="text-[11px] text-[var(--color-text-tertiary)]">
+              {user?.role === 'librarian' ? 'Библиотекарь' : 'Ученик'}
+            </div>
+          </div>
+          <ThemeToggle size="sm" />
+        </div>
+        <div className="flex gap-2">
+          <a
+            href="https://dls.edu.kz"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-soft)] transition-colors"
+          >
+            Сайт школы <ArrowUpRight size={12} />
+          </a>
+          <button
+            onClick={logout}
+            className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-medium text-[var(--color-danger)] bg-[var(--color-danger)]/8 hover:bg-[var(--color-danger)]/14 transition-colors"
+          >
+            <LogOut size={13} /> Выйти
+          </button>
+        </div>
+      </div>
+    </aside>
+  )
+}
+
+/** Баланс, уровень и прогресс — главный «игровой» блок меню. */
+function PointsWidget({ summary }) {
+  if (!summary) {
+    return <div className="mx-3 mt-3 h-[118px] rounded-2xl bg-[var(--color-bg-soft)] animate-pulse" />
+  }
+  const { balance, level, ranks } = summary
+  return (
+    <Link
+      href="/profile#points"
+      className="mx-3 mt-3 block rounded-2xl p-4 text-white bg-gradient-to-br from-[#1f2a5c] via-[#22348a] to-[#2f5bea] hover:brightness-110 transition"
+    >
+      <div className="flex items-center justify-between">
+        <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">Мои баллы</span>
+        {ranks?.school_rank && (
+          <span className="text-[11px] font-semibold text-[#ffc93c]">#{ranks.school_rank} в школе</span>
+        )}
+      </div>
+      <div className="flex items-baseline gap-1.5 mt-1">
+        <span className="text-[34px] font-extrabold leading-none text-[#ffc93c]">{balance.available}</span>
+        <span className="text-[12px] text-white/70">монет</span>
+      </div>
+      <div className="mt-3 flex items-center justify-between text-[11px]">
+        <span className="font-semibold">{level.emoji} {level.title}</span>
+        {level.next && <span className="text-white/60">ещё {level.toNext} до «{level.next.title}»</span>}
+      </div>
+      <div className="mt-1.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
+        <div className="h-full rounded-full bg-[#ffc93c]" style={{ width: `${level.progress}%` }} />
+      </div>
+    </Link>
+  )
+}
+
+function BottomNav({ isStudent }) {
+  const isActive = useActive()
+  const { summary } = useGame()
+  return (
+    <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]">
+      <div className="grid grid-cols-5">
+        {NAV.map(item => {
+          const Icon = item.icon
+          const active = isActive(item.href)
+          const showCoins = isStudent && item.href === '/profile' && summary
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex flex-col items-center justify-center gap-0.5 py-2 text-[10px] font-medium ${
+                active ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-tertiary)]'
+              }`}
+            >
+              <span className="relative">
+                <Icon size={20} />
+                {showCoins && (
+                  <span className="absolute -top-2 -right-4 px-1 rounded-full bg-[#ffc93c] text-[#1f2a5c] text-[9px] font-bold leading-[14px]">
+                    {summary.balance.available}
+                  </span>
+                )}
+              </span>
+              {item.short}
+            </Link>
+          )
+        })}
+      </div>
+    </nav>
+  )
+}

@@ -5,24 +5,20 @@ import { motion } from 'framer-motion'
 import { CheckCircle, BookOpen } from 'lucide-react'
 import StarRating from '../../components/ui/StarRating'
 
+// Раньше карточки появлялись каскадом (по 0.05 с каждая, со scale) —
+// при 40+ книгах последние «доезжали» больше двух секунд, и каталог казался
+// медленным. Теперь все появляются сразу коротким fade.
 const containerVariants = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.05,
-      delayChildren: 0.05
-    }
-  }
+  hidden: { opacity: 1 },
+  show: { opacity: 1 }
 }
 
 const cardVariants = {
-  hidden: { opacity: 0, y: 30, scale: 0.92 },
+  hidden: { opacity: 0, y: 8 },
   show: {
     opacity: 1,
     y: 0,
-    scale: 1,
-    transition: { duration: 0.5, ease: [0.23, 1, 0.32, 1] }
+    transition: { duration: 0.22, ease: 'easeOut' }
   }
 }
 

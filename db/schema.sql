@@ -228,3 +228,32 @@ LEFT JOIN borrows b ON b.user_id = u.id
 LEFT JOIN books bk ON bk.id = b.book_id
 WHERE u.role = 'student'
 GROUP BY u.id, u.name, u.class_name;
+-- ============================================================
+-- Программа «Читай — копи баллы — получай призы»
+-- (таблицы также создаются автоматически миграциями в lib/db.js)
+-- ============================================================
+CREATE TABLE IF NOT EXISTS prizes (
+  id SERIAL PRIMARY KEY,
+  code TEXT UNIQUE NOT NULL,
+  title TEXT NOT NULL,
+  description TEXT,
+  price INT NOT NULL CHECK (price > 0),
+  image TEXT,
+  sort INT NOT NULL DEFAULT 0,
+  needs_note BOOLEAN NOT NULL DEFAULT FALSE,
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- Заказ приза: монеты резервируются сразу (pending/issued), отмена их возвращает
+CREATE TABLE IF NOT EXISTS prize_orders (
+  id SERIAL PRIMARY KEY,
+  user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  prize_id INT NOT NULL REFERENCES prizes(id),
+  price INT NOT NULL,
+  note TEXT,
+  status TEXT NOT NULL DEFAULT 'pending' CHECK (status IN ('pending','issued','cancelled')),
+  processed_by INT REFERENCES users(id),
+  processed_at TIMESTAMPTZ,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);

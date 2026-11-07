@@ -6,7 +6,8 @@ import { ThemeProvider } from '../components/ThemeContext';
 const inter = Inter({
   variable: "--font-inter",
   subsets: ["latin", "cyrillic"],
-  weight: ["300", "400", "500", "600", "700", "800"],
+  // 300 нигде не используется — не грузим лишний файл шрифта
+  weight: ["400", "500", "600", "700", "800"],
   display: "swap"
 });
 
