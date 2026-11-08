@@ -19,13 +19,18 @@ export default function Modal({
   size = 'md'
 }) {
   const panelRef = useRef(null)
+  // onClose держим в ref: родитель обычно передаёт новую функцию на каждый
+  // рендер, и раньше эффект ниже перезапускался после КАЖДОЙ нажатой клавиши —
+  // фокус прыгал на первый элемент окна, и печатать было невозможно.
+  const onCloseRef = useRef(onClose)
+  useEffect(() => { onCloseRef.current = onClose }, [onClose])
 
   useEffect(() => {
     if (!open) return
 
     const onKey = e => {
       if (e.key === 'Escape') {
-        onClose?.()
+        onCloseRef.current?.()
         return
       }
       // Фокус-ловушка: не даём уйти за пределы окна
@@ -49,9 +54,11 @@ export default function Modal({
     document.addEventListener('keydown', onKey)
     const prevOverflow = document.body.style.overflow
     document.body.style.overflow = 'hidden'
-    // Фокус внутрь окна при открытии
+    // Фокус внутрь окна — только при открытии; сначала на поле ввода
     const t = setTimeout(() => {
-      panelRef.current?.querySelector('input, button')?.focus()
+      const panel = panelRef.current
+      if (!panel || panel.contains(document.activeElement)) return
+      ;(panel.querySelector('input, textarea, select') || panel.querySelector('button'))?.focus()
     }, 50)
 
     return () => {
@@ -59,7 +66,7 @@ export default function Modal({
       document.body.style.overflow = prevOverflow
       clearTimeout(t)
     }
-  }, [open, onClose])
+  }, [open])
 
   if (typeof document === 'undefined') return null
 

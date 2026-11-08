@@ -347,9 +347,9 @@ export default function LibrarianDashboard() {
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" vertical={false} />
-                  <XAxis dataKey="day" tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} tickFormatter={d => d.slice(5)} axisLine={false} tickLine={false} />
+                  <XAxis dataKey="day" tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} tickFormatter={d => { const [, m, dd] = String(d).split('-'); return `${dd}.${m}` }} minTickGap={16} axisLine={false} tickLine={false} />
                   <YAxis tick={{ fill: 'var(--color-text-tertiary)', fontSize: 11 }} axisLine={false} tickLine={false} />
-                  <Tooltip contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 12, fontSize: 12, color: 'var(--color-text-primary)' }} labelStyle={{ color: 'var(--color-text-primary)' }} itemStyle={{ color: 'var(--color-text-secondary)' }} />
+                  <Tooltip labelFormatter={d => new Date(d + 'T00:00:00').toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'short' })} contentStyle={{ background: 'var(--color-bg-card)', border: '1px solid var(--color-border)', borderRadius: 12, fontSize: 12, color: 'var(--color-text-primary)' }} labelStyle={{ color: 'var(--color-text-primary)' }} itemStyle={{ color: 'var(--color-text-secondary)' }} />
                   <Area type="monotone" dataKey="borrows_count" stroke="#1a56db" strokeWidth={2} fill="url(#g-borrows)" name="Выдачи" />
                   <Area type="monotone" dataKey="returns_count" stroke="#34c759" strokeWidth={2} fill="url(#g-returns)" name="Возвраты" />
                 </AreaChart>

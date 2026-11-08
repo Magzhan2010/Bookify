@@ -27,7 +27,7 @@ export default function GamePage() {
           READ<span className="text-[var(--color-brand)]">.</span> THINK<span className="text-[var(--color-brand)]">.</span> SPEAK<span className="text-[var(--color-brand)]">.</span>
           <br />
           CREATE<span className="text-[var(--color-brand)]">.</span>{' '}
-          <span className="inline-block -rotate-2 px-3 sm:px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
+          <span className="inline-block px-3 sm:px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
         </h1>
         <p className="mt-5 text-[16px] sm:text-[18px] text-[var(--color-text-secondary)] max-w-xl">
           Читай книги — получай баллы и обменивай их на призы. Чем больше читаешь,
@@ -46,7 +46,7 @@ export default function GamePage() {
           {STEPS.map((s, i) => {
             const Icon = s.icon
             return (
-              <div key={s.title} className="toon-card toon-card-hover p-4">
+              <div key={s.title} className="apple-card card-lift p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-7 h-7 rounded-full bg-[#1f2a5c] text-white text-[13px] font-bold flex items-center justify-center">{i + 1}</span>
                   <Icon size={18} className="text-[var(--color-brand)]" />

@@ -21,9 +21,29 @@ export async function GET(req) {
     ) rt ON rt.book_id = bk.id
   `
 
+  // Популярность: сколько раз книгу брали + заявки + избранное.
+  // Каталог сортируется по ней: популярные — в начале, невостребованные — в конце.
+  const POP_AGG = `
+    LEFT JOIN (
+      SELECT book_id, SUM(n)::int AS popularity, SUM(b)::int AS times_borrowed FROM (
+        SELECT book_id, COUNT(*) * 3 AS n, COUNT(*) AS b FROM borrows GROUP BY book_id
+        UNION ALL
+        SELECT book_id, COUNT(*) AS n, 0 FROM book_requests GROUP BY book_id
+        UNION ALL
+        SELECT book_id, COUNT(*) AS n, 0 FROM favorites GROUP BY book_id
+      ) x GROUP BY book_id
+    ) pop ON pop.book_id = bk.id
+  `
+
   const SELECT_BOOKS = `SELECT bk.*,
            COALESCE(rt.rating_avg, 0)::float AS rating_avg,
-           COALESCE(rt.rating_count, 0)::int AS rating_count`
+           COALESCE(rt.rating_count, 0)::int AS rating_count,
+           COALESCE(pop.popularity, 0)::int AS popularity,
+           COALESCE(pop.times_borrowed, 0)::int AS times_borrowed`
+
+  // id в конце — чтобы порядок был стабильным между страницами подгрузки
+  const ORDER = `ORDER BY COALESCE(pop.popularity, 0) DESC, COALESCE(rt.rating_avg, 0) DESC,
+                          COALESCE(rt.rating_count, 0) DESC, bk.created_at DESC, bk.id DESC`
 
   // 1. Все жанры для фильтра
   if (searchParams.get('allGenres') === 'true') {
@@ -83,7 +103,7 @@ export async function GET(req) {
   if (isFiltered) {
     params.push(genre, genre + ' / %', '% / ' + genre, '% / ' + genre + ' / %')
     let sql = `${SELECT_BOOKS}
-       FROM books bk ${RATING_AGG}
+       FROM books bk ${RATING_AGG} ${POP_AGG}
        WHERE ${LIVE}
          AND (bk.genre = $1 OR bk.genre LIKE $2 OR bk.genre LIKE $3 OR bk.genre LIKE $4)`
     sql += buildSearch(params)
@@ -91,19 +111,19 @@ export async function GET(req) {
     limitIdx = params.length - 1
     offsetIdx = params.length
     const result = await pool.query(
-      `${sql} ORDER BY bk.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+      `${sql} ${ORDER} LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
       params
     )
     return NextResponse.json(result.rows)
   }
 
-  let sql = `${SELECT_BOOKS} FROM books bk ${RATING_AGG} WHERE ${LIVE}`
+  let sql = `${SELECT_BOOKS} FROM books bk ${RATING_AGG} ${POP_AGG} WHERE ${LIVE}`
   sql += buildSearch(params)
   params.push(limit, offset)
   limitIdx = params.length - 1
   offsetIdx = params.length
   const result = await pool.query(
-    `${sql} ORDER BY bk.created_at DESC LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
+    `${sql} ${ORDER} LIMIT $${limitIdx} OFFSET $${offsetIdx}`,
     params
   )
   return NextResponse.json(result.rows)

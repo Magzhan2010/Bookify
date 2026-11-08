@@ -95,6 +95,11 @@ const Books = ({ books, myFinishedId = [], myReadingId = [], onOpen }) => {
                   На руках
                 </span>
               )}
+              {!isFinished && !isReading && book.times_borrowed >= 3 && (
+                <span className="px-2 py-0.5 rounded-full bg-white/90 backdrop-blur-md text-[#1d1d1f] text-[11px] font-semibold shadow-sm">
+                  🔥 Популярная
+                </span>
+              )}
             </div>
 
             {/* Difficulty badge (top-right) */}

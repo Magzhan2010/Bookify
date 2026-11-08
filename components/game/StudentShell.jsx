@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote
 } from 'lucide-react'
 import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
@@ -16,6 +16,7 @@ const NAV = [
   { href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound },
   { href: '/shop', label: 'Магазин призов', short: 'Магазин', icon: ShoppingBag, badge: 'shop' },
   { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy },
+  { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote },
   { href: '/game', label: 'Как это работает', short: 'Правила', icon: Gamepad2 }
 ]
 
@@ -205,7 +206,7 @@ function BottomNav({ isStudent }) {
   const { summary } = useGame()
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]">
-      <div className="grid grid-cols-5">
+      <div className="grid grid-cols-6">
         {NAV.map(item => {
           const Icon = item.icon
           const active = isActive(item.href)

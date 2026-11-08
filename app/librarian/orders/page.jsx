@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Gift, Check, X, Loader2 } from 'lucide-react'
 import { Button, EmptyState } from '../../../components/ui'
-import { PRIZE_TINTS } from '../../../lib/points'
+import PrizeVisual from '../../../components/game/PrizeVisual'
 
 const FILTERS = [
   { key: 'pending', label: 'Ждут выдачи' },
@@ -101,12 +101,7 @@ export default function LibrarianOrdersPage() {
           {orders.map(o => (
             <div key={o.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <div
-                  className="w-14 h-14 rounded-xl flex items-center justify-center shrink-0"
-                  style={{ background: PRIZE_TINTS[o.prize_code] || '#f1f5f9' }}
-                >
-                  <img src={o.prize_image} alt="" className="w-11 h-11" />
-                </div>
+                <PrizeVisual code={o.prize_code} size="sm" className="shrink-0 !w-14 !h-14" />
                 <div className="min-w-0">
                   <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">
                     {o.prize_title} <span className="text-[var(--color-text-tertiary)] font-normal">· {o.price} монет</span>

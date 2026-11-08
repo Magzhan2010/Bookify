@@ -21,7 +21,7 @@ export async function GET(req) {
       getBalance(pool, userId),
       pool.query(
         `SELECT o.id, o.price, o.note, o.status, o.created_at, o.processed_at,
-                p.title, p.image
+                p.title, p.image, p.code
            FROM prize_orders o
            JOIN prizes p ON p.id = o.prize_id
           WHERE o.user_id = $1

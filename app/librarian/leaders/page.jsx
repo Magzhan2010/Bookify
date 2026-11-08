@@ -73,36 +73,53 @@ export default function LibrarianLeadersPage() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Рейтинг */}
-        <div className="lg:col-span-2 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 sm:p-5">
+        {/* Рейтинг — карточки учеников */}
+        <div className="lg:col-span-2">
           {loading && !data ? (
             <div className="flex justify-center py-16"><Loader2 className="animate-spin text-[var(--color-brand)]" /></div>
           ) : leaders.length === 0 ? (
-            <div className="text-center py-16 text-[var(--color-text-tertiary)] text-[14px]">Пока никто не сдал ни одной книги</div>
+            <div className="text-center py-16 rounded-2xl border border-dashed border-[var(--color-border)] text-[var(--color-text-tertiary)] text-[14px]">
+              Пока никто не сдал ни одной книги
+            </div>
           ) : (
-            <div className={`space-y-1.5 ${loading ? 'opacity-60' : ''} transition-opacity`}>
+            <div className={`grid grid-cols-1 sm:grid-cols-2 gap-4 items-start ${loading ? 'opacity-60' : ''} transition-opacity`}>
               {leaders.map((l, i) => {
                 const expanded = open === l.id
                 return (
-                  <div key={l.id} className={`rounded-xl border ${i < 3 ? 'border-[#f5b301]/40 bg-[#f5b301]/5' : 'border-[var(--color-border)]'}`}>
+                  <motion.div
+                    key={l.id}
+                    layout
+                    initial={{ opacity: 0, y: 12 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ delay: Math.min(i, 12) * 0.03, duration: 0.5, ease: [0.2, 0.8, 0.2, 1] }}
+                    className={`relative bg-[var(--color-bg-card)] border rounded-2xl p-5 transition-shadow hover:shadow-[0_12px_32px_rgba(0,0,0,0.06)] ${
+                      i < 3 ? 'border-[#f5b301]/50' : 'border-[var(--color-border)]'
+                    }`}
+                  >
+                    <div className="absolute top-4 right-4 text-[18px] font-semibold text-[var(--color-text-tertiary)]">
+                      {MEDALS[i] || `#${i + 1}`}
+                    </div>
+                    <div className="flex items-center gap-3 pr-10">
+                      <Avatar name={l.name} />
+                      <div className="min-w-0">
+                        <div className="font-semibold text-[16px] text-[var(--color-text-primary)] truncate">{l.name}</div>
+                        <div className="text-[13px] text-[var(--color-text-tertiary)]">{l.class_name || 'без класса'}</div>
+                      </div>
+                    </div>
+                    <div className="mt-3 text-[12px] text-[var(--color-text-secondary)] truncate min-h-[18px]">
+                      {l.last_books?.[0] ? <>Последняя: «{l.last_books[0].title}»</> : ' '}
+                    </div>
+                    <div className="mt-3 pt-3 border-t border-[var(--color-border)] grid grid-cols-3 text-center">
+                      <Stat value={l.books} label="книг" color="var(--color-brand)" strong={sort === 'books'} />
+                      <Stat value={l.points} label="монет" color="#d99a00" strong={sort === 'points'} />
+                      <Stat value={l.reading_now} label="сейчас" color="var(--color-text-primary)" />
+                    </div>
                     <button
                       onClick={() => setOpen(expanded ? null : l.id)}
-                      className="w-full flex items-center gap-3 px-3 py-2.5 text-left"
+                      className="mt-3 w-full flex items-center justify-center gap-1 text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)]"
                     >
-                      <div className="w-8 text-center text-[16px] font-bold text-[var(--color-text-tertiary)] shrink-0">
-                        {MEDALS[i] || i + 1}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="font-semibold text-[14px] text-[var(--color-text-primary)] truncate">{l.name}</div>
-                        <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">
-                          {l.class_name ? `${l.class_name} класс` : 'без класса'}
-                          {l.last_books?.[0] && <> · последняя: «{l.last_books[0].title}»</>}
-                          {l.reading_now > 0 && <> · читает сейчас: {l.reading_now}</>}
-                        </div>
-                      </div>
-                      <Stat value={l.books} label="книг" strong={sort === 'books'} />
-                      <Stat value={l.points} label="монет" strong={sort === 'points'} />
-                      <ChevronDown size={16} className={`text-[var(--color-text-tertiary)] transition-transform ${expanded ? 'rotate-180' : ''}`} />
+                      {expanded ? 'Скрыть книги' : 'Что прочитал'}
+                      <ChevronDown size={14} className={`transition-transform ${expanded ? 'rotate-180' : ''}`} />
                     </button>
                     <AnimatePresence initial={false}>
                       {expanded && (
@@ -112,14 +129,13 @@ export default function LibrarianLeadersPage() {
                           exit={{ height: 0, opacity: 0 }}
                           className="overflow-hidden"
                         >
-                          <div className="px-4 pb-3 pl-14 space-y-1">
+                          <div className="pt-3 space-y-1.5">
                             {l.last_books.map((b, j) => (
                               <div key={j} className="flex items-center gap-2 text-[13px]">
                                 {b.status === 'approved'
                                   ? <CheckCircle2 size={13} className="text-[var(--color-success)] shrink-0" />
                                   : <BookOpen size={13} className="text-[var(--color-text-tertiary)] shrink-0" />}
                                 <span className="text-[var(--color-text-primary)] truncate">«{b.title}»</span>
-                                <span className="text-[var(--color-text-tertiary)] truncate hidden sm:inline">{b.author}</span>
                                 <span className="ml-auto text-[11px] text-[var(--color-text-tertiary)] shrink-0">
                                   {b.at ? new Date(b.at).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' }) : ''}
                                 </span>
@@ -128,14 +144,14 @@ export default function LibrarianLeadersPage() {
                             {l.books > l.last_books.length && (
                               <div className="text-[12px] text-[var(--color-text-tertiary)]">…и ещё {l.books - l.last_books.length}</div>
                             )}
-                            <Link href={`/librarian/students/${l.id}`} className="inline-block mt-1 text-[12px] font-semibold text-[var(--color-brand)]">
+                            <Link href={`/librarian/students/${l.id}`} className="inline-block pt-1 text-[12px] font-semibold text-[var(--color-brand)]">
                               Карточка ученика →
                             </Link>
                           </div>
                         </motion.div>
                       )}
                     </AnimatePresence>
-                  </div>
+                  </motion.div>
                 )
               })}
             </div>
@@ -201,11 +217,22 @@ export default function LibrarianLeadersPage() {
   )
 }
 
-function Stat({ value, label, strong }) {
+function Stat({ value, label, color, strong }) {
   return (
-    <div className="text-center w-14 shrink-0">
-      <div className={`text-[17px] font-bold leading-none ${strong ? 'text-[var(--color-brand)]' : 'text-[var(--color-text-primary)]'}`}>{value}</div>
-      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-tertiary)] mt-0.5">{label}</div>
+    <div>
+      <div className={`text-[22px] font-semibold leading-none tabular-nums ${strong ? 'scale-110' : ''} transition-transform`} style={{ color }}>{value}</div>
+      <div className="text-[10px] uppercase tracking-wider text-[var(--color-text-tertiary)] mt-1.5">{label}</div>
+    </div>
+  )
+}
+
+const AVATAR_COLORS = ['#2f5bea', '#ff6b6b', '#20b486', '#ff9f1c', '#8b5cf6', '#0ea5e9', '#e0457b']
+
+function Avatar({ name = '?' }) {
+  const color = AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
+  return (
+    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[18px] font-semibold shrink-0" style={{ background: color }}>
+      {name.charAt(0).toUpperCase()}
     </div>
   )
 }

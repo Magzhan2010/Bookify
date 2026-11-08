@@ -3,9 +3,10 @@
 import { motion, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
-import { useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
 import CoinCard from '../components/game/CoinCard'
+import QuoteFeature from '../components/quotes/QuoteFeature'
 import { PointsSystem, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import {
   BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
@@ -85,6 +86,9 @@ export default function LandingPage() {
 
       {/* === ПРОГРАММА: ЧИТАЙ — КОПИ — ПОЛУЧАЙ === */}
       <ProgramSection />
+
+      {/* === ЦИТАТЫ === */}
+      <QuotesSection />
 
       {/* === FEATURES === */}
       <FeaturesSection />
@@ -468,7 +472,7 @@ const ProgramSection = () => (
           READ<span className="text-[var(--color-brand)]">.</span> THINK<span className="text-[var(--color-brand)]">.</span> SPEAK<span className="text-[var(--color-brand)]">.</span>
           <br />
           CREATE<span className="text-[var(--color-brand)]">.</span>{' '}
-          <span className="inline-block -rotate-2 px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
+          <span className="inline-block px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
         </h2>
         <p className="mt-6 text-[17px] md:text-[20px] text-[var(--color-text-secondary)] max-w-xl">
           Читай книги — получай баллы-карточки и обменивай их на призы.
@@ -482,7 +486,7 @@ const ProgramSection = () => (
 
       <div className="grid md:grid-cols-3 gap-4 mb-14">
         {PROGRAM_STEPS.map(s => (
-          <div key={s.n} className="toon-card toon-card-hover p-6">
+          <div key={s.n} className="apple-card card-lift p-6">
             <div className="w-10 h-10 rounded-full bg-[#1f2a5c] text-[#ffc93c] text-[18px] font-extrabold flex items-center justify-center mb-4">{s.n}</div>
             <div className="text-[20px] font-extrabold text-[var(--color-text-primary)] mb-1.5">{s.title}</div>
             <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">{s.text}</p>
@@ -513,6 +517,36 @@ const ProgramSection = () => (
     </div>
   </section>
 )
+
+/** Цитаты из книг — показываем, только если библиотекарь уже добавил их. */
+const QuotesSection = () => {
+  const [quotes, setQuotes] = useState([])
+  useEffect(() => {
+    fetch('/api/quotes?limit=12')
+      .then(r => (r.ok ? r.json() : []))
+      .then(d => setQuotes(Array.isArray(d) ? d : []))
+      .catch(() => {})
+  }, [])
+  if (!quotes.length) return null
+  return (
+    <section className="py-20 md:py-28 px-6">
+      <div className="max-w-[1100px] mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+        >
+          <div className="text-[13px] font-semibold text-[var(--color-brand)] mb-2">Цитаты из книг</div>
+          <h2 className="text-[36px] md:text-[52px] font-semibold tracking-tight leading-[1.05] mb-10 text-[var(--color-text-primary)]">
+            Мысли, которые<br />стоит запомнить.
+          </h2>
+          <QuoteFeature quotes={quotes} />
+        </motion.div>
+      </div>
+    </section>
+  )
+}
 
 const CtaSection = () => (
   <section className="py-24 md:py-32 px-6">

@@ -8,6 +8,7 @@ import { Button, Modal, Input } from '../../../components/ui'
 import { useGame } from '../../../components/game/GameContext'
 import CoinCard from '../../../components/game/CoinCard'
 import Confetti from '../../../components/game/Confetti'
+import PrizeVisual from '../../../components/game/PrizeVisual'
 import { motion } from 'framer-motion'
 
 const ORDER_STATUS = {
@@ -131,7 +132,7 @@ export default function ShopPage() {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[340px] rounded-[1.25rem] bg-[var(--color-bg-soft)] animate-pulse" />
+            <div key={i} className="h-[340px] rounded-[28px] bg-[var(--color-bg-soft)] animate-pulse" />
           ))}
         </div>
       ) : (
@@ -144,59 +145,53 @@ export default function ShopPage() {
                 key={p.id}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
-                transition={{ delay: i * 0.05 }}
-                className={`toon-card toon-card-hover hover-wiggle p-4 sm:p-5 flex flex-col ${enough ? '' : 'opacity-95'}`}
+                transition={{ delay: i * 0.06, duration: 0.7, ease: [0.2, 0.8, 0.2, 1] }}
+                className="apple-card card-lift p-3 sm:p-4 flex flex-col"
               >
-                <div className="relative w-full aspect-square flex items-center justify-center mb-3">
-                  <img
-                    src={p.image}
-                    alt={p.title}
-                    className={`wiggle-target w-[85%] h-[85%] ${enough ? '' : 'grayscale-[40%] opacity-80'}`}
-                  />
-                  {enough ? (
-                    <span className="absolute top-0 right-0 px-2 py-0.5 rounded-lg bg-[#20b486] text-white text-[11px] font-bold border-2 border-[var(--toon-ink)]">
-                      Можно взять!
-                    </span>
-                  ) : (
-                    <span className="absolute top-0 right-0 w-8 h-8 rounded-full bg-[var(--color-bg-card)] border-2 border-[var(--toon-ink)] flex items-center justify-center">
-                      <Lock size={14} className="text-[var(--color-text-primary)]" />
+                <div className="relative">
+                  <PrizeVisual code={p.code} className={enough ? '' : 'saturate-[0.6]'} />
+                  {enough && (
+                    <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[#1d1d1f] shadow-sm">
+                      Доступно
                     </span>
                   )}
                 </div>
-                <div className="font-bold text-[15px] sm:text-[18px] text-[var(--color-text-primary)] leading-tight text-center">{p.title}</div>
-                <div className="text-[12px] text-[var(--color-text-tertiary)] mt-1 line-clamp-2 min-h-[2.5em] text-center">{p.description}</div>
+                <div className="px-1 pt-4 flex-1 flex flex-col">
+                  <div className="flex items-start justify-between gap-2">
+                    <div className="font-semibold text-[15px] sm:text-[17px] text-[var(--color-text-primary)] leading-tight">{p.title}</div>
+                    <div className="text-[15px] font-semibold text-[var(--color-text-primary)] tabular-nums whitespace-nowrap">{p.price}</div>
+                  </div>
+                  <div className="text-[12px] text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{p.description}</div>
 
-                <div className="mt-3 flex items-center justify-center">
-                  <span className="toon-btn px-4 py-1.5 rounded-xl bg-[#ffc93c] text-[#1e293b] text-[15px] font-extrabold">
-                    {p.price} баллов
-                  </span>
+                  <div className="mt-auto pt-4">
+                    {!enough && (
+                      <div className="mb-3">
+                        <div className="h-1 rounded-full bg-[var(--color-bg-soft)] overflow-hidden">
+                          <motion.div
+                            initial={{ width: 0 }}
+                            animate={{ width: `${pct}%` }}
+                            transition={{ duration: 1, delay: 0.3 + i * 0.05, ease: [0.2, 0.8, 0.2, 1] }}
+                            className="h-full rounded-full bg-[var(--color-brand)]"
+                          />
+                        </div>
+                        <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">ещё {p.price - available} монет</div>
+                      </div>
+                    )}
+                    {isStudent && (
+                      <button
+                        disabled={!enough}
+                        onClick={() => { setBuying(p); setNote('') }}
+                        className={`apple-press w-full py-2.5 rounded-full text-[14px] font-medium ${
+                          enough
+                            ? 'bg-[var(--color-brand)] text-white hover:opacity-90'
+                            : 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)] cursor-not-allowed'
+                        }`}
+                      >
+                        {enough ? 'Обменять' : 'Пока не хватает'}
+                      </button>
+                    )}
+                  </div>
                 </div>
-                {!enough && (
-                  <>
-                    <div className="mt-3 h-2 rounded-full bg-[var(--color-bg-soft)] overflow-hidden border border-[var(--color-border)]">
-                      <motion.div
-                        initial={{ width: 0 }}
-                        animate={{ width: `${pct}%` }}
-                        transition={{ duration: 0.8, delay: 0.2 + i * 0.05 }}
-                        className="h-full rounded-full bg-[var(--color-brand)]"
-                      />
-                    </div>
-                    <div className="text-[11px] text-center text-[var(--color-text-tertiary)] mt-1">ещё {p.price - available} монет</div>
-                  </>
-                )}
-                {isStudent && (
-                  <button
-                    disabled={!enough}
-                    onClick={() => { setBuying(p); setNote('') }}
-                    className={`toon-btn mt-3 w-full py-2.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-1.5 ${
-                      enough
-                        ? 'bg-[var(--color-brand)] text-white hover:brightness-110'
-                        : 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)] cursor-not-allowed'
-                    }`}
-                  >
-                    {enough ? <><Gift size={15} /> Обменять</> : <><Lock size={14} /> Не хватает</>}
-                  </button>
-                )}
               </motion.div>
             )
           })}
@@ -213,7 +208,7 @@ export default function ShopPage() {
               const Icon = st.icon
               return (
                 <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                  <img src={o.image} alt="" className="w-12 h-12 shrink-0" />
+                  <PrizeVisual code={o.code} size="sm" className="shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)] truncate">{o.title}</div>
                     <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">
@@ -257,9 +252,7 @@ export default function ShopPage() {
         {buying && (
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <div className="toon-card !shadow-none w-20 h-20 !rounded-2xl flex items-center justify-center shrink-0">
-                <img src={buying.image} alt="" className="w-16 h-16" />
-              </div>
+              <PrizeVisual code={buying.code} size="lg" className="shrink-0" />
               <div>
                 <div className="font-bold text-[17px] text-[var(--color-text-primary)]">{buying.title}</div>
                 <div className="text-[13px] text-[var(--color-text-secondary)]">

@@ -69,15 +69,22 @@ export async function GET(req) {
       LIMIT 10
     `)
 
-    // 5. Выдачи по дням (последние 30 дней)
+    // 5. Выдачи и возвраты по дням за 30 дней.
+    // Дата — строкой 'YYYY-MM-DD' (раньше уходил объект Date и на графике
+    // были подписи вида «10-12T00:00:00.000Z»); возвраты — по дате возврата;
+    // дни без активности тоже есть (generate_series), чтобы линия не «прыгала».
     const timeline = await pool.query(`
-      SELECT DATE(borrowed_at) AS day,
-             COUNT(*) AS borrows_count,
-             COUNT(*) FILTER (WHERE status <> 'active') AS returns_count
-      FROM borrows
-      WHERE borrowed_at > NOW() - INTERVAL '30 days'
-      GROUP BY DATE(borrowed_at)
-      ORDER BY day ASC
+      WITH series AS (
+        SELECT generate_series(
+          (NOW() AT TIME ZONE 'Asia/Qyzylorda')::date - 29,
+          (NOW() AT TIME ZONE 'Asia/Qyzylorda')::date,
+          interval '1 day'
+        )::date AS day
+      )
+      SELECT to_char(s.day, 'YYYY-MM-DD') AS day,
+        (SELECT COUNT(*) FROM borrows WHERE (borrowed_at AT TIME ZONE 'Asia/Qyzylorda')::date = s.day)::int AS borrows_count,
+        (SELECT COUNT(*) FROM borrows WHERE (returned_at AT TIME ZONE 'Asia/Qyzylorda')::date = s.day)::int AS returns_count
+      FROM series s ORDER BY s.day
     `)
 
     // 6. Топ жанров

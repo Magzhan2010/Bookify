@@ -216,25 +216,44 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   .hover-wiggle:hover .wiggle-target { animation: wiggle 0.45s ease-in-out; }
   .sparkle { animation: sparkle 2.4s ease-in-out infinite; }
 
-  /* Карточки в «мультяшном» стиле: толстая обводка и сплошная тень */
-  .toon-card {
+  /* Карточки в духе Apple: без обводок, мягкая многослойная тень, крупное скругление */
+  .apple-card {
     background: var(--color-bg-card);
-    border: 3px solid var(--toon-ink);
-    border-radius: 1.25rem;
-    box-shadow: 6px 6px 0 0 var(--toon-ink);
-    transition: transform 0.18s ease, box-shadow 0.18s ease;
+    border-radius: 28px;
+    border: 1px solid var(--color-border);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03), 0 8px 28px rgba(0, 0, 0, 0.04);
+    transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.5s cubic-bezier(0.2, 0.8, 0.2, 1);
   }
-  .toon-card-hover:hover { transform: translate(-2px, -4px); box-shadow: 8px 10px 0 0 var(--toon-ink); }
-  .toon-btn {
-    border: 2px solid var(--toon-ink);
-    box-shadow: 2px 2px 0 0 var(--toon-ink);
-    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  .card-lift:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 24px 48px rgba(0, 0, 0, 0.08);
   }
-  .toon-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+  .card-lift:hover .prize-icon { transform: scale(1.12) rotate(-4deg); }
+  .apple-press { transition: transform 0.15s ease, opacity 0.2s ease, background-color 0.2s ease; }
+  .apple-press:active:not(:disabled) { transform: scale(0.97); }
+
+  /* Ползунок в стиле iOS */
+  .apple-range { -webkit-appearance: none; appearance: none; height: 6px; border-radius: 999px; cursor: pointer;
+    background: linear-gradient(90deg, var(--color-brand) var(--pct, 50%), var(--color-border) var(--pct, 50%)); }
+  .apple-range::-webkit-slider-thumb { -webkit-appearance: none; width: 26px; height: 26px; border-radius: 50%;
+    background: #fff; box-shadow: 0 1px 4px rgba(0,0,0,0.25), 0 0 0 0.5px rgba(0,0,0,0.06); transition: transform 0.15s ease; }
+  .apple-range::-webkit-slider-thumb:active { transform: scale(1.12); }
+  .apple-range::-moz-range-thumb { width: 26px; height: 26px; border: none; border-radius: 50%; background: #fff;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.25); }
+
+  /* Плавное появление при прокрутке (без JS) */
+  .reveal { animation: revealUp 0.9s cubic-bezier(0.2, 0.8, 0.2, 1) both; }
 }
 
-:root { --toon-ink: #1e293b; }
-.dark { --toon-ink: #cbd5e1; }
+@keyframes revealUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* Цвета рядов на графиках (проверены на различимость при дальтонизме
+   и контраст — отдельно для светлой и тёмной темы) */
+:root { --chart-1: #2f5bea; --chart-2: #1aa37a; --chart-3: #c97a00; --chart-seq: 47, 91, 234; }
+.dark { --chart-1: #5b8def; --chart-2: #1f9e7b; --chart-3: #c27a0e; --chart-seq: 91, 141, 239; }
 
 /* === Utilities === */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

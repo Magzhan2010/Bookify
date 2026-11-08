@@ -257,3 +257,18 @@ CREATE TABLE IF NOT EXISTS prize_orders (
   processed_at TIMESTAMPTZ,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+
+-- QUOTES: цитаты из книг с фото автора (добавляет библиотекарь)
+CREATE TABLE IF NOT EXISTS quotes (
+  id SERIAL PRIMARY KEY,
+  text TEXT NOT NULL,
+  author_name TEXT NOT NULL,
+  author_info TEXT,
+  book_title TEXT,
+  book_id INT REFERENCES books(id) ON DELETE SET NULL,
+  image TEXT,               -- data:URL загруженного фото или https-ссылка
+  active BOOLEAN NOT NULL DEFAULT TRUE,
+  created_by INT REFERENCES users(id) ON DELETE SET NULL,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
