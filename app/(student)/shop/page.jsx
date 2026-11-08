@@ -8,7 +8,8 @@ import { Button, Modal, Input } from '../../../components/ui'
 import { useGame } from '../../../components/game/GameContext'
 import CoinCard from '../../../components/game/CoinCard'
 import Confetti from '../../../components/game/Confetti'
-import PrizeVisual from '../../../components/game/PrizeVisual'
+import PrizeVisual, { ColorSwatches } from '../../../components/game/PrizeVisual'
+import { HIGHLIGHTER_COLORS, colorKeyFromNote } from '../../../lib/points'
 import { motion } from 'framer-motion'
 
 const ORDER_STATUS = {
@@ -26,6 +27,9 @@ export default function ShopPage() {
   const [saving, setSaving] = useState(false)
   const [role, setRole] = useState('student')
   const [boom, setBoom] = useState(0)
+  // Выбранный цвет текстовыделителя: на карточке и в окне обмена
+  const [color, setColor] = useState(HIGHLIGHTER_COLORS[0].key)
+  const colorLabel = HIGHLIGHTER_COLORS.find(c => c.key === color)?.label
 
   const load = async () => {
     const token = localStorage.getItem('token')
@@ -63,7 +67,7 @@ export default function ShopPage() {
       const res = await fetch('/api/shop/order', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ prizeId: buying.id, note })
+        body: JSON.stringify({ prizeId: buying.id, note, color: buying.code === 'highlighter' ? color : undefined })
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
@@ -149,7 +153,7 @@ export default function ShopPage() {
                 className="apple-card card-lift p-3 sm:p-4 flex flex-col"
               >
                 <div className="relative">
-                  <PrizeVisual code={p.code} className={enough ? '' : 'saturate-[0.6]'} />
+                  <PrizeVisual code={p.code} variant={p.code === 'highlighter' ? color : undefined} className={enough ? '' : 'saturate-[0.6]'} />
                   {enough && (
                     <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[#1d1d1f] shadow-sm">
                       Доступно
@@ -162,6 +166,12 @@ export default function ShopPage() {
                     <div className="text-[15px] font-semibold text-[var(--color-text-primary)] tabular-nums whitespace-nowrap">{p.price}</div>
                   </div>
                   <div className="text-[12px] text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{p.description}</div>
+                  {p.code === 'highlighter' && (
+                    <div className="mt-3">
+                      <ColorSwatches colors={HIGHLIGHTER_COLORS} value={color} onChange={setColor} size={20} />
+                      <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">Цвет: {colorLabel}</div>
+                    </div>
+                  )}
 
                   <div className="mt-auto pt-4">
                     {!enough && (
@@ -208,7 +218,7 @@ export default function ShopPage() {
               const Icon = st.icon
               return (
                 <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                  <PrizeVisual code={o.code} size="sm" className="shrink-0" />
+                  <PrizeVisual code={o.code} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)] truncate">{o.title}</div>
                     <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">
@@ -252,7 +262,7 @@ export default function ShopPage() {
         {buying && (
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <PrizeVisual code={buying.code} size="lg" className="shrink-0" />
+              <PrizeVisual code={buying.code} variant={buying.code === 'highlighter' ? color : undefined} size="lg" className="shrink-0" />
               <div>
                 <div className="font-bold text-[17px] text-[var(--color-text-primary)]">{buying.title}</div>
                 <div className="text-[13px] text-[var(--color-text-secondary)]">
@@ -260,6 +270,12 @@ export default function ShopPage() {
                 </div>
               </div>
             </div>
+            {buying.code === 'highlighter' && (
+              <div className="mb-1">
+                <div className="text-[13px] font-medium text-[var(--color-text-primary)] mb-2">Цвет: {colorLabel}</div>
+                <ColorSwatches colors={HIGHLIGHTER_COLORS} value={color} onChange={setColor} size={28} className="gap-2.5" />
+              </div>
+            )}
             {buying.needs_note && (
               <Input
                 label="Какую книгу ты хочешь?"

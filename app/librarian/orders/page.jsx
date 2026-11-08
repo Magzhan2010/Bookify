@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Gift, Check, X, Loader2 } from 'lucide-react'
 import { Button, EmptyState } from '../../../components/ui'
 import PrizeVisual from '../../../components/game/PrizeVisual'
+import { HIGHLIGHTER_COLORS, colorKeyFromNote } from '../../../lib/points'
 
 const FILTERS = [
   { key: 'pending', label: 'Ждут выдачи' },
@@ -101,7 +102,7 @@ export default function LibrarianOrdersPage() {
           {orders.map(o => (
             <div key={o.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <PrizeVisual code={o.prize_code} size="sm" className="shrink-0 !w-14 !h-14" />
+                <PrizeVisual code={o.prize_code} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0 !w-14 !h-14" />
                 <div className="min-w-0">
                   <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">
                     {o.prize_title} <span className="text-[var(--color-text-tertiary)] font-normal">· {o.price} монет</span>
@@ -109,7 +110,14 @@ export default function LibrarianOrdersPage() {
                   <div className="text-[13px] text-[var(--color-text-secondary)] truncate">
                     {o.student_name}{o.student_class ? ` · ${o.student_class} класс` : ''}
                   </div>
-                  {o.note && <div className="text-[12px] text-[var(--color-brand)] mt-0.5">«{o.note}»</div>}
+                  {o.note && (colorKeyFromNote(o.note) ? (
+                    <div className="text-[12px] text-[var(--color-text-primary)] mt-0.5 flex items-center gap-1.5 font-medium">
+                      <span className="w-3 h-3 rounded-full" style={{ background: HIGHLIGHTER_COLORS.find(c => c.key === colorKeyFromNote(o.note))?.hex, boxShadow: 'inset 0 0 0 1px rgba(0,0,0,0.1)' }} />
+                      {o.note}
+                    </div>
+                  ) : (
+                    <div className="text-[12px] text-[var(--color-brand)] mt-0.5">«{o.note}»</div>
+                  ))}
                   <div className="text-[11px] text-[var(--color-text-tertiary)] mt-0.5">
                     {new Date(o.created_at).toLocaleString('ru-RU', { day: 'numeric', month: 'short', hour: '2-digit', minute: '2-digit' })}
                     {o.status !== 'pending' && ` · ${STATUS_LABEL[o.status]}${o.processed_by_name ? ` (${o.processed_by_name})` : ''}`}

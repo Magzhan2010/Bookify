@@ -287,3 +287,8 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   }
   main { animation: none; }
 }
+/* Плавная смена фото приза (например, при выборе цвета текстовыделителя) */
+@keyframes prizeFade {
+  from { opacity: 0; transform: scale(0.96); }
+  to { opacity: 1; transform: scale(1); }
+}

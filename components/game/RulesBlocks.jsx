@@ -4,8 +4,8 @@ import { useEffect, useRef, useState } from 'react'
 import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { BookOpen, MessageSquare, Video, Mic, ShieldAlert } from 'lucide-react'
 import CoinCard from './CoinCard'
-import PrizeVisual from './PrizeVisual'
-import { PAGE_TIERS, BONUSES, PRIZES_PREVIEW, LEVELS, tierForPages } from '../../lib/points'
+import PrizeVisual, { ColorSwatches } from './PrizeVisual'
+import { PAGE_TIERS, BONUSES, PRIZES_PREVIEW, LEVELS, tierForPages, HIGHLIGHTER_COLORS } from '../../lib/points'
 
 /**
  * Блоки правил программы — для страницы «Как это работает» и лендинга.
@@ -310,6 +310,7 @@ function AnimatedNumber({ value }) {
 
 /* ------------------------------------------------------------------ */
 export function PrizesPreview() {
+  const [color, setColor] = useState(HIGHLIGHTER_COLORS[0].key)
   return (
     <div className="grid grid-cols-2 sm:grid-cols-3 gap-4 sm:gap-5">
       {PRIZES_PREVIEW.map((p, i) => (
@@ -321,11 +322,14 @@ export function PrizesPreview() {
           transition={{ delay: i * 0.06, duration: 0.7, ease: EASE }}
           className="apple-card card-lift p-3 sm:p-4 flex flex-col"
         >
-          <PrizeVisual code={p.code} />
+          <PrizeVisual code={p.code} variant={p.code === 'highlighter' ? color : undefined} />
           <div className="px-1 pt-4 pb-1 flex items-end justify-between gap-2">
             <div className="text-[14px] sm:text-[16px] font-semibold text-[var(--color-text-primary)] leading-tight">{p.title}</div>
             <div className="text-[13px] sm:text-[14px] font-semibold text-[var(--color-text-secondary)] tabular-nums whitespace-nowrap">{p.price}</div>
           </div>
+          {p.code === 'highlighter' && (
+            <ColorSwatches colors={HIGHLIGHTER_COLORS} value={color} onChange={setColor} size={16} className="px-1 pt-2" />
+          )}
         </motion.div>
       ))}
     </div>
