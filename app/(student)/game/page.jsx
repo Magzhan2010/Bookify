@@ -5,7 +5,7 @@ import { BookOpen, PenLine, BadgeCheck, Coins, Gift, ArrowRight } from 'lucide-r
 import { useGame } from '../../../components/game/GameContext'
 import CoinCard from '../../../components/game/CoinCard'
 import {
-  PagesTable, BonusList, PrizesPreview, LevelsList, AiWarning
+  PointsSystem, PrizesPreview, LevelsList, AiWarning
 } from '../../../components/game/RulesBlocks'
 
 const STEPS = [
@@ -46,7 +46,7 @@ export default function GamePage() {
           {STEPS.map((s, i) => {
             const Icon = s.icon
             return (
-              <div key={s.title} className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-4">
+              <div key={s.title} className="toon-card toon-card-hover p-4">
                 <div className="flex items-center gap-2 mb-3">
                   <span className="w-7 h-7 rounded-full bg-[#1f2a5c] text-white text-[13px] font-bold flex items-center justify-center">{i + 1}</span>
                   <Icon size={18} className="text-[var(--color-brand)]" />
@@ -62,10 +62,7 @@ export default function GamePage() {
       {/* Система баллов */}
       <section>
         <SectionTitle>Система баллов</SectionTitle>
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-          <PagesTable />
-          <BonusList />
-        </div>
+        <PointsSystem />
       </section>
 
       {/* Призы */}

@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 
@@ -20,6 +20,7 @@ const navItems = [
   { href: '/librarian/books', label: 'Книги', icon: Library },
   { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
   { href: '/librarian/students', label: 'Ученики', icon: Users },
+  { href: '/librarian/leaders', label: 'Лидеры чтения', icon: Trophy },
   { href: '/librarian/history', label: 'История', icon: History },
   { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 },
   { href: '/librarian/books/add', label: 'Добавить книгу', icon: PlusCircle }

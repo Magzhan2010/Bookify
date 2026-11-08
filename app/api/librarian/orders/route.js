@@ -26,7 +26,7 @@ export async function GET(req) {
     const [orders, counts] = await Promise.all([
       pool.query(
         `SELECT o.id, o.price, o.note, o.status, o.created_at, o.processed_at,
-                p.title AS prize_title, p.image AS prize_image,
+                p.title AS prize_title, p.image AS prize_image, p.code AS prize_code,
                 u.id AS student_id, u.name AS student_name, u.class_name AS student_class,
                 lib.name AS processed_by_name
            FROM prize_orders o

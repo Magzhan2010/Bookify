@@ -6,7 +6,7 @@ import Link from 'next/link'
 import { toast } from 'sonner'
 import {
   BookOpen, BookMarked, ArrowDownToLine, AlertTriangle, Users,
-  TrendingUp, Clock, PenLine, Star, Check, X, Loader2, Award
+  TrendingUp, Clock, UserPlus, PenLine, Star, Check, X, Loader2, Award
 } from 'lucide-react'
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
@@ -153,12 +153,15 @@ export default function LibrarianDashboard() {
             {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' })}
           </p>
         </div>
-        <div className="flex gap-2">
+        <div className="flex flex-wrap gap-2">
           <Link href="/librarian/issue" className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium transition-colors flex items-center gap-2">
             <BookMarked size={14} /> Выдать книгу
           </Link>
           <Link href="/librarian/returns" className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[13px] font-medium hover:bg-[var(--color-bg-soft)] transition-colors flex items-center gap-2">
             <ArrowDownToLine size={14} /> Принять возврат
+          </Link>
+          <Link href="/librarian/students?add=1" className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[13px] font-medium hover:bg-[var(--color-bg-soft)] transition-colors flex items-center gap-2">
+            <UserPlus size={14} /> Добавить учеников
           </Link>
         </div>
       </motion.div>

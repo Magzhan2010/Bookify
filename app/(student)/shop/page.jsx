@@ -7,7 +7,8 @@ import { ShoppingBag, Lock, Check, Clock, X, Gift, Info } from 'lucide-react'
 import { Button, Modal, Input } from '../../../components/ui'
 import { useGame } from '../../../components/game/GameContext'
 import CoinCard from '../../../components/game/CoinCard'
-import { PRIZE_TINTS } from '../../../lib/points'
+import Confetti from '../../../components/game/Confetti'
+import { motion } from 'framer-motion'
 
 const ORDER_STATUS = {
   pending: { label: 'Ждёт выдачи', icon: Clock, cls: 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]' },
@@ -23,6 +24,7 @@ export default function ShopPage() {
   const [note, setNote] = useState('')
   const [saving, setSaving] = useState(false)
   const [role, setRole] = useState('student')
+  const [boom, setBoom] = useState(0)
 
   const load = async () => {
     const token = localStorage.getItem('token')
@@ -65,6 +67,7 @@ export default function ShopPage() {
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
       toast.success(`🎉 ${buying.title} — твой!`, { description: 'Забери приз у библиотекаря' })
+      setBoom(b => b + 1)
       setBuying(null)
       setNote('')
       load()
@@ -96,6 +99,7 @@ export default function ShopPage() {
 
   return (
     <main className="max-w-[1100px] mx-auto px-4 sm:px-6 py-8 sm:py-10">
+      <Confetti fire={boom} />
       {/* Шапка с балансом */}
       <section className="rounded-[28px] p-6 sm:p-8 mb-8 text-white bg-gradient-to-br from-[#1f2a5c] via-[#22348a] to-[#2f5bea] relative overflow-hidden">
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
@@ -127,68 +131,73 @@ export default function ShopPage() {
       {loading ? (
         <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
           {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="h-[320px] rounded-3xl bg-[var(--color-bg-soft)] animate-pulse" />
+            <div key={i} className="h-[340px] rounded-[1.25rem] bg-[var(--color-bg-soft)] animate-pulse" />
           ))}
         </div>
       ) : (
-        <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
-          {(data?.prizes || []).map(p => {
+        <div className="grid grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+          {(data?.prizes || []).map((p, i) => {
             const enough = available >= p.price
             const pct = Math.min(100, Math.round((available / p.price) * 100))
             return (
-              <div
+              <motion.div
                 key={p.id}
-                className={`group rounded-3xl border bg-[var(--color-bg-card)] p-3 sm:p-4 flex flex-col transition-all ${
-                  enough
-                    ? 'border-[#ffc93c] shadow-[0_6px_24px_rgba(255,201,60,0.25)] hover:-translate-y-1'
-                    : 'border-[var(--color-border)]'
-                }`}
+                initial={{ opacity: 0, y: 24 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: i * 0.05 }}
+                className={`toon-card toon-card-hover hover-wiggle p-4 sm:p-5 flex flex-col ${enough ? '' : 'opacity-95'}`}
               >
-                <div
-                  className="relative rounded-2xl aspect-square flex items-center justify-center mb-3 overflow-hidden"
-                  style={{ background: PRIZE_TINTS[p.code] || '#eef2ff' }}
-                >
+                <div className="relative w-full aspect-square flex items-center justify-center mb-3">
                   <img
                     src={p.image}
                     alt={p.title}
-                    className={`w-[80%] h-[80%] transition-transform duration-300 group-hover:scale-105 group-hover:-rotate-3 ${enough ? '' : 'grayscale-[35%]'}`}
+                    className={`wiggle-target w-[85%] h-[85%] ${enough ? '' : 'grayscale-[40%] opacity-80'}`}
                   />
-                  {!enough && (
-                    <span className="absolute top-2 right-2 w-7 h-7 rounded-full bg-white/90 flex items-center justify-center">
-                      <Lock size={13} className="text-[#1f2a5c]" />
+                  {enough ? (
+                    <span className="absolute top-0 right-0 px-2 py-0.5 rounded-lg bg-[#20b486] text-white text-[11px] font-bold border-2 border-[var(--toon-ink)]">
+                      Можно взять!
+                    </span>
+                  ) : (
+                    <span className="absolute top-0 right-0 w-8 h-8 rounded-full bg-[var(--color-bg-card)] border-2 border-[var(--toon-ink)] flex items-center justify-center">
+                      <Lock size={14} className="text-[var(--color-text-primary)]" />
                     </span>
                   )}
                 </div>
-                <div className="font-bold text-[14px] sm:text-[16px] text-[var(--color-text-primary)] leading-tight">{p.title}</div>
-                <div className="text-[12px] text-[var(--color-text-tertiary)] mt-0.5 line-clamp-2 min-h-[2.5em]">{p.description}</div>
+                <div className="font-bold text-[15px] sm:text-[18px] text-[var(--color-text-primary)] leading-tight text-center">{p.title}</div>
+                <div className="text-[12px] text-[var(--color-text-tertiary)] mt-1 line-clamp-2 min-h-[2.5em] text-center">{p.description}</div>
 
-                <div className="mt-3 flex items-center justify-between gap-2">
-                  <span className="px-3 py-1 rounded-full bg-[#ffc93c] text-[#1f2a5c] text-[14px] font-extrabold">
-                    {p.price}
+                <div className="mt-3 flex items-center justify-center">
+                  <span className="toon-btn px-4 py-1.5 rounded-xl bg-[#ffc93c] text-[#1e293b] text-[15px] font-extrabold">
+                    {p.price} баллов
                   </span>
-                  {!enough && (
-                    <span className="text-[11px] text-[var(--color-text-tertiary)]">ещё {p.price - available}</span>
-                  )}
                 </div>
                 {!enough && (
-                  <div className="mt-2 h-1.5 rounded-full bg-[var(--color-bg-soft)] overflow-hidden">
-                    <div className="h-full rounded-full bg-[var(--color-brand)]" style={{ width: `${pct}%` }} />
-                  </div>
+                  <>
+                    <div className="mt-3 h-2 rounded-full bg-[var(--color-bg-soft)] overflow-hidden border border-[var(--color-border)]">
+                      <motion.div
+                        initial={{ width: 0 }}
+                        animate={{ width: `${pct}%` }}
+                        transition={{ duration: 0.8, delay: 0.2 + i * 0.05 }}
+                        className="h-full rounded-full bg-[var(--color-brand)]"
+                      />
+                    </div>
+                    <div className="text-[11px] text-center text-[var(--color-text-tertiary)] mt-1">ещё {p.price - available} монет</div>
+                  </>
                 )}
                 {isStudent && (
-                  <Button
-                    size="sm"
-                    className="mt-3"
-                    fullWidth
-                    variant={enough ? 'primary' : 'ghost'}
+                  <button
                     disabled={!enough}
-                    icon={enough ? Gift : Lock}
                     onClick={() => { setBuying(p); setNote('') }}
+                    className={`toon-btn mt-3 w-full py-2.5 rounded-xl text-[14px] font-bold flex items-center justify-center gap-1.5 ${
+                      enough
+                        ? 'bg-[var(--color-brand)] text-white hover:brightness-110'
+                        : 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)] cursor-not-allowed'
+                    }`}
                   >
-                    {enough ? 'Обменять' : 'Не хватает'}
-                  </Button>
+                    {enough ? <><Gift size={15} /> Обменять</> : <><Lock size={14} /> Не хватает</>}
+                  </button>
                 )}
-              </div>
+              </motion.div>
             )
           })}
         </div>
@@ -248,7 +257,7 @@ export default function ShopPage() {
         {buying && (
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <div className="w-20 h-20 rounded-2xl flex items-center justify-center shrink-0" style={{ background: PRIZE_TINTS[buying.code] || '#eef2ff' }}>
+              <div className="toon-card !shadow-none w-20 h-20 !rounded-2xl flex items-center justify-center shrink-0">
                 <img src={buying.image} alt="" className="w-16 h-16" />
               </div>
               <div>

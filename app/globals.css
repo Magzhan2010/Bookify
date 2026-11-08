@@ -154,11 +154,16 @@ body {
   transition: background-color 0.3s ease, color 0.3s ease;
 }
 
-h1, h2, h3, h4 {
-  font-family: var(--font-display);
-  letter-spacing: -0.022em;
-  color: var(--color-text-primary);
-  font-weight: 600;
+/* В base-слое, чтобы классы Tailwind (text-white и т.п.) могли перекрыть цвет.
+   Раньше правило было вне слоя и перебивало утилиты: белые заголовки
+   на тёмных блоках становились тёмными и пропадали. */
+@layer base {
+  h1, h2, h3, h4 {
+    font-family: var(--font-display);
+    letter-spacing: -0.022em;
+    color: var(--color-text-primary);
+    font-weight: 600;
+  }
 }
 
 /* === Animation === */
@@ -172,6 +177,64 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   0% { background-position: -200% 0; }
   100% { background-position: 200% 0; }
 }
+
+/* === Игра: «живые» анимации === */
+@keyframes coinFloat {
+  0%, 100% { transform: translateY(0) rotate(var(--tilt, 0deg)); }
+  50%      { transform: translateY(-8px) rotate(var(--tilt, 0deg)); }
+}
+@keyframes coinSheen {
+  0%   { transform: translateX(-120%) skewX(-20deg); }
+  60%, 100% { transform: translateX(220%) skewX(-20deg); }
+}
+@keyframes wiggle {
+  0%, 100% { transform: rotate(0deg); }
+  25% { transform: rotate(-8deg); }
+  75% { transform: rotate(8deg); }
+}
+@keyframes sparkle {
+  0%, 100% { opacity: 0; transform: scale(0.4) rotate(0deg); }
+  50%      { opacity: 1; transform: scale(1) rotate(90deg); }
+}
+@keyframes confettiFall {
+  0%   { transform: translate(0, 0) rotate(0); opacity: 1; }
+  100% { transform: translate(var(--dx), 110vh) rotate(var(--rot)); opacity: 0.9; }
+}
+
+@layer components {
+  /* Плавающая карточка-монета с бликом */
+  .coin-float { animation: coinFloat 4s ease-in-out infinite; }
+  .coin-sheen { position: relative; overflow: hidden; border-radius: 10px; }
+  .coin-sheen::after {
+    content: '';
+    position: absolute; inset: 0;
+    width: 40%;
+    background: linear-gradient(90deg, transparent, rgba(255,255,255,0.65), transparent);
+    animation: coinSheen 3.5s ease-in-out infinite;
+    pointer-events: none;
+  }
+  .hover-wiggle:hover .wiggle-target { animation: wiggle 0.45s ease-in-out; }
+  .sparkle { animation: sparkle 2.4s ease-in-out infinite; }
+
+  /* Карточки в «мультяшном» стиле: толстая обводка и сплошная тень */
+  .toon-card {
+    background: var(--color-bg-card);
+    border: 3px solid var(--toon-ink);
+    border-radius: 1.25rem;
+    box-shadow: 6px 6px 0 0 var(--toon-ink);
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
+  }
+  .toon-card-hover:hover { transform: translate(-2px, -4px); box-shadow: 8px 10px 0 0 var(--toon-ink); }
+  .toon-btn {
+    border: 2px solid var(--toon-ink);
+    box-shadow: 2px 2px 0 0 var(--toon-ink);
+    transition: transform 0.1s ease, box-shadow 0.1s ease;
+  }
+  .toon-btn:active:not(:disabled) { transform: translate(2px, 2px); box-shadow: none; }
+}
+
+:root { --toon-ink: #1e293b; }
+.dark { --toon-ink: #cbd5e1; }
 
 /* === Utilities === */
 .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }

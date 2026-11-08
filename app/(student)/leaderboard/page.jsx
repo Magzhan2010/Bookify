@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { motion } from 'framer-motion'
 import { Trophy, Crown, BookOpen, School, Users } from 'lucide-react'
 import { useGame } from '../../../components/game/GameContext'
 import { levelFor } from '../../../lib/points'
@@ -80,8 +81,14 @@ export default function LeaderboardPage() {
               const l = top3.find(x => x.place === p.place) || (p.place === 1 ? top3[0] : null)
               if (!l) return <div key={p.place} />
               return (
-                <div key={p.place} className="flex flex-col items-center text-center">
-                  {p.place === 1 && <Crown size={26} className="text-[#ffc93c] mb-1" fill="#ffc93c" />}
+                <motion.div
+                  key={`${cls}-${p.place}`}
+                  initial={{ opacity: 0, y: 40 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  transition={{ delay: p.place === 1 ? 0.25 : p.place === 2 ? 0.1 : 0.4, type: 'spring', stiffness: 200, damping: 18 }}
+                  className="flex flex-col items-center text-center"
+                >
+                  {p.place === 1 && <Crown size={26} className="text-[#ffc93c] mb-1 coin-float" fill="#ffc93c" />}
                   <Avatar name={l.name} size={p.place === 1 ? 64 : 52} ring={p.color} highlight={l.id === me} />
                   <div className="mt-2 text-[13px] sm:text-[14px] font-bold text-[var(--color-text-primary)] line-clamp-1 max-w-full">{l.name}</div>
                   <div className="text-[11px] text-[var(--color-text-tertiary)]">{l.class_name ? `${l.class_name} кл.` : ''}</div>
@@ -89,7 +96,7 @@ export default function LeaderboardPage() {
                     <div className="text-[22px] leading-none">{p.medal}</div>
                     <div className="text-[18px] sm:text-[22px] font-extrabold text-[#1f2a5c] mt-1">{l.earned}</div>
                   </div>
-                </div>
+                </motion.div>
               )
             })}
           </div>

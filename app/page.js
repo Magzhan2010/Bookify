@@ -6,7 +6,7 @@ import Image from 'next/image'
 import { useRef } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
 import CoinCard from '../components/game/CoinCard'
-import { PagesTable, BonusList, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
+import { PointsSystem, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import {
   BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
   ArrowRight, ArrowUpRight, Library, ShieldCheck, Zap, Heart, Clock,
@@ -482,7 +482,7 @@ const ProgramSection = () => (
 
       <div className="grid md:grid-cols-3 gap-4 mb-14">
         {PROGRAM_STEPS.map(s => (
-          <div key={s.n} className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-6">
+          <div key={s.n} className="toon-card toon-card-hover p-6">
             <div className="w-10 h-10 rounded-full bg-[#1f2a5c] text-[#ffc93c] text-[18px] font-extrabold flex items-center justify-center mb-4">{s.n}</div>
             <div className="text-[20px] font-extrabold text-[var(--color-text-primary)] mb-1.5">{s.title}</div>
             <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">{s.text}</p>
@@ -491,18 +491,8 @@ const ProgramSection = () => (
       </div>
 
       <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Система баллов</h3>
-      <div className="grid lg:grid-cols-2 gap-4 mb-6">
-        <PagesTable />
-        <BonusList />
-      </div>
-      <div className="rounded-3xl bg-[var(--color-bg-card)] border border-[var(--color-border)] p-5 md:p-6 mb-14">
-        <div className="text-[15px] font-semibold text-[var(--color-text-primary)] mb-1">Баллы приходят карточками</div>
-        <p className="text-[14px] text-[var(--color-text-secondary)] mb-4">
-          Все карточки собираются в профиле ученика — как коллекция.
-        </p>
-        <div className="flex flex-wrap gap-3">
-          {[5, 10, 15, 20, 25].map(v => <CoinCard key={v} value={v} size="md" />)}
-        </div>
+      <div className="mb-14">
+        <PointsSystem />
       </div>
 
       <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Призы</h3>
