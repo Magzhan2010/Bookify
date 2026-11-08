@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { useArea } from '../../../lib/useArea'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Trophy, BookOpen, Coins, ChevronDown, Clock, CheckCircle2, Loader2 } from 'lucide-react'
 
@@ -13,6 +14,7 @@ const REVIEW = {
 }
 
 export default function LibrarianLeadersPage() {
+  const { team, base } = useArea()
   const [cls, setCls] = useState('')
   const [sort, setSort] = useState('books')
   const [data, setData] = useState(null)
@@ -144,7 +146,7 @@ export default function LibrarianLeadersPage() {
                             {l.books > l.last_books.length && (
                               <div className="text-[12px] text-[var(--color-text-tertiary)]">…и ещё {l.books - l.last_books.length}</div>
                             )}
-                            <Link href={`/librarian/students/${l.id}`} className="inline-block pt-1 text-[12px] font-semibold text-[var(--color-brand)]">
+                            <Link href={`${base}/students/${l.id}`} className="inline-block pt-1 text-[12px] font-semibold text-[var(--color-brand)]">
                               Карточка ученика →
                             </Link>
                           </div>

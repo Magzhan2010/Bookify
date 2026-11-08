@@ -19,7 +19,7 @@ import { requireAuth } from '../../../../lib/auth'
  * В ответе по каждой книге: сколько экземпляров на руках и у кого именно.
  */
 export async function GET(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

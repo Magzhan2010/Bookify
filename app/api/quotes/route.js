@@ -36,7 +36,7 @@ export async function GET(req) {
  * Body: { text, author_name, author_info?, book_title?, book_id?, image? }
  */
 export async function POST(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   let body

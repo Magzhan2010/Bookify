@@ -7,24 +7,46 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote, Users2
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
+import { useTeamMe } from '../../lib/useTeamMe'
 
-const navItems = [
-  { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
-  { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
-  { href: '/librarian/orders', label: 'Призы', icon: Gift, badge: 'orders' },
-  { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
-  { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
-  { href: '/librarian/books', label: 'Книги', icon: Library },
-  { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
-  { href: '/librarian/students', label: 'Ученики', icon: Users },
-  { href: '/librarian/leaders', label: 'Лидеры чтения', icon: Trophy },
-  { href: '/librarian/quotes', label: 'Цитаты', icon: Quote },
-  { href: '/librarian/history', label: 'История', icon: History },
-  { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 },
-  { href: '/librarian/books/add', label: 'Добавить книгу', icon: PlusCircle }
+// Меню сгруппировано: что делаешь каждый день → фонд → ученики → цифры
+const navGroups = [
+  {
+    title: 'Ежедневно',
+    items: [
+      { href: '/librarian', label: 'Дашборд', icon: LayoutDashboard, exact: true },
+      { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
+      { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
+      { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
+      { href: '/librarian/orders', label: 'Призы', icon: Gift, badge: 'orders' }
+    ]
+  },
+  {
+    title: 'Библиотека',
+    items: [
+      { href: '/librarian/books', label: 'Книги', icon: Library, exact: true },
+      { href: '/librarian/books/add', label: 'Добавить книгу', icon: PlusCircle },
+      { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
+      { href: '/librarian/quotes', label: 'Цитаты', icon: Quote }
+    ]
+  },
+  {
+    title: 'Ученики',
+    items: [
+      { href: '/librarian/students', label: 'Ученики', icon: Users },
+      { href: '/librarian/leaders', label: 'Лидеры чтения', icon: Trophy }
+    ]
+  },
+  {
+    title: 'Аналитика',
+    items: [
+      { href: '/librarian/analytics', label: 'Аналитика', icon: BarChart3 },
+      { href: '/librarian/history', label: 'История', icon: History }
+    ]
+  }
 ]
 
 export default function LibrarianLayout({ children }) {
@@ -35,6 +57,7 @@ export default function LibrarianLayout({ children }) {
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [pendingCount, setPendingCount] = useState(0)
   const [pendingOrders, setPendingOrders] = useState(0)
+  const teamMe = useTeamMe()
 
   // Счётчик ожидающих заявок в меню
   useEffect(() => {
@@ -133,35 +156,50 @@ export default function LibrarianLayout({ children }) {
             <ThemeToggle size="md" />
           </div>
 
-          <nav className="flex-1 overflow-y-auto px-3 py-4 space-y-0.5">
-            {navItems.map(item => {
-              const Icon = item.icon
-              const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
-              const badgeValue =
-                item.badge === 'requests' ? pendingCount :
-                item.badge === 'orders' ? pendingOrders : 0
-              const badge = badgeValue > 0 ? badgeValue : null
-              return (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  onClick={() => setSidebarOpen(false)}
-                  className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-all ${
-                    active
-                      ? 'bg-[var(--color-brand)] text-white'
-                      : 'text-[var(--color-text-secondary)] hover:bg-black/[0.04] hover:text-[var(--color-text-primary)]'
-                  }`}
-                >
-                  <Icon size={16} />
-                  <span className="flex-1">{item.label}</span>
-                  {badge && (
-                    <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-danger)] text-white text-[11px] font-semibold flex items-center justify-center">
-                      {badge > 99 ? '99+' : badge}
-                    </span>
-                  )}
-                </Link>
-              )
-            })}
+          <nav className="flex-1 overflow-y-auto px-3 py-4">
+            {navGroups.map(group => (
+              <div key={group.title} className="mb-3 space-y-0.5">
+                <div className="px-3 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">{group.title}</div>
+                {group.items.map(item => {
+                  const Icon = item.icon
+                  const active = item.exact ? pathname === item.href : pathname.startsWith(item.href)
+                  const badgeValue =
+                    item.badge === 'requests' ? pendingCount :
+                    item.badge === 'orders' ? pendingOrders : 0
+                  const badge = badgeValue > 0 ? badgeValue : null
+                  return (
+                    <Link
+                      key={item.href}
+                      href={item.href}
+                      onClick={() => setSidebarOpen(false)}
+                      className={`flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium transition-all ${
+                        active
+                          ? 'bg-[var(--color-brand)] text-white'
+                          : 'text-[var(--color-text-secondary)] hover:bg-black/[0.04] hover:text-[var(--color-text-primary)]'
+                      }`}
+                    >
+                      <Icon size={16} />
+                      <span className="flex-1">{item.label}</span>
+                      {badge && (
+                        <span className="min-w-[20px] h-5 px-1.5 rounded-full bg-[var(--color-danger)] text-white text-[11px] font-semibold flex items-center justify-center">
+                          {badge > 99 ? '99+' : badge}
+                        </span>
+                      )}
+                    </Link>
+                  )
+                })}
+              </div>
+            ))}
+            {teamMe && (
+              <Link
+                href="/team"
+                onClick={() => setSidebarOpen(false)}
+                className="mt-1 flex items-center gap-3 px-3 py-2 rounded-lg text-[14px] font-medium text-[var(--color-text-primary)] bg-[var(--color-text-primary)]/[0.05] hover:bg-[var(--color-text-primary)]/[0.08]"
+              >
+                <Users2 size={16} />
+                <span className="flex-1">Командная платформа</span>
+              </Link>
+            )}
           </nav>
 
           <div className="p-3 border-t border-[var(--color-border)]">

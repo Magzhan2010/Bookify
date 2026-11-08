@@ -14,7 +14,7 @@ import { emailBaseFromName, generatePassword, pickFreeEmail } from '../../../../
  * в открытом виде).
  */
 export async function POST(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   let body

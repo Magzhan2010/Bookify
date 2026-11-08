@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useArea } from '../../../lib/useArea'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
 import {
@@ -28,6 +29,7 @@ const SORTS = [
 
 export default function LibrarianBooksPage() {
   const router = useRouter()
+  const { team, base } = useArea()
 
   const [books, setBooks] = useState([])
   const [genres, setGenres] = useState([])
@@ -158,7 +160,7 @@ export default function LibrarianBooksPage() {
           </div>
         </div>
         <Button
-          onClick={() => router.push('/librarian/books/add')}
+          onClick={() => router.push(`${base}/books/add`)}
           icon={Plus}
           size="sm"
         >
@@ -371,7 +373,7 @@ export default function LibrarianBooksPage() {
                         >
                           <RotateCcw size={12} /> Вернуть
                         </button>
-                      ) : (
+                      ) : team ? null : (
                         <button
                           onClick={() => router.push(`/librarian/issue?book=${b.id}`)}
                           disabled={b.available_copies <= 0}

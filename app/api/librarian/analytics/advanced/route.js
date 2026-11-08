@@ -10,7 +10,7 @@ const PERIODS = { 7: 'day', 30: 'day', 90: 'week', 365: 'month' }
  * Расширенная аналитика за период + сравнение с предыдущим таким же периодом.
  */
 export async function GET(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

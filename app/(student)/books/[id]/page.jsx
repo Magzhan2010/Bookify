@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
+import { useTeamMe } from '../../../../lib/useTeamMe'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '../../../../components/ThemeContext'
@@ -219,6 +220,7 @@ const Book = () => {
   const [book, setBook] = useState(null)
   const [requestLoading, setRequestLoading] = useState(false)
   const [userRole, setUserRole] = useState(null)
+  const teamMe = useTeamMe()
   const [userId, setUserId] = useState(null)
   const [myBorrow, setMyBorrow] = useState(null)
   const [myRequest, setMyRequest] = useState(null)
@@ -516,6 +518,8 @@ const Book = () => {
   }
 
   const isLibrarian = userRole === 'librarian'
+  // Редактировать и архивировать книгу могут ещё и участники командной платформы
+  const canEditBook = isLibrarian || !!teamMe
 
   // === Библиотекарь: сохранить изменения ===
   const handleSaveEdit = async () => {
@@ -817,8 +821,9 @@ const Book = () => {
           </button>
 
           <div className="flex items-center gap-2">
-            {isLibrarian && (
+            {canEditBook && (
               <>
+                {isLibrarian && (
                 <button
                   onClick={() => setIssueOpen(true)}
                   disabled={book.archived_at || book.available_copies <= 0}
@@ -833,6 +838,7 @@ const Book = () => {
                 >
                   <Send size={13} /> Выдать
                 </button>
+                )}
                 <button
                   onClick={() => setEditMode(!editMode)}
                   className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[12px] font-medium transition-colors ${

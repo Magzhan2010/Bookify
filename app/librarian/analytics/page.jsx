@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
+import { useArea } from '../../../lib/useArea'
 import { motion } from 'framer-motion'
 import {
   ArrowUpRight, ArrowDownRight, Minus, BookOpen, Users, MessageSquare, Coins, Gift, Clock,
@@ -27,6 +28,7 @@ const DOW = ['Пн', 'Вт', 'Ср', 'Чт', 'Пт', 'Сб', 'Вс']
 const HOURS = Array.from({ length: 12 }, (_, i) => i + 8) // 8:00–19:00
 
 export default function AnalyticsPage() {
+  const { team, base } = useArea()
   const [days, setDays] = useState(30)
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -99,10 +101,10 @@ export default function AnalyticsPage() {
 
           {/* Сейчас */}
           <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <NowTile label="На руках сейчас" value={s.on_hands} href="/librarian/returns" />
-            <NowTile label="Просрочено" value={s.overdue} href="/librarian/lookup?overdue=true" alert={s.overdue > 0} icon={AlertTriangle} />
-            <NowTile label="Заявок ждут" value={s.open_requests} href="/librarian/requests" icon={Inbox} />
-            <NowTile label="Отзывов и призов ждут" value={(s.pending_reviews || 0) + (s.pending_prizes || 0)} href="/librarian" icon={Gift} />
+            <NowTile label="На руках сейчас" value={s.on_hands} href={team ? undefined : "/librarian/returns"} />
+            <NowTile label="Просрочено" value={s.overdue} href={team ? undefined : "/librarian/lookup?overdue=true"} alert={s.overdue > 0} icon={AlertTriangle} />
+            <NowTile label="Заявок ждут" value={s.open_requests} href={team ? undefined : "/librarian/requests"} icon={Inbox} />
+            <NowTile label="Отзывов и призов ждут" value={(s.pending_reviews || 0) + (s.pending_prizes || 0)} href={team ? undefined : "/librarian"} icon={Gift} />
           </section>
 
           {/* Активность во времени */}
@@ -263,7 +265,7 @@ export default function AnalyticsPage() {
             ) : (
               <div className="grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
                 {data.top_readers.map((r, i) => (
-                  <Link key={r.id} href={`/librarian/students/${r.id}`}
+                  <Link key={r.id} href={`${base}/students/${r.id}`}
                     className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-border)] transition-colors">
                     <span className="w-7 text-center text-[15px] font-semibold text-[var(--color-text-tertiary)]">{['🥇', '🥈', '🥉'][i] || i + 1}</span>
                     <div className="min-w-0 flex-1">
@@ -336,8 +338,9 @@ function Kpi({ icon: Icon, label, value, prev, i, lowerIsBetter = false }) {
 }
 
 function NowTile({ label, value, href, alert, icon: Icon }) {
+  const Tag = href ? Link : 'div'
   return (
-    <Link
+    <Tag
       href={href}
       className={`flex items-center justify-between gap-3 px-4 py-3 rounded-[18px] border transition-colors ${
         alert
@@ -351,7 +354,7 @@ function NowTile({ label, value, href, alert, icon: Icon }) {
       <span className={`text-[20px] font-semibold tabular-nums ${alert ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-primary)]'}`}>
         {value ?? 0}
       </span>
-    </Link>
+    </Tag>
   )
 }
 

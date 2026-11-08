@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
+import { useArea } from '../../../../lib/useArea'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -11,6 +12,7 @@ import {
 
 export default function AddBookPage() {
   const router = useRouter()
+  const { team, base } = useArea()
 
   const [form, setForm] = useState({
     title: '',
@@ -234,7 +236,7 @@ export default function AddBookPage() {
                 </div>
                 <div className="flex gap-2 mt-3">
                   <button
-                    onClick={() => router.push('/librarian')}
+                    onClick={() => router.push(`${base}/books`)}
                     className="text-[12px] px-3 py-1.5 rounded-lg bg-[var(--color-bg-card)] border border-[var(--color-border)] hover:border-[var(--color-brand)]/40 transition-colors"
                   >
                     В библиотеку

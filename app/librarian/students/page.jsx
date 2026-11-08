@@ -3,12 +3,14 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useArea } from '../../../lib/useArea'
 import { toast } from 'sonner'
 import AddStudentsModal from '../../../components/librarian/AddStudentsModal'
 import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check } from 'lucide-react'
 
 export default function StudentsPage() {
   const router = useRouter()
+  const { team, base } = useArea()
   const [students, setStudents] = useState([])
   const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
@@ -97,7 +99,7 @@ export default function StudentsPage() {
               initial={{ opacity: 0, y: 8 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
-              onClick={() => router.push(`/librarian/students/${s.id}`)}
+              onClick={() => router.push(`${base}/students/${s.id}`)}
               className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all cursor-pointer"
             >
               <div className="flex items-start gap-3 mb-3">

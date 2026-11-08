@@ -7,7 +7,7 @@ import { requireAuth } from '../../../../../lib/auth'
  * Вернуть книгу из архива в каталог (обратное действие архивирования).
  */
 export async function POST(req, { params }) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { id } = await params

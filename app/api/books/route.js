@@ -130,7 +130,7 @@ export async function GET(req) {
 }
 
 export async function POST(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const {

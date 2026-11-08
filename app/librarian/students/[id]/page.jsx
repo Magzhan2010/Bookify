@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useArea } from '../../../../lib/useArea'
 import { toast } from 'sonner'
 import {
   ArrowLeft, Save, KeyRound, Trash2, BookOpen, Heart,
@@ -11,6 +12,7 @@ import {
 
 export default function StudentDetailPage() {
   const router = useRouter()
+  const { team, base } = useArea()
   const { id } = useParams()
 
   const [student, setStudent] = useState(null)
@@ -102,7 +104,7 @@ export default function StudentDetailPage() {
       const data = await res.json()
       if (res.ok) {
         toast.success('Удалено')
-        router.push('/librarian/students')
+        router.push(`${base}/students`)
       } else {
         toast.error(data.error || 'Ошибка')
       }
@@ -130,7 +132,7 @@ export default function StudentDetailPage() {
   return (
     <div className="max-w-5xl mx-auto">
       <button
-        onClick={() => router.push('/librarian/students')}
+        onClick={() => router.push(`${base}/students`)}
         className="flex items-center gap-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] mb-6 transition-colors"
       >
         <ArrowLeft size={15} /> Назад к списку
@@ -232,6 +234,11 @@ export default function StudentDetailPage() {
               </Field>
             </div>
 
+            {team ? (
+              <p className="mt-5 text-[12px] text-[var(--color-text-tertiary)]">
+                Менять данные и пароль ученика может только библиотекарь.
+              </p>
+            ) : (
             <div className="flex gap-2 mt-5">
               <button
                 onClick={handleSave}
@@ -247,6 +254,7 @@ export default function StudentDetailPage() {
                 <Trash2 size={14} /> Удалить
               </button>
             </div>
+            )}
           </motion.div>
 
           {/* История книг */}

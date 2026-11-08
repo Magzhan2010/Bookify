@@ -8,7 +8,7 @@ import { validateQuote, publicQuote } from '../../../../lib/quotes'
  * Поле image: строка — новое фото, null — убрать фото, не передано — оставить как было.
  */
 export async function PATCH(req, { params }) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
   const { id } = await params
 
@@ -38,7 +38,7 @@ export async function PATCH(req, { params }) {
 
 /** DELETE /api/quotes/[id] — удалить цитату (библиотекарь). */
 export async function DELETE(req, { params }) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
   const { id } = await params
   try {

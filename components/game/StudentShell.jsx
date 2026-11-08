@@ -5,19 +5,39 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2
 } from 'lucide-react'
 import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
 import { parseJwt } from '../../lib/jwt'
+import { useTeamMe } from '../../lib/useTeamMe'
 
+// Меню сгруппировано по смыслу: читать → играть → я
+const NAV_GROUPS = [
+  {
+    title: 'Читать',
+    items: [
+      { href: '/library', label: 'Каталог', short: 'Книги', icon: Library },
+      { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote }
+    ]
+  },
+  {
+    title: 'Игра',
+    items: [
+      { href: '/shop', label: 'Магазин призов', short: 'Магазин', icon: ShoppingBag, badge: 'shop' },
+      { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy },
+      { href: '/game', label: 'Как это работает', short: 'Правила', icon: Gamepad2 }
+    ]
+  },
+  {
+    title: 'Я',
+    items: [{ href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound }]
+  }
+]
+// Нижняя панель на телефоне — плоский список в привычном порядке
 const NAV = [
-  { href: '/library', label: 'Каталог', short: 'Книги', icon: Library },
-  { href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound },
-  { href: '/shop', label: 'Магазин призов', short: 'Магазин', icon: ShoppingBag, badge: 'shop' },
-  { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy },
-  { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote },
-  { href: '/game', label: 'Как это работает', short: 'Правила', icon: Gamepad2 }
+  NAV_GROUPS[0].items[0], NAV_GROUPS[2].items[0], NAV_GROUPS[1].items[0],
+  NAV_GROUPS[1].items[1], NAV_GROUPS[0].items[1], NAV_GROUPS[1].items[2]
 ]
 
 /**
@@ -74,6 +94,7 @@ function Sidebar({ user, isStudent }) {
   const router = useRouter()
   const isActive = useActive()
   const { summary } = useGame()
+  const teamMe = useTeamMe()
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -92,37 +113,52 @@ function Sidebar({ user, isStudent }) {
 
       {isStudent && <PointsWidget summary={summary} />}
 
-      <nav className="flex-1 overflow-y-auto px-3 py-3 space-y-0.5">
-        {NAV.map(item => {
-          const Icon = item.icon
-          const active = isActive(item.href)
-          const badge = item.badge === 'shop' && summary?.affordable_prizes > 0 ? summary.affordable_prizes : null
-          return (
-            <Link
-              key={item.href}
-              href={item.href}
-              prefetch
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
-                active
-                  ? 'bg-[var(--color-brand)] text-white'
-                  : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'
-              }`}
-            >
-              <Icon size={17} />
-              <span className="flex-1">{item.label}</span>
-              {badge && (
-                <span
-                  title="Призов, на которые уже хватает баллов"
-                  className={`min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
-                    active ? 'bg-white text-[var(--color-brand)]' : 'bg-[#ffc93c] text-[#1f2a5c]'
+      <nav className="flex-1 overflow-y-auto px-3 py-3">
+        {NAV_GROUPS.map(group => (
+          <div key={group.title} className="mb-3 space-y-0.5">
+            <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">{group.title}</div>
+            {group.items.map(item => {
+              const Icon = item.icon
+              const active = isActive(item.href)
+              const badge = item.badge === 'shop' && summary?.affordable_prizes > 0 ? summary.affordable_prizes : null
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  prefetch
+                  className={`flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium transition-colors ${
+                    active
+                      ? 'bg-[var(--color-brand)] text-white'
+                      : 'text-[var(--color-text-secondary)] hover:bg-[var(--color-bg-soft)] hover:text-[var(--color-text-primary)]'
                   }`}
                 >
-                  {badge}
-                </span>
-              )}
-            </Link>
-          )
-        })}
+                  <Icon size={17} />
+                  <span className="flex-1">{item.label}</span>
+                  {badge && (
+                    <span
+                      title="Призов, на которые уже хватает баллов"
+                      className={`min-w-[20px] h-5 px-1.5 rounded-full text-[11px] font-bold flex items-center justify-center ${
+                        active ? 'bg-white text-[var(--color-brand)]' : 'bg-[#ffc93c] text-[#1f2a5c]'
+                      }`}
+                    >
+                      {badge}
+                    </span>
+                  )}
+                </Link>
+              )
+            })}
+          </div>
+        ))}
+
+        {teamMe && (
+          <Link
+            href="/team"
+            className="mt-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--color-text-primary)] bg-[var(--color-text-primary)]/[0.05] hover:bg-[var(--color-text-primary)]/[0.08] transition-colors"
+          >
+            <Users2 size={17} />
+            <span className="flex-1">Командная платформа</span>
+          </Link>
+        )}
 
         {user?.role === 'librarian' && (
           <Link
@@ -204,10 +240,15 @@ function PointsWidget({ summary }) {
 function BottomNav({ isStudent }) {
   const isActive = useActive()
   const { summary } = useGame()
+  const teamMe = useTeamMe()
+  // Участникам платформы вместо «Правил» показываем вход в командную платформу
+  const items = teamMe
+    ? [...NAV.slice(0, 5), { href: '/team', label: 'Команда', short: 'Команда', icon: Users2 }]
+    : NAV
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]">
       <div className="grid grid-cols-6">
-        {NAV.map(item => {
+        {items.map(item => {
           const Icon = item.icon
           const active = isActive(item.href)
           const showCoins = isStudent && item.href === '/profile' && summary
