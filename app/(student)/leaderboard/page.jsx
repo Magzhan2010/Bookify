@@ -89,7 +89,7 @@ export default function LeaderboardPage() {
                   className="flex flex-col items-center text-center"
                 >
                   {p.place === 1 && <Crown size={26} className="text-[#ffc93c] mb-1 coin-float" fill="#ffc93c" />}
-                  <Avatar name={l.name} size={p.place === 1 ? 64 : 52} ring={p.color} highlight={l.id === me} />
+                  <Avatar name={l.name} src={l.avatar_url} size={p.place === 1 ? 64 : 52} ring={p.color} highlight={l.id === me} />
                   <div className="mt-2 text-[13px] sm:text-[14px] font-bold text-[var(--color-text-primary)] line-clamp-1 max-w-full">{l.name}</div>
                   <div className="text-[11px] text-[var(--color-text-tertiary)]">{l.class_name ? `${l.class_name} кл.` : ''}</div>
                   <div className={`mt-2 w-full ${p.height} rounded-t-2xl flex flex-col items-center justify-start pt-2`} style={{ background: p.color }}>
@@ -116,7 +116,7 @@ export default function LeaderboardPage() {
                   }`}
                 >
                   <div className="w-8 text-center text-[15px] font-bold text-[var(--color-text-tertiary)]">{l.place}</div>
-                  <Avatar name={l.name} size={36} />
+                  <Avatar name={l.name} src={l.avatar_url} size={36} />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)] truncate">
                       {l.name} {mine && <span className="text-[var(--color-brand)]">(ты)</span>}
@@ -171,7 +171,7 @@ function Chip({ active, onClick, children }) {
 
 const AVATAR_COLORS = ['#2f5bea', '#ff6b6b', '#20b486', '#ff9f1c', '#8b5cf6', '#0ea5e9', '#e0457b']
 
-function Avatar({ name = '?', size = 40, ring, highlight }) {
+function Avatar({ name = '?', src, size = 40, ring, highlight }) {
   const color = AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
   return (
     <div
@@ -181,7 +181,10 @@ function Avatar({ name = '?', size = 40, ring, highlight }) {
         boxShadow: ring ? `0 0 0 3px ${ring}` : highlight ? '0 0 0 3px var(--color-brand)' : 'none'
       }}
     >
-      {name.charAt(0).toUpperCase()}
+      {src
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={src} alt="" className="w-full h-full object-cover rounded-full" />
+        : name.charAt(0).toUpperCase()}
     </div>
   )
 }

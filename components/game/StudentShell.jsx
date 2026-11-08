@@ -173,9 +173,12 @@ function Sidebar({ user, isStudent }) {
 
       <div className="p-3 border-t border-[var(--color-border)] space-y-2 shrink-0">
         <div className="flex items-center gap-2.5 px-2">
-          <div className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] shrink-0">
-            {user?.name?.charAt(0).toUpperCase() || '?'}
-          </div>
+          <Link href="/profile" aria-label="Мой профиль" className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] shrink-0 overflow-hidden">
+            {summary?.avatar_url
+              // eslint-disable-next-line @next/next/no-img-element
+              ? <img src={summary.avatar_url} alt="" className="w-full h-full object-cover" />
+              : user?.name?.charAt(0).toUpperCase() || '?'}
+          </Link>
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold truncate text-[var(--color-text-primary)]">{user?.name}</div>
             <div className="text-[11px] text-[var(--color-text-tertiary)]">

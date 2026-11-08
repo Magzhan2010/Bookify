@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import {
   BookOpen, Heart, CheckCircle, Clock, Target,
   Trophy, Library, X, Sparkles, BellOff, PenLine, Star, Send, Award, Loader2,
-  Settings, User, KeyRound, Save
+  Settings, User, KeyRound, Save, Camera
 } from 'lucide-react'
 import {
   ResponsiveContainer, BarChart, Bar, XAxis, YAxis, Tooltip,
@@ -17,6 +17,7 @@ import { Button, Input, Card } from '../../../components/ui'
 import CoinCard from '../../../components/game/CoinCard'
 import { useGame } from '../../../components/game/GameContext'
 import Link from 'next/link'
+import AvatarPicker from '../../../components/AvatarPicker'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
@@ -32,6 +33,8 @@ const COLORS = ['#1a56db', '#34c759', '#ff9500', '#ff3b30', '#af52de', '#5856d6'
 export default function ProfilePage() {
   const router = useRouter()
   const [userData, setUserData] = useState(null)
+  const [avatarOpen, setAvatarOpen] = useState(false)
+  const game = useGame()
   const [active, setActive] = useState([])
   const [requests, setRequests] = useState([])
   const [toReview, setToReview] = useState([])
@@ -242,9 +245,32 @@ export default function ProfilePage() {
           className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] p-6 sm:p-8 mb-6 shadow-[0_2px_20px_rgba(0,0,0,0.03)]"
         >
           <div className="flex flex-col sm:flex-row items-start gap-5">
-            <div className="w-20 h-20 sm:w-24 sm:h-24 rounded-2xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-3xl sm:text-4xl text-white shrink-0">
-              {userData.name?.charAt(0).toUpperCase()}
-            </div>
+            <button
+              type="button"
+              onClick={() => setAvatarOpen(true)}
+              aria-label="Сменить аватарку"
+              className="group relative w-20 h-20 sm:w-24 sm:h-24 rounded-full bg-[var(--color-brand)] flex items-center justify-center font-semibold text-3xl sm:text-4xl text-white shrink-0 overflow-visible apple-press"
+            >
+              <span className="absolute inset-0 rounded-full overflow-hidden flex items-center justify-center">
+                {userData.avatar_url
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={userData.avatar_url} alt="" className="w-full h-full object-cover" />
+                  : userData.name?.charAt(0).toUpperCase()}
+                <span className="absolute inset-0 bg-black/35 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                  <Camera size={22} />
+                </span>
+              </span>
+              <span className="absolute -bottom-0.5 -right-0.5 w-8 h-8 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] flex items-center justify-center shadow-sm">
+                <Camera size={15} />
+              </span>
+            </button>
+            <AvatarPicker
+              open={avatarOpen}
+              onClose={() => setAvatarOpen(false)}
+              current={userData.avatar_url}
+              name={userData.name}
+              onSaved={url => { setUserData(u => ({ ...u, avatar_url: url })); game.refresh?.() }}
+            />
 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-2 mb-1 flex-wrap">

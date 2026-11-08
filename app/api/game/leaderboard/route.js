@@ -27,7 +27,7 @@ export async function GET(req) {
     const [rows, classes] = await Promise.all([
       pool.query(
         `WITH totals AS (
-           SELECT u.id, u.name, u.class_name,
+           SELECT u.id, u.name, u.class_name, u.avatar_url,
                   COALESCE(SUM(p.points), 0)::int AS earned,
                   COUNT(DISTINCT p.book_id) FILTER (WHERE p.reason LIKE 'pages%')::int AS books
              FROM users u
@@ -35,7 +35,7 @@ export async function GET(req) {
             WHERE u.role = 'student' ${classFilter}
             GROUP BY u.id
          )
-         SELECT id, name, class_name, earned, books,
+         SELECT id, name, class_name, avatar_url, earned, books,
                 RANK() OVER (ORDER BY earned DESC)::int AS place
            FROM totals
           WHERE earned > 0

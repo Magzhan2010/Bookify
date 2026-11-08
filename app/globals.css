@@ -228,7 +228,7 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
     transform: translateY(-6px);
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04), 0 24px 48px rgba(0, 0, 0, 0.08);
   }
-  .card-lift:hover .prize-icon { transform: scale(1.12) rotate(-4deg); }
+  .card-lift:hover .prize-icon { transform: scale(1.05); }
   .apple-press { transition: transform 0.15s ease, opacity 0.2s ease, background-color 0.2s ease; }
   .apple-press:active:not(:disabled) { transform: scale(0.97); }
 
