@@ -19,6 +19,7 @@ export default function Library() {
   const [myFinishedId, setMyFinishedId] = useState([])
   const [myReadingId, setMyReadingId] = useState([])
   const [myShelf, setMyShelf] = useState(0)
+  const [myRequested, setMyRequested] = useState(0)
   const [allGenres, setAllGenres] = useState([])
 
   const activeGenre = searchParams.get('genre') || 'Все'
@@ -79,11 +80,18 @@ export default function Library() {
     } catch (e) {}
   }, [])
 
+  // true с момента клика по книге: дальше любые события прокрутки
+  // (Next при переходе прокручивает страницу наверх) позицию не перезаписывают.
+  // Раньше именно этот «прыжок наверх» сохранялся как y=0, и при возврате
+  // каталог открывался с самого начала.
+  const leavingRef = useRef(false)
+
   // Запоминаем текущую прокрутку, чтобы подстраховать браузер: он
   // пытается восстановить её ДО загрузки книг, когда страница ещё короткая
   useEffect(() => {
     let raf
     const onScroll = () => {
+      if (leavingRef.current) return
       cancelAnimationFrame(raf)
       raf = requestAnimationFrame(() => {
         const saved = readSavedState()
@@ -98,15 +106,29 @@ export default function Library() {
   }, [activeGenre, searchQuery, readSavedState, saveLoadedPages])
 
   // После подгрузки книг: если браузер не смог вернуть нас на место
-  // (остались вверху) — возвращаем сами
+  // (остались вверху) — возвращаем сами. Двойной requestAnimationFrame —
+  // чтобы карточки успели отрисоваться и у страницы появилась нужная высота.
   const [restoredY, setRestoredY] = useState(0)
 
   useEffect(() => {
     if (loading || !restoredY) return
-    if (window.scrollY < 100 && restoredY > 200) {
-      window.scrollTo({ top: restoredY, behavior: 'instant' })
-    }
+    let raf1, raf2
+    raf1 = requestAnimationFrame(() => {
+      raf2 = requestAnimationFrame(() => {
+        if (window.scrollY < restoredY - 150) {
+          window.scrollTo({ top: restoredY, behavior: 'instant' })
+        }
+        setRestoredY(0)
+      })
+    })
+    return () => { cancelAnimationFrame(raf1); cancelAnimationFrame(raf2) }
   }, [loading, restoredY])
+
+  // Клик по книге: фиксируем, сколько книг подгружено и где мы сейчас
+  const handleOpenBook = () => {
+    saveLoadedPages(page, activeGenre, searchQuery)
+    leavingRef.current = true
+  }
 
   // === Профиль ===
   useEffect(() => {
@@ -121,6 +143,7 @@ export default function Library() {
         setMyFinishedId((data.finished || []).map(Number))
         setMyReadingId((data.reading || []).map(Number))
         setMyShelf(data.finished?.length || 0)
+        setMyRequested(data.requested?.length || 0)
       } catch (err) {}
     }
     fetchProfile()
@@ -191,13 +214,14 @@ export default function Library() {
     // сколько было подгружено, чтобы страница была нужной длины и браузер
     // вернул нас на ту же прокрутку, а не в начало
     const saved = readSavedState()
+    // Позицию возвращаем всегда, когда фильтр тот же (раньше — только если
+    // подгружено больше одной страницы, и середина первых 12 книг терялась)
     const sameView =
       saved &&
       (saved.genre || 'Все') === activeGenre &&
-      (saved.query || '') === searchQuery &&
-      saved.pages > 1
+      (saved.query || '') === searchQuery
 
-    const restoreLimit = sameView ? Math.min(60, saved.pages * 12) : 0
+    const restoreLimit = sameView && saved.pages > 1 ? Math.min(60, saved.pages * 12) : 0
 
     setRestoredY(sameView ? (saved.y || 0) : 0)
 
@@ -268,7 +292,10 @@ export default function Library() {
 
   const stats = [
     { icon: BookOpen, label: 'Всего книг', value: totalBooks, color: 'var(--color-brand)' },
-    { icon: BookOpen, label: 'Читаю сейчас', value: myReadingId.length, color: 'var(--color-warning)' },
+    {
+      icon: BookOpen, label: 'Читаю сейчас', value: myReadingId.length, color: 'var(--color-warning)',
+      hint: myRequested > 0 ? `ещё ${myRequested} ждут выдачи` : null
+    },
     { icon: CheckCircle, label: 'Прочитано', value: myShelf, color: 'var(--color-success)' }
   ]
 
@@ -310,6 +337,9 @@ export default function Library() {
                 </div>
                 <div className="text-3xl sm:text-4xl font-semibold tracking-tight text-[var(--color-text-primary)]">{stat.value}</div>
                 <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mt-1">{stat.label}</div>
+                {stat.hint && (
+                  <div className="text-[11px] text-[var(--color-warning)] font-medium mt-1">{stat.hint}</div>
+                )}
               </motion.div>
             )
           })}
@@ -411,6 +441,7 @@ export default function Library() {
               books={books}
               myFinishedId={myFinishedId}
               myReadingId={myReadingId}
+              onOpen={handleOpenBook}
             />
             <div ref={observerRef} className="h-20 w-full flex justify-center items-center">
               {hasMore && (

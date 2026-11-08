@@ -33,7 +33,7 @@ function parseDifficulty(tags) {
   return null
 }
 
-const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
+const Books = ({ books, myFinishedId = [], myReadingId = [], onOpen }) => {
   const router = useRouter()
 
   if (!books || books.length === 0) return null
@@ -61,7 +61,11 @@ const Books = ({ books, myFinishedId = [], myReadingId = [] }) => {
               transition: { duration: 0.25, ease: [0.23, 1, 0.32, 1] }
             }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => router.push(`/books/${book.id}`)}
+            onClick={() => {
+              // Сначала запоминаем позицию в каталоге, потом уходим на книгу
+              onOpen?.(book)
+              router.push(`/books/${book.id}`)
+            }}
             className="group relative bg-[var(--color-bg-card)] rounded-2xl overflow-hidden cursor-pointer border border-[var(--color-border)] hover:border-[var(--color-brand)]/50 hover:shadow-[0_12px_40px_rgba(26,86,219,0.15)] transition-all duration-300"
           >
             {/* Status badge (top-left) */}
