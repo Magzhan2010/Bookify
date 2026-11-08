@@ -137,7 +137,7 @@ export async function GET(req) {
       ),
       // 10. Самые активные читатели периода
       pool.query(
-        `SELECT u.id, u.name, u.class_name, COUNT(*)::int AS n
+        `SELECT u.id, u.name, u.class_name, u.avatar_url, COUNT(*)::int AS n
            FROM borrows b JOIN users u ON u.id = b.user_id
           WHERE u.role = 'student' AND b.returned_at >= NOW() - make_interval(days => $1)
           GROUP BY u.id ORDER BY n DESC, u.name LIMIT 8`,

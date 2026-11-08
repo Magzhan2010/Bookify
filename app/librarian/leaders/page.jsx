@@ -102,7 +102,7 @@ export default function LibrarianLeadersPage() {
                       {MEDALS[i] || `#${i + 1}`}
                     </div>
                     <div className="flex items-center gap-3 pr-10">
-                      <Avatar name={l.name} />
+                      <Avatar name={l.name} src={l.avatar_url} />
                       <div className="min-w-0">
                         <div className="font-semibold text-[16px] text-[var(--color-text-primary)] truncate">{l.name}</div>
                         <div className="text-[13px] text-[var(--color-text-tertiary)]">{l.class_name || 'без класса'}</div>
@@ -230,11 +230,14 @@ function Stat({ value, label, color, strong }) {
 
 const AVATAR_COLORS = ['#2f5bea', '#ff6b6b', '#20b486', '#ff9f1c', '#8b5cf6', '#0ea5e9', '#e0457b']
 
-function Avatar({ name = '?' }) {
+function Avatar({ name = '?', src }) {
   const color = AVATAR_COLORS[(name.charCodeAt(0) || 0) % AVATAR_COLORS.length]
   return (
-    <div className="w-12 h-12 rounded-full flex items-center justify-center text-white text-[18px] font-semibold shrink-0" style={{ background: color }}>
-      {name.charAt(0).toUpperCase()}
+    <div className="w-12 h-12 rounded-full overflow-hidden flex items-center justify-center text-white text-[18px] font-semibold shrink-0" style={{ background: color }}>
+      {src
+        // eslint-disable-next-line @next/next/no-img-element
+        ? <img src={src} alt="" className="w-full h-full object-cover" />
+        : name.charAt(0).toUpperCase()}
     </div>
   )
 }

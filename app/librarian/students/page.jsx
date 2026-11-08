@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import UserAvatar from '../../../components/UserAvatar'
 import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useArea } from '../../../lib/useArea'
@@ -103,9 +104,7 @@ export default function StudentsPage() {
               className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all cursor-pointer"
             >
               <div className="flex items-start gap-3 mb-3">
-                <div className="w-11 h-11 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0">
-                  {s.name.charAt(0).toUpperCase()}
-                </div>
+                <UserAvatar src={s.avatar_url} name={s.name} className="w-11 h-11 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0" />
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{s.name}</div>
                   <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{s.class_name || '—'}</div>

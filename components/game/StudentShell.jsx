@@ -11,6 +11,7 @@ import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
 import { parseJwt } from '../../lib/jwt'
 import { useTeamMe } from '../../lib/useTeamMe'
+import { useMyAvatar } from '../../lib/useMyAvatar'
 
 // Меню сгруппировано по смыслу: читать → играть → я
 const NAV_GROUPS = [
@@ -95,6 +96,7 @@ function Sidebar({ user, isStudent }) {
   const isActive = useActive()
   const { summary } = useGame()
   const teamMe = useTeamMe()
+  const myAvatar = useMyAvatar()
 
   const logout = () => {
     localStorage.removeItem('token')
@@ -174,9 +176,9 @@ function Sidebar({ user, isStudent }) {
       <div className="p-3 border-t border-[var(--color-border)] space-y-2 shrink-0">
         <div className="flex items-center gap-2.5 px-2">
           <Link href="/profile" aria-label="Мой профиль" className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] shrink-0 overflow-hidden">
-            {summary?.avatar_url
+            {myAvatar
               // eslint-disable-next-line @next/next/no-img-element
-              ? <img src={summary.avatar_url} alt="" className="w-full h-full object-cover" />
+              ? <img src={myAvatar} alt="" className="w-full h-full object-cover" />
               : user?.name?.charAt(0).toUpperCase() || '?'}
           </Link>
           <div className="flex-1 min-w-0">

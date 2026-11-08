@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import UserAvatar from '../../../components/UserAvatar'
 import { useEffect, useState } from 'react'
 import { Search, BookOpen, User as UserIcon, Calendar, AlertTriangle } from 'lucide-react'
 
@@ -129,9 +130,7 @@ export default function LookupPage() {
                       У ученика
                     </div>
                     <div className="flex items-center gap-2 mb-1.5">
-                      <div className="w-6 h-6 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[11px] font-bold text-white shrink-0">
-                        {r.student_name?.charAt(0).toUpperCase()}
-                      </div>
+                      <UserAvatar src={r.student_avatar} name={r.student_name} className="w-6 h-6 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[11px] font-bold text-white shrink-0" />
                       <span className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{r.student_name}</span>
                       {r.student_class && (
                         <span className="px-1.5 py-0.5 rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[11px] font-medium whitespace-nowrap">

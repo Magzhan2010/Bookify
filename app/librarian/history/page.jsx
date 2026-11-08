@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import UserAvatar from '../../../components/UserAvatar'
 import { useEffect, useState } from 'react'
 import { Search, Filter, RotateCw, Calendar, ArrowDownToLine, ArrowUpFromLine, BookOpen, User, RefreshCw } from 'lucide-react'
 
@@ -188,9 +189,7 @@ export default function HistoryPage() {
                     </div>
                     <div className="flex items-center gap-3 text-[12px] text-[var(--color-text-secondary)]">
                       <div className="flex items-center gap-1.5">
-                        <div className="w-5 h-5 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[9px] font-bold text-[var(--color-text-on-brand)]">
-                          {h.student_name?.charAt(0).toUpperCase()}
-                        </div>
+                        <UserAvatar src={h.student_avatar} name={h.student_name} className="w-5 h-5 rounded-full bg-[var(--color-brand)] flex items-center justify-center text-[9px] font-bold text-[var(--color-text-on-brand)]" />
                         <span className="font-medium">{h.student_name}</span>
                         {h.student_class && (
                           <span className="text-[var(--color-text-tertiary)]">· {h.student_class}</span>

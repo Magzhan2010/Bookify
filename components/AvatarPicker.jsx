@@ -4,6 +4,7 @@ import { useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Trash2, Upload } from 'lucide-react'
 import { Modal, Button } from './ui'
+import { announceAvatar } from '../lib/useMyAvatar'
 
 /**
  * Окно смены аватарки: своё фото (обрезается в квадрат и сжимается в браузере)
@@ -86,6 +87,7 @@ export default function AvatarPicker({ open, onClose, current, name, onSaved }) 
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Ошибка')
       toast.success('Аватарка обновлена')
+      announceAvatar(data.avatar_url)
       onSaved?.(data.avatar_url)
       close()
     } catch (err) {
@@ -103,6 +105,7 @@ export default function AvatarPicker({ open, onClose, current, name, onSaved }) 
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}` }
       })
       if (!res.ok) throw new Error('Не удалось убрать фото')
+      announceAvatar(null)
       onSaved?.(null)
       close()
     } catch (err) {

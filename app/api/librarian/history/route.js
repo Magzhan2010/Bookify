@@ -53,7 +53,7 @@ export async function GET(req) {
         SELECT
           'request' AS kind,
           r.id AS event_id,
-          r.user_id, u.name AS student_name, u.class_name AS student_class,
+          r.user_id, u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class,
           r.book_id, b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
           r.status,
           NULL::int AS days_held,
@@ -75,7 +75,7 @@ export async function GET(req) {
         SELECT
           'borrow' AS kind,
           br.id AS event_id,
-          br.user_id, u.name AS student_name, u.class_name AS student_class,
+          br.user_id, u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class,
           br.book_id, b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
           br.status,
           CASE

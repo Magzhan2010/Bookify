@@ -36,7 +36,7 @@ export async function GET(req) {
          ), pts AS (
            SELECT user_id, COALESCE(SUM(points), 0)::int AS points FROM user_points GROUP BY user_id
          )
-         SELECT u.id, u.name, u.class_name,
+         SELECT u.id, u.name, u.class_name, u.avatar_url,
                 COUNT(f.book_id)::int AS books,
                 COUNT(f.book_id) FILTER (WHERE f.status = 'approved')::int AS confirmed,
                 COALESCE(MAX(p.points), 0)::int AS points,
@@ -59,7 +59,7 @@ export async function GET(req) {
         params
       ),
       pool.query(
-        `SELECT b.id, b.returned_at, b.status, u.name AS student_name, u.class_name,
+        `SELECT b.id, b.returned_at, b.status, u.name AS student_name, u.avatar_url AS student_avatar, u.class_name,
                 bk.title, bk.author, bk.cover_url, r.status AS review_status
            FROM borrows b
            JOIN users u ON u.id = b.user_id

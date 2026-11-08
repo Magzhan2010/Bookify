@@ -26,10 +26,10 @@ export async function GET(req) {
     if (overdue) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email,
+               u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.email,
                u.class_name, u.class_name AS student_class,
                bk.id AS book_id, bk.title, bk.title AS book_title,
-               bk.author, bk.author AS book_author, bk.cover_url, bk.genre
+               bk.author, bk.author AS book_author, bk.cover_url, bk.genre,
                EXTRACT(DAY FROM (NOW() - b.due_date))::INT AS overdue_days
         FROM borrows b
         JOIN users u ON u.id = b.user_id
@@ -42,7 +42,7 @@ export async function GET(req) {
     } else if (q) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email,
+               u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.email,
                u.class_name, u.class_name AS student_class,
                bk.id AS book_id, bk.title, bk.title AS book_title,
                bk.author, bk.author AS book_author, bk.cover_url, bk.genre
@@ -58,7 +58,7 @@ export async function GET(req) {
     } else if (student) {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email,
+               u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.email,
                u.class_name, u.class_name AS student_class,
                bk.id AS book_id, bk.title, bk.title AS book_title,
                bk.author, bk.author AS book_author, bk.cover_url, bk.genre
@@ -74,7 +74,7 @@ export async function GET(req) {
     } else {
       query = `
         SELECT b.id, b.borrowed_at, b.due_date, b.status, b.notes,
-               u.id AS student_id, u.name AS student_name, u.email,
+               u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.email,
                u.class_name, u.class_name AS student_class,
                bk.id AS book_id, bk.title, bk.title AS book_title,
                bk.author, bk.author AS book_author, bk.cover_url, bk.genre

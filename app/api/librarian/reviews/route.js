@@ -20,7 +20,7 @@ export async function GET(req) {
 
     const result = await pool.query(
       `SELECT r.*,
-              u.name AS student_name, u.class_name AS student_class, u.email AS student_email,
+              u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class, u.email AS student_email,
               b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
               b.pages AS book_pages,
               br.borrowed_at, br.returned_at,

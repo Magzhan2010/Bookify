@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import UserAvatar from '../../../components/UserAvatar'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
 import { Search, BookMarked, Check, User, Calendar, X, BookOpen } from 'lucide-react'
@@ -201,9 +202,7 @@ export default function IssuePage() {
                       onClick={() => { setSelectedStudent(s); setStep(2) }}
                       className="w-full flex items-center gap-4 p-4 rounded-xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-card)] hover:border-[var(--color-brand)]/30 border border-transparent transition-all text-left"
                     >
-                      <div className="w-12 h-12 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0">
-                        {s.name.charAt(0).toUpperCase()}
-                      </div>
+                      <UserAvatar src={s.avatar_url} name={s.name} className="w-12 h-12 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-[14px] text-[var(--color-text-primary)]">{s.name}</div>
                         <div className="text-[12px] text-[var(--color-text-tertiary)]">{s.class_name || '—'} · {s.email}</div>
@@ -222,9 +221,7 @@ export default function IssuePage() {
             {step === 2 && selectedStudent && (
               <div>
                 <div className="flex items-center gap-3 mb-5 p-3 rounded-xl bg-[var(--color-bg-soft)]">
-                  <div className="w-10 h-10 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white text-[14px]">
-                    {selectedStudent.name.charAt(0).toUpperCase()}
-                  </div>
+                  <UserAvatar src={selectedStudent.avatar_url} name={selectedStudent.name} className="w-10 h-10 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white text-[14px]" />
                   <div className="flex-1">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)]">{selectedStudent.name}</div>
                     <div className="text-[12px] text-[var(--color-text-tertiary)]">{selectedStudent.class_name || '—'}</div>

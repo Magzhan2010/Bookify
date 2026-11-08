@@ -7,6 +7,7 @@ import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Search, X, LogOut, BookMarked } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
+import { useMyAvatar } from '../../lib/useMyAvatar'
 
 const Navbar = () => {
   const [user, setUser] = useState(null)
@@ -72,6 +73,7 @@ const Navbar = () => {
   }, [mobileOpen])
 
   const avatarLetter = user?.name?.charAt(0).toUpperCase() || '?'
+  const myAvatar = useMyAvatar()
 
   const handleLogout = () => {
     localStorage.removeItem('token')
@@ -127,9 +129,9 @@ const Navbar = () => {
             <div className="flex items-center gap-1 ml-2">
               <button
                 onClick={handleProfile}
-                className="w-9 h-9 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] hover:bg-[var(--color-brand-hover)] transition-colors"
+                className="w-9 h-9 rounded-full overflow-hidden bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-[14px] hover:bg-[var(--color-brand-hover)] transition-colors"
               >
-                {avatarLetter}
+                {myAvatar ? <img src={myAvatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
               </button>
               <button
                 onClick={handleLogout}
@@ -194,8 +196,8 @@ const Navbar = () => {
                 onClick={handleProfile}
                 className="flex items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-soft)] hover:bg-[var(--color-bg-elevated)] text-[var(--color-text-primary)] text-left transition-colors"
               >
-                <div className="w-11 h-11 rounded-full bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-lg">
-                  {avatarLetter}
+                <div className="w-11 h-11 rounded-full overflow-hidden bg-[var(--color-brand)] text-white flex items-center justify-center font-semibold text-lg">
+                  {myAvatar ? <img src={myAvatar} alt="" className="w-full h-full object-cover" /> : avatarLetter}
                 </div>
                 <div>
                   <div className="font-semibold text-[15px]">{user.name}</div>

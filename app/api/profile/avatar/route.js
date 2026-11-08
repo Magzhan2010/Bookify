@@ -2,6 +2,19 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 
+/** GET /api/profile/avatar — адрес своей аватарки (для шапок и меню). */
+export async function GET(req) {
+  const guard = await requireAuth(req)
+  if (!guard.ok) return guard.response
+  try {
+    const r = await pool.query('SELECT avatar_url FROM users WHERE id = $1', [guard.payload.id])
+    return NextResponse.json({ avatar_url: r.rows[0]?.avatar_url || null })
+  } catch (err) {
+    console.error('[avatar GET me]', err)
+    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+  }
+}
+
 const MAX_BYTES = 400 * 1024 // сжатое в браузере фото 256×256 весит ~20–40 КБ
 
 /**

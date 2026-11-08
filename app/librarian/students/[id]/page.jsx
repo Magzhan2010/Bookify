@@ -1,6 +1,7 @@
 'use client'
 
 import { motion } from 'framer-motion'
+import UserAvatar from '../../../../components/UserAvatar'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
@@ -146,9 +147,7 @@ export default function StudentDetailPage() {
             animate={{ opacity: 1, y: 0 }}
             className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6 text-center"
           >
-            <div className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-hover)] flex items-center justify-center text-white font-semibold text-3xl mx-auto mb-3">
-              {student.name?.charAt(0).toUpperCase()}
-            </div>
+            <UserAvatar src={student.avatar_url} name={student.name} className="w-20 h-20 rounded-full bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-hover)] flex items-center justify-center text-white font-semibold text-3xl mx-auto mb-3" />
             <h1 className="text-xl font-semibold text-[var(--color-text-primary)] mb-1">{student.name}</h1>
             <p className="text-[12px] text-[var(--color-text-tertiary)] mb-3">{student.email}</p>
             {student.class_name && (

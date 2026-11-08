@@ -14,7 +14,7 @@ export async function GET(req) {
   try {
     const res = await pool.query(
       `SELECT c.id, c.content, c.is_pinned, c.created_at,
-              u.name AS user_name, u.class_name AS user_class,
+              u.name AS user_name, u.avatar_url AS user_avatar, u.class_name AS user_class,
               u.id AS user_id
        FROM book_comments c
        JOIN users u ON u.id = c.user_id
@@ -55,7 +55,7 @@ export async function POST(req) {
     // Возвращаем с user_name
     const result = await pool.query(
       `SELECT c.id, c.content, c.is_pinned, c.created_at,
-              u.name AS user_name, u.class_name AS user_class,
+              u.name AS user_name, u.avatar_url AS user_avatar, u.class_name AS user_class,
               u.id AS user_id
        FROM book_comments c JOIN users u ON u.id = c.user_id
        WHERE c.id = $1`,

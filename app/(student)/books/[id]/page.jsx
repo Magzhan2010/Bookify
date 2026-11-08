@@ -1,6 +1,7 @@
 'use client'
 
 import { motion, AnimatePresence } from 'framer-motion'
+import UserAvatar from '../../../../components/UserAvatar'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useTeamMe } from '../../../../lib/useTeamMe'
@@ -1161,9 +1162,7 @@ const Book = () => {
                       }`}
                     >
                       <div className="flex items-start gap-3">
-                        <div className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-hover)] flex items-center justify-center text-white font-semibold shrink-0">
-                          {c.user_name?.charAt(0).toUpperCase()}
-                        </div>
+                        <UserAvatar src={c.user_avatar} name={c.user_name} className="w-10 h-10 rounded-full bg-gradient-to-br from-[var(--color-brand)] to-[var(--color-brand-hover)] flex items-center justify-center text-white font-semibold shrink-0" />
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1.5 flex-wrap">
                             <span className="font-semibold text-[14px] text-[var(--color-text-primary)]">{c.user_name}</span>
@@ -1277,9 +1276,7 @@ const Book = () => {
                         disabled={issueSubmitting}
                         className="w-full flex items-center gap-3 px-3 py-2.5 rounded-xl text-left hover:bg-[var(--color-bg-soft)] disabled:opacity-50 transition-colors"
                       >
-                        <div className="w-8 h-8 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] flex items-center justify-center text-[12px] font-semibold shrink-0">
-                          {s.name?.charAt(0).toUpperCase()}
-                        </div>
+                        <UserAvatar src={s.avatar_url} name={s.name} className="w-8 h-8 rounded-full bg-[var(--color-brand-soft)] text-[var(--color-brand)] flex items-center justify-center text-[12px] font-semibold shrink-0" />
                         <div className="min-w-0 flex-1">
                           <div className="text-[14px] font-medium text-[var(--color-text-primary)] truncate">
                             {s.name}

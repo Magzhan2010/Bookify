@@ -27,7 +27,7 @@ export async function GET(req) {
       pool.query(
         `SELECT o.id, o.price, o.note, o.status, o.created_at, o.processed_at,
                 p.title AS prize_title, p.image AS prize_image, p.code AS prize_code,
-                u.id AS student_id, u.name AS student_name, u.class_name AS student_class,
+                u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class,
                 lib.name AS processed_by_name
            FROM prize_orders o
            JOIN prizes p ON p.id = o.prize_id

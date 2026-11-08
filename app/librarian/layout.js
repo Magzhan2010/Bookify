@@ -11,6 +11,7 @@ import {
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 import { useTeamMe } from '../../lib/useTeamMe'
+import { useMyAvatar } from '../../lib/useMyAvatar'
 
 // Меню сгруппировано: что делаешь каждый день → фонд → ученики → цифры
 const navGroups = [
@@ -58,6 +59,7 @@ export default function LibrarianLayout({ children }) {
   const [pendingCount, setPendingCount] = useState(0)
   const [pendingOrders, setPendingOrders] = useState(0)
   const teamMe = useTeamMe()
+  const myAvatar = useMyAvatar()
 
   // Счётчик ожидающих заявок в меню
   useEffect(() => {
@@ -204,9 +206,12 @@ export default function LibrarianLayout({ children }) {
 
           <div className="p-3 border-t border-[var(--color-border)]">
             <div className="bg-[var(--color-bg-soft)] rounded-xl p-3 flex items-center gap-3 mb-2">
-              <div className="w-9 h-9 rounded-full bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white text-[13px] shrink-0">
-                {user?.name?.charAt(0).toUpperCase()}
-              </div>
+              <Link href="/profile" aria-label="Мой профиль — сменить аватарку" className="w-9 h-9 rounded-full overflow-hidden bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white text-[13px] shrink-0">
+                {myAvatar
+                  // eslint-disable-next-line @next/next/no-img-element
+                  ? <img src={myAvatar} alt="" className="w-full h-full object-cover" />
+                  : user?.name?.charAt(0).toUpperCase()}
+              </Link>
               <div className="flex-1 min-w-0">
                 <div className="font-semibold text-[13px] truncate text-[var(--color-text-primary)]">{user?.name}</div>
                 <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">Библиотекарь</div>
