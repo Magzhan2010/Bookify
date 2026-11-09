@@ -32,19 +32,19 @@ export async function POST(req) {
     if (typeof studentIdentifier === 'number' || /^\d+$/.test(studentIdentifier)) {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE id = $1 AND role = 'student'`,
+         WHERE id = $1 AND (role = 'student' OR (role = 'teacher' AND NOT COALESCE(teacher_pending, FALSE)))`,
         [parseInt(studentIdentifier)]
       )
     } else if (String(studentIdentifier).includes('@')) {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE LOWER(email) = LOWER($1) AND role = 'student'`,
+         WHERE LOWER(email) = LOWER($1) AND (role = 'student' OR (role = 'teacher' AND NOT COALESCE(teacher_pending, FALSE)))`,
         [studentIdentifier]
       )
     } else {
       studentRes = await client.query(
         `SELECT id, name, email, class_name, role FROM users
-         WHERE LOWER(name) LIKE LOWER($1) AND role = 'student'
+         WHERE LOWER(name) LIKE LOWER($1) AND (role = 'student' OR (role = 'teacher' AND NOT COALESCE(teacher_pending, FALSE)))
          ORDER BY name ASC LIMIT 1`,
         [`%${studentIdentifier}%`]
       )

@@ -31,12 +31,12 @@ export default function IssuePage() {
     const t = setTimeout(async () => {
       try {
         const token = localStorage.getItem('token')
-        const res = await fetch(`/api/librarian/students?q=${encodeURIComponent(studentQuery)}&active=true`, {
+        const res = await fetch(`/api/librarian/students?q=${encodeURIComponent(studentQuery)}&active=true&withTeachers=1`, {
           headers: { Authorization: `Bearer ${token}` }
         })
         const data = await res.json()
         if (data.length === 0) {
-          const r2 = await fetch(`/api/librarian/students?q=${encodeURIComponent(studentQuery)}`, {
+          const r2 = await fetch(`/api/librarian/students?q=${encodeURIComponent(studentQuery)}&withTeachers=1`, {
             headers: { Authorization: `Bearer ${token}` }
           })
           setStudentResults(await r2.json())
@@ -205,7 +205,7 @@ export default function IssuePage() {
                       <UserAvatar src={s.avatar_url} name={s.name} className="w-12 h-12 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0" />
                       <div className="flex-1 min-w-0">
                         <div className="font-semibold text-[14px] text-[var(--color-text-primary)]">{s.name}</div>
-                        <div className="text-[12px] text-[var(--color-text-tertiary)]">{s.class_name || '—'} · {s.email}</div>
+                        <div className="text-[12px] text-[var(--color-text-tertiary)]">{s.role === 'teacher' ? 'Учитель' : (s.class_name || '—')} · {s.email}</div>
                       </div>
                       {s.currently_holding > 0 && (
                         <div className="text-right shrink-0">
@@ -224,7 +224,7 @@ export default function IssuePage() {
                   <UserAvatar src={selectedStudent.avatar_url} name={selectedStudent.name} className="w-10 h-10 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white text-[14px]" />
                   <div className="flex-1">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)]">{selectedStudent.name}</div>
-                    <div className="text-[12px] text-[var(--color-text-tertiary)]">{selectedStudent.class_name || '—'}</div>
+                    <div className="text-[12px] text-[var(--color-text-tertiary)]">{selectedStudent.role === 'teacher' ? 'Учитель' : (selectedStudent.class_name || '—')}</div>
                   </div>
                   <button onClick={() => { setSelectedStudent(null); setStep(1) }} className="text-[var(--color-text-tertiary)] hover:text-[var(--color-text-primary)]">
                     <X size={16} />
@@ -298,7 +298,7 @@ export default function IssuePage() {
                     <div className="flex-1">
                       <div className="text-[10px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium">Ученик</div>
                       <div className="font-semibold text-[14px] text-[var(--color-text-primary)]">{selectedStudent.name}</div>
-                      <div className="text-[12px] text-[var(--color-text-tertiary)]">{selectedStudent.class_name} · {selectedStudent.email}</div>
+                      <div className="text-[12px] text-[var(--color-text-tertiary)]">{selectedStudent.role === 'teacher' ? 'Учитель' : selectedStudent.class_name} · {selectedStudent.email}</div>
                     </div>
                   </div>
 

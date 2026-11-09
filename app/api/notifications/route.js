@@ -25,7 +25,7 @@ export async function GET(req) {
         ? { kind: 'overdue', title: `Срок прошёл: ${b.title}`, body: 'Верни книгу или попроси библиотекаря продлить срок.', link: `/books/${b.book_id}`, dedupeKey: `overdue-${b.id}-${b.d}` }
         : { kind: 'due_soon', title: `Скоро вернуть: ${b.title}`, body: `Срок — ${fmtDate(b.due_date)}. Не успеваешь? Попроси продлить.`, link: `/books/${b.book_id}`, dedupeKey: `due-${b.id}-${b.d}` })
     }
-    if (me.role === 'student') await syncAchievements(pool, me.id).catch(e => console.error('[ach]', e.message))
+    if (me.role === 'student' || me.role === 'teacher') await syncAchievements(pool, me.id).catch(e => console.error('[ach]', e.message))
 
     const [list, unread] = await Promise.all([
       pool.query(

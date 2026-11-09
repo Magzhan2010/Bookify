@@ -19,9 +19,10 @@ export async function GET(req) {
 
     const [leaders, best, quotes, books, stats] = await Promise.all([
       pool.query(`
-        SELECT u.id, u.name, u.class_name, u.avatar_url, SUM(p.points)::int AS points
+        SELECT u.id, u.name, CASE WHEN u.role = 'teacher' THEN NULL ELSE u.class_name END AS class_name,
+               (u.role = 'teacher') AS is_teacher, u.avatar_url, SUM(p.points)::int AS points
           FROM user_points p JOIN users u ON u.id = p.user_id
-         WHERE u.role = 'student' AND p.created_at >= ${MONTH_START}
+         WHERE u.role IN ('student', 'teacher') AND p.created_at >= ${MONTH_START}
          GROUP BY u.id ORDER BY points DESC, u.name LIMIT 10`),
       bestClasses(pool, 5),
       pool.query(`SELECT id, text, author_name, author_info, book_title, image, updated_at FROM quotes WHERE active ORDER BY id`),

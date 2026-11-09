@@ -55,7 +55,7 @@ export default function ShopPage() {
   }, [])
 
   const available = data?.balance?.available ?? summary?.balance?.available ?? 0
-  const isStudent = role === 'student'
+  const isStudent = role === 'student' || role === 'teacher'
 
   const order = async () => {
     if (!buying) return

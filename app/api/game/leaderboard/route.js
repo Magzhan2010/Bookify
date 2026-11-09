@@ -25,21 +25,22 @@ export async function GET(req) {
     let classFilter = ''
     if (cls) {
       params.push(cls)
-      classFilter = 'AND u.class_name = $2'
+      classFilter = `AND u.role = 'student' AND u.class_name = $2`
     }
 
     const [rows, classes, best] = await Promise.all([
       pool.query(
         `WITH totals AS (
-           SELECT u.id, u.name, u.class_name, u.avatar_url,
+           SELECT u.id, u.name, CASE WHEN u.role = 'teacher' THEN NULL ELSE u.class_name END AS class_name, u.avatar_url,
+                  (u.role = 'teacher') AS is_teacher,
                   COALESCE(SUM(p.points), 0)::int AS earned,
                   COUNT(DISTINCT p.book_id) FILTER (WHERE p.reason LIKE 'pages%')::int AS books
              FROM users u
              LEFT JOIN user_points p ON p.user_id = u.id ${period === 'month' ? `AND p.created_at >= ${MONTH_START}` : ''}
-            WHERE u.role = 'student' ${classFilter}
+            WHERE (u.role = 'student' OR (u.role = 'teacher' AND NOT COALESCE(u.teacher_pending, FALSE))) ${classFilter}
             GROUP BY u.id
          )
-         SELECT id, name, class_name, avatar_url, earned, books,
+         SELECT id, name, class_name, avatar_url, is_teacher, earned, books,
                 RANK() OVER (ORDER BY earned DESC)::int AS place
            FROM totals
           WHERE earned > 0

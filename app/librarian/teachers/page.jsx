@@ -44,7 +44,7 @@ export default function TeachersPage() {
         <div>
           <h1 className="text-3xl sm:text-4xl font-semibold tracking-[-0.025em] text-[var(--color-text-primary)]">Учителя</h1>
           <p className="text-[15px] text-[var(--color-text-secondary)] mt-1 max-w-2xl">
-            Учитель берёт книги, видит, как читает его класс, и советует книги ученикам. В монетах и рейтинге не участвует.
+            Учитель участвует наравне с учениками: берёт книги, пишет отзывы, получает монеты и призы. Плюс видит, как читает любой класс, и советует книги. Классный руководитель — по желанию.
           </p>
         </div>
         <Button icon={GraduationCap} onClick={() => setAdding(true)}>Сделать учителем</Button>
@@ -119,7 +119,7 @@ function ClassEdit({ t, onSave }) {
   const changed = cls !== (t.class_name || '')
   return (
     <div className="flex items-center gap-2 mt-3">
-      <span className="text-[12px] text-[var(--color-text-secondary)] shrink-0">Классный руководитель:</span>
+      <span className="text-[12px] text-[var(--color-text-secondary)] shrink-0">Классный руководитель (необязательно):</span>
       <input value={cls} onChange={e => setCls(e.target.value)} placeholder="—" className={`${inputCls} flex-1 min-w-0`} />
       {changed && <Button size="sm" onClick={() => onSave(cls)}>OK</Button>}
     </div>

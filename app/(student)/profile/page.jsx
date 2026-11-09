@@ -301,10 +301,10 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* === БАЛЛЫ И КАРТОЧКИ === */}
-        {userData.role === 'student' && (
+        {(userData.role === 'student' || userData.role === 'teacher') && (
           <PointsPanel points={points} history={pointsHistory} />
         )}
-        {userData.role === 'student' && <Achievements />}
+        {(userData.role === 'student' || userData.role === 'teacher') && <Achievements />}
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}

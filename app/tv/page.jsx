@@ -87,7 +87,7 @@ function Tv() {
                       <Avatar l={l} />
                       <div className="flex-1 min-w-0">
                         <div className="text-[1.8vw] font-bold truncate">{l.name}</div>
-                        {l.class_name && <div className={`text-[1.1vw] ${i === 0 ? 'text-[#1f2a5c]/70' : 'text-white/50'}`}>{l.class_name} класс</div>}
+                        {(l.is_teacher || l.class_name) && <div className={`text-[1.1vw] ${i === 0 ? 'text-[#1f2a5c]/70' : 'text-white/50'}`}>{l.is_teacher ? 'Учитель' : `${l.class_name} класс`}</div>}
                       </div>
                       <div className="text-[2.2vw] font-extrabold tabular-nums">{l.points}<span className="text-[1.1vw] font-semibold ml-[0.4vw] opacity-70">монет</span></div>
                     </motion.div>

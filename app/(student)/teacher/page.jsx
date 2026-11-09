@@ -70,7 +70,7 @@ export default function TeacherPage() {
       </div>
 
       {!data ? <Skeleton className="h-64 rounded-3xl" /> : !data.class_name ? (
-        <p className="text-[15px] text-[var(--color-text-secondary)] py-10 text-center border border-dashed border-[var(--color-border)] rounded-3xl">Выберите класс сверху.</p>
+        <p className="text-[15px] text-[var(--color-text-secondary)] py-10 text-center border border-dashed border-[var(--color-border)] rounded-3xl">Выберите класс сверху — можно смотреть любой.</p>
       ) : (
         <>
           <section className="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">

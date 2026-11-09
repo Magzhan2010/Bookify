@@ -28,7 +28,7 @@ export default function Register() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, className, isTeacher })
+        body: JSON.stringify({ name, email, password, className: isTeacher ? '' : className, isTeacher })
       })
       const data = await res.json()
 
@@ -110,7 +110,7 @@ export default function Register() {
                 </button>
               ))}
             </div>
-            <Field label="Класс" value={className} onChange={setClassName} />
+            {!isTeacher && <Field label="Класс" value={className} onChange={setClassName} />}
             {isTeacher && (
               <p className="text-[12px] text-[var(--color-text-tertiary)] -mt-1">
                 Укажите класс, где вы классный руководитель. Кабинет учителя откроется после подтверждения библиотекарем.

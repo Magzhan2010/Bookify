@@ -13,7 +13,7 @@ import { HIGHLIGHTER_COLORS, COLOR_NOTE_PREFIX } from '../../../../lib/points'
  * не позволят потратить одни и те же баллы дважды.
  */
 export async function POST(req) {
-  const guard = await requireAuth(req, ['student'])
+  const guard = await requireAuth(req, ['student', 'teacher'])
   if (!guard.ok) return guard.response
   const userId = guard.payload.id
 

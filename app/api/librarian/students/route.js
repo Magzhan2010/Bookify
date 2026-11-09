@@ -20,8 +20,11 @@ export async function GET(req) {
   const q = searchParams.get('q')?.trim()
   const className = searchParams.get('class')?.trim()
   const active = searchParams.get('active') === 'true'
+  const withTeachers = searchParams.get('withTeachers') === '1'
 
-  const conditions = [`u.role = 'student'`]
+  const conditions = [withTeachers
+    ? `(u.role = 'student' OR (u.role = 'teacher' AND NOT COALESCE(u.teacher_pending, FALSE)))`
+    : `u.role = 'student'`]
   const params = []
   let i = 1
 
@@ -45,7 +48,7 @@ export async function GET(req) {
   try {
     const query = `
       SELECT
-        u.id, u.name, u.email, u.class_name, u.phone, u.avatar_url, u.created_at,
+        u.id, u.name, u.email, u.class_name, u.role, u.phone, u.avatar_url, u.created_at,
         COUNT(b.id) AS total_borrows,
         COUNT(b.id) FILTER (WHERE b.status = 'active') AS currently_holding,
         COUNT(b.id) FILTER (WHERE b.status <> 'active') AS returned_count,

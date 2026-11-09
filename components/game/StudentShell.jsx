@@ -37,19 +37,13 @@ const NAV_GROUPS = [
     items: [{ href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound }]
   }
 ]
-// Учителю игра не нужна: каталог, свой класс, профиль
+// Учитель участвует наравне с учениками + раздел «Мой класс»
 const TEACHER_GROUPS = [
-  { title: 'Читать', items: [NAV_GROUPS[0].items[0], NAV_GROUPS[0].items[1]] },
-  {
-    title: 'Учитель',
-    items: [
-      { href: '/teacher', label: 'Мой класс', short: 'Класс', icon: GraduationCap },
-      { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy }
-    ]
-  },
-  { title: 'Я', items: [NAV_GROUPS[2].items[0]] }
+  NAV_GROUPS[0],
+  NAV_GROUPS[1],
+  { title: 'Учитель', items: [{ href: '/teacher', label: 'Мой класс', short: 'Класс', icon: GraduationCap }] },
+  NAV_GROUPS[2]
 ]
-const TEACHER_NAV = [TEACHER_GROUPS[0].items[0], TEACHER_GROUPS[1].items[0], TEACHER_GROUPS[0].items[1], TEACHER_GROUPS[1].items[1], TEACHER_GROUPS[2].items[0]]
 
 // Нижняя панель на телефоне — плоский список в привычном порядке
 const NAV = [
@@ -86,7 +80,8 @@ export default function StudentShell({ children }) {
     )
   }
 
-  const isStudent = user?.role === 'student'
+  // Учителя тоже играют: монеты, призы, достижения
+  const isStudent = user?.role === 'student' || user?.role === 'teacher'
 
   return (
     <GameProvider enabled={isStudent}>
@@ -277,7 +272,9 @@ function BottomNav({ isStudent, isTeacher }) {
   const { summary } = useGame()
   const teamMe = useTeamMe()
   // Участникам платформы вместо «Правил» показываем вход в командную платформу
-  const items = isTeacher ? TEACHER_NAV : teamMe
+  const items = isTeacher
+    ? [...NAV.slice(0, 5), TEACHER_GROUPS[2].items[0]]
+    : teamMe
     ? [...NAV.slice(0, 5), { href: '/team', label: 'Команда', short: 'Команда', icon: Users2 }]
     : NAV
   return (

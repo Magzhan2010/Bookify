@@ -138,7 +138,7 @@ export default function LeaderboardPage() {
                   {p.place === 1 && <Crown size={26} className="text-[#ffc93c] mb-1 coin-float" fill="#ffc93c" />}
                   <Avatar name={l.name} src={l.avatar_url} size={p.place === 1 ? 64 : 52} ring={p.color} highlight={l.id === me} />
                   <div className="mt-2 text-[13px] sm:text-[14px] font-bold text-[var(--color-text-primary)] line-clamp-1 max-w-full">{l.name}</div>
-                  <div className="text-[11px] text-[var(--color-text-tertiary)]">{l.class_name ? t('{c} кл.', { c: l.class_name }) : ''}</div>
+                  <div className="text-[11px] text-[var(--color-text-tertiary)]">{l.is_teacher ? t('Учитель') : l.class_name ? t('{c} кл.', { c: l.class_name }) : ''}</div>
                   <div className={`mt-2 w-full ${p.height} rounded-t-2xl flex flex-col items-center justify-start pt-2`} style={{ background: p.color }}>
                     <div className="text-[22px] leading-none">{p.medal}</div>
                     <div className="text-[18px] sm:text-[22px] font-extrabold text-[#1f2a5c] mt-1">{l.earned}</div>
@@ -169,7 +169,7 @@ export default function LeaderboardPage() {
                       {l.name} {mine && <span className="text-[var(--color-brand)]">{t('(ты)')}</span>}
                     </div>
                     <div className="text-[12px] text-[var(--color-text-tertiary)] flex items-center gap-2">
-                      {l.class_name && <span>{t('{c} кл.', { c: l.class_name })}</span>}
+                      {l.is_teacher ? <span>{t('Учитель')}</span> : l.class_name && <span>{t('{c} кл.', { c: l.class_name })}</span>}
                       <span className="flex items-center gap-1"><BookOpen size={11} /> {l.books}</span>
                       <span>{lvl.emoji} {t(lvl.title)}</span>
                     </div>
