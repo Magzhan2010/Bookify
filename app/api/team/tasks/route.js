@@ -45,7 +45,8 @@ export async function GET(req) {
 
 /**
  * POST /api/team/tasks — тимлид ставит задачу.
- * Body: { title, description?, teamId?, assigneeId?, priority?, dueDate? }
+ * Body: { title, description?, teamId?, assigneeId? | assigneeIds?: number[], priority?, dueDate? }
+ * Несколько исполнителей — каждый получает свою копию задачи (свой статус и отчёты).
  */
 export async function POST(req) {
   const guard = await requireAuth(req, ['teamlead'])
@@ -57,25 +58,32 @@ export async function POST(req) {
   if (!title) return NextResponse.json({ error: 'Напиши, что нужно сделать' }, { status: 400 })
   const description = String(body?.description || '').trim().slice(0, 4000) || null
   const teamId = parseInt(body?.teamId) || null
-  const assigneeId = parseInt(body?.assigneeId) || null
+  const ids = [...new Set(
+    (Array.isArray(body?.assigneeIds) ? body.assigneeIds : [body?.assigneeId])
+      .map(x => parseInt(x)).filter(Boolean)
+  )].slice(0, 30)
   const priority = ['low', 'normal', 'high'].includes(body?.priority) ? body.priority : 'normal'
   const dueDate = /^\d{4}-\d{2}-\d{2}$/.test(body?.dueDate || '') ? body.dueDate : null
 
-  if (!teamId && !assigneeId) {
+  if (!teamId && !ids.length) {
     return NextResponse.json({ error: 'Выбери команду или исполнителя' }, { status: 400 })
   }
 
   try {
-    if (assigneeId) {
-      const ok = await pool.query('SELECT 1 FROM team_members WHERE user_id = $1', [assigneeId])
-      if (!ok.rows[0]) return NextResponse.json({ error: 'Исполнитель не участник платформы' }, { status: 400 })
+    if (ids.length) {
+      const ok = await pool.query('SELECT COUNT(*)::int AS n FROM team_members WHERE user_id = ANY($1::int[])', [ids])
+      if (ok.rows[0].n !== ids.length) return NextResponse.json({ error: 'Исполнитель не участник платформы' }, { status: 400 })
     }
-    const res = await pool.query(
-      `INSERT INTO team_tasks (title, description, team_id, assignee_id, priority, due_date, created_by)
-       VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-      [title, description, teamId, assigneeId, priority, dueDate, guard.payload.id]
-    )
-    return NextResponse.json({ success: true, id: res.rows[0].id })
+    const created = []
+    for (const assigneeId of (ids.length ? ids : [null])) {
+      const res = await pool.query(
+        `INSERT INTO team_tasks (title, description, team_id, assignee_id, priority, due_date, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
+        [title, description, teamId, assigneeId, priority, dueDate, guard.payload.id]
+      )
+      created.push(res.rows[0].id)
+    }
+    return NextResponse.json({ success: true, id: created[0], ids: created })
   } catch (err) {
     console.error('[team/tasks POST]', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })

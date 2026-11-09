@@ -205,7 +205,7 @@ function MoveBtn({ children, onClick, label }) {
 
 /** Создание и редактирование задачи (тимлид). */
 function TaskEditor({ open, onClose, teams, people, task, onSaved }) {
-  const empty = { title: '', description: '', teamId: '', assigneeId: '', priority: 'normal', dueDate: '' }
+  const empty = { title: '', description: '', teamId: '', assigneeId: '', assigneeIds: [], priority: 'normal', dueDate: '' }
   const [form, setForm] = useState(empty)
   const [saving, setSaving] = useState(false)
 
@@ -229,7 +229,8 @@ function TaskEditor({ open, onClose, teams, people, task, onSaved }) {
     try {
       if (task) await api(`/api/team/tasks/${task.id}`, { method: 'PATCH', body: form })
       else await api('/api/team/tasks', { method: 'POST', body: form })
-      toast.success(task ? 'Задача обновлена' : 'Задача поставлена')
+      toast.success(task ? 'Задача обновлена'
+        : form.assigneeIds.length > 1 ? `Задача поставлена ${form.assigneeIds.length} участникам` : 'Задача поставлена')
       onSaved?.()
     } catch (err) {
       toast.error(err.message)
@@ -247,6 +248,46 @@ function TaskEditor({ open, onClose, teams, people, task, onSaved }) {
         <Field label="Подробности">
           <textarea value={form.description} onChange={e => set('description', e.target.value)} rows={4} className={`${inputCls} resize-y`} placeholder="Цель, критерии готовности, ссылки" />
         </Field>
+        {!task && (
+          <div>
+            <div className="text-[12px] font-medium text-[var(--color-text-secondary)] mb-1.5">
+              Исполнители{form.assigneeIds.length ? ` · ${form.assigneeIds.length}` : ''}
+            </div>
+            <div className="flex flex-wrap gap-1.5">
+              {teamPeople.map(p => {
+                const on = form.assigneeIds.includes(p.id)
+                return (
+                  <button
+                    key={p.id}
+                    type="button"
+                    onClick={() => set('assigneeIds', on ? form.assigneeIds.filter(x => x !== p.id) : [...form.assigneeIds, p.id])}
+                    className={`inline-flex items-center gap-1.5 pl-1 pr-3 py-1 rounded-full text-[13px] font-medium transition-colors ${
+                      on ? 'bg-[var(--color-text-primary)] text-[var(--color-bg-card)]' : 'bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'
+                    }`}
+                  >
+                    <Avatar name={p.name} src={p.avatar_url} size={22} /> {p.name}
+                  </button>
+                )
+              })}
+              {teamPeople.length > 1 && (
+                <button
+                  type="button"
+                  onClick={() => set('assigneeIds', form.assigneeIds.length === teamPeople.length ? [] : teamPeople.map(p => p.id))}
+                  className="px-3 py-1 rounded-full text-[13px] font-medium text-[var(--color-brand)] hover:bg-[var(--color-brand-soft)]"
+                >
+                  {form.assigneeIds.length === teamPeople.length ? 'Снять всех' : 'Выбрать всех'}
+                </button>
+              )}
+            </div>
+            <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">
+              {form.assigneeIds.length > 1
+                ? 'Каждый получит свою копию задачи и отчитается отдельно'
+                : form.teamId && !form.assigneeIds.length
+                  ? 'Никого не выбрал — задачу увидит и сможет взять вся команда'
+                  : 'Можно выбрать несколько человек'}
+            </div>
+          </div>
+        )}
         <div className="grid sm:grid-cols-2 gap-3">
           <Field label="Команда">
             <select value={form.teamId} onChange={e => set('teamId', e.target.value)} className={inputCls}>
@@ -254,12 +295,14 @@ function TaskEditor({ open, onClose, teams, people, task, onSaved }) {
               {teams.map(t => <option key={t.id} value={t.id}>{t.name}</option>)}
             </select>
           </Field>
+          {task && (
           <Field label="Исполнитель" hint={form.teamId && !form.assigneeId ? 'Задачу увидит и сможет взять вся команда' : undefined}>
             <select value={form.assigneeId} onChange={e => set('assigneeId', e.target.value)} className={inputCls}>
               <option value="">{form.teamId ? 'Вся команда' : 'Выбери человека'}</option>
               {teamPeople.map(p => <option key={p.id} value={p.id}>{p.name}</option>)}
             </select>
           </Field>
+          )}
           <Field label="Приоритет">
             <select value={form.priority} onChange={e => set('priority', e.target.value)} className={inputCls}>
               {TASK_PRIORITIES.map(p => <option key={p.key} value={p.key}>{p.label}</option>)}

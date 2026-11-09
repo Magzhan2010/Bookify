@@ -8,8 +8,9 @@ import { useArea } from '../../../lib/useArea'
 import { toast } from 'sonner'
 import AddStudentsModal from '../../../components/librarian/AddStudentsModal'
 import PasswordsModal from '../../../components/librarian/PasswordsModal'
+import DeleteStudent from '../../../components/librarian/DeleteStudent'
 import { useTeamMe } from '../../../lib/useTeamMe'
-import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check, KeyRound } from 'lucide-react'
+import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check, KeyRound, Trash2 } from 'lucide-react'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -23,6 +24,8 @@ export default function StudentsPage() {
   const teamMe = useTeamMe()
   // Пароли списком: библиотекарь или тимлид
   const canPasswords = !team || !!teamMe?.is_lead
+  const canDelete = canPasswords
+  const [deleting, setDeleting] = useState(null)
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -117,8 +120,19 @@ export default function StudentsPage() {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.02 }}
               onClick={() => router.push(`${base}/students/${s.id}`)}
-              className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all cursor-pointer"
+              className="group relative bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-4 hover:border-[var(--color-brand)]/40 hover:shadow-[0_4px_16px_rgba(0,0,0,0.04)] transition-all cursor-pointer"
             >
+              {canDelete && (
+                <button
+                  type="button"
+                  onClick={e => { e.stopPropagation(); setDeleting(s) }}
+                  aria-label={`Удалить ${s.name}`}
+                  title="Удалить ученика"
+                  className="absolute top-3 right-3 w-8 h-8 rounded-lg flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 focus:opacity-100 transition-all"
+                >
+                  <Trash2 size={15} />
+                </button>
+              )}
               <div className="flex items-start gap-3 mb-3">
                 <UserAvatar src={s.avatar_url} name={s.name} className="w-11 h-11 rounded-xl bg-[var(--color-brand)] flex items-center justify-center font-semibold text-white shrink-0" />
                 <div className="flex-1 min-w-0">
@@ -139,6 +153,12 @@ export default function StudentsPage() {
         </div>
       )}
 
+      <DeleteStudent
+        student={deleting}
+        open={!!deleting}
+        onClose={() => setDeleting(null)}
+        onDeleted={id => { setDeleting(null); setStudents(ss => ss.filter(x => x.id !== id)) }}
+      />
       <PasswordsModal open={showPasswords} onClose={() => setShowPasswords(false)} onDone={() => fetchStudents()} />
       <AddStudentsModal
         open={showAddModal}

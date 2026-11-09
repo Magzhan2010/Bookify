@@ -948,7 +948,8 @@ const SettingsPanel = ({ user, onUpdated }) => {
         </form>
       </Card>
 
-      {/* Пароль */}
+      {/* Пароль — ученикам менять нельзя: пароли выдаёт библиотекарь */}
+      {user?.role !== 'student' && (
       <Card padding="lg">
         <div className="flex items-center gap-3 mb-5">
           <div className="w-10 h-10 rounded-[var(--radius-md)] bg-[var(--color-bg-soft)] flex items-center justify-center">
@@ -1016,6 +1017,12 @@ const SettingsPanel = ({ user, onUpdated }) => {
           </Button>
         </form>
       </Card>
+      )}
+      {user?.role === 'student' && (
+        <p className="text-[13px] text-[var(--color-text-tertiary)] text-center">
+          Забыл пароль? Обратись к библиотекарю.
+        </p>
+      )}
     </div>
   )
 }

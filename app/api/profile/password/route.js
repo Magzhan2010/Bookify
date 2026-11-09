@@ -18,6 +18,11 @@ export async function PATCH(req) {
   if (!guard.ok) return guard.response
   const payload = guard.payload
 
+  // Ученики пароль сами не меняют — его выдаёт библиотекарь
+  if (payload.role === 'student') {
+    return NextResponse.json({ error: 'Пароль меняет библиотекарь' }, { status: 403 })
+  }
+
   try {
     const { oldPassword, newPassword } = await req.json()
 

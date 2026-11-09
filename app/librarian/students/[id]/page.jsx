@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
 import ExtendDue from '../../../../components/librarian/ExtendDue'
+import DeleteStudent from '../../../../components/librarian/DeleteStudent'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
@@ -21,6 +22,7 @@ export default function StudentDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [history, setHistory] = useState([])
+  const [deleteOpen, setDeleteOpen] = useState(false)
   const [favorites, setFavorites] = useState([])
   const [stats, setStats] = useState(null)
 
@@ -95,25 +97,7 @@ export default function StudentDetailPage() {
     }
   }
 
-  const handleDelete = async () => {
-    if (!confirm(`Удалить ${student.name}? Это нельзя отменить.`)) return
-    const token = localStorage.getItem('token')
-    try {
-      const res = await fetch(`/api/librarian/students/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const data = await res.json()
-      if (res.ok) {
-        toast.success('Удалено')
-        router.push(`${base}/students`)
-      } else {
-        toast.error(data.error || 'Ошибка')
-      }
-    } catch (e) {
-      toast.error('Ошибка сети')
-    }
-  }
+  const handleDelete = () => setDeleteOpen(true)
 
   if (loading) {
     return (
@@ -303,6 +287,7 @@ export default function StudentDetailPage() {
           </motion.div>
         </div>
       </div>
+      <DeleteStudent student={student} open={deleteOpen} onClose={() => setDeleteOpen(false)} onDeleted={() => router.push(`${base}/students`)} />
     </div>
   )
 }

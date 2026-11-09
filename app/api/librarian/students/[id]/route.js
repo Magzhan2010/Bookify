@@ -170,53 +170,59 @@ export async function PATCH(req, { params }) {
  * Удалить ученика. Только если у него нет активных займов.
  */
 export async function DELETE(req, { params }) {
-  const guard = await requireAuth(req, ['librarian'])
+  // Удаляет библиотекарь или тимлид командной платформы
+  const guard = await requireAuth(req, ['librarian', 'teamlead'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
-  const selfId = guard.payload.id
+  const force = new URL(req.url).searchParams.get('force') === '1'
 
-  if (Number(id) === Number(selfId)) {
-    return NextResponse.json(
-      { error: 'Нельзя удалить свой аккаунт' },
-      { status: 400 }
-    )
+  if (Number(id) === Number(guard.payload.id)) {
+    return NextResponse.json({ error: 'Нельзя удалить свой аккаунт' }, { status: 400 })
   }
 
+  const client = await pool.connect()
   try {
-    const target = await pool.query('SELECT id, role FROM users WHERE id = $1', [id])
-    if (!target.rows[0]) {
-      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
+    await client.query('BEGIN')
+    const target = await client.query(
+      `SELECT u.id, u.role, u.name,
+              EXISTS (SELECT 1 FROM team_members tm WHERE tm.user_id = u.id) AS in_team
+         FROM users u WHERE u.id = $1 FOR UPDATE`, [id])
+    const t = target.rows[0]
+    if (!t) { await client.query('ROLLBACK'); return NextResponse.json({ error: 'Не найден' }, { status: 404 }) }
+    if (t.role !== 'student') {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Удалять можно только учеников' }, { status: 403 })
     }
-    if (target.rows[0].role === 'librarian') {
+    if (t.in_team) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Это участник команды — сначала уберите его с командной платформы' }, { status: 400 })
+    }
+
+    const active = await client.query(
+      `SELECT id, book_id FROM borrows WHERE user_id = $1 AND status = 'active'`, [id])
+    if (active.rows.length && !force) {
+      await client.query('ROLLBACK')
       return NextResponse.json(
-        { error: 'Нельзя удалить библиотекаря' },
-        { status: 403 }
+        { error: `У ученика на руках книг: ${active.rows.length}`, active_books: active.rows.length },
+        { status: 409 }
       )
     }
-
-    const active = await pool.query(
-      `SELECT id FROM borrows WHERE user_id = $1 AND status = 'active'`,
-      [id]
-    )
-    if (active.rows[0]) {
-      return NextResponse.json(
-        { error: 'У ученика есть активные книги. Сначала примите возвраты.' },
-        { status: 400 }
-      )
+    // force: книги считаем возвращёнными, экземпляры возвращаются в фонд
+    for (const b of active.rows) {
+      await client.query(
+        'UPDATE books SET available_copies = LEAST(available_copies + 1, total_copies), updated_at = NOW() WHERE id = $1',
+        [b.book_id])
     }
 
-    const res = await pool.query(
-      `DELETE FROM users WHERE id = $1 AND role = 'student' RETURNING id`,
-      [id]
-    )
-    if (!res.rows[0]) {
-      return NextResponse.json({ error: 'Не найден' }, { status: 404 })
-    }
-
-    return NextResponse.json({ success: true })
+    await client.query(`DELETE FROM users WHERE id = $1 AND role = 'student'`, [id])
+    await client.query('COMMIT')
+    return NextResponse.json({ success: true, returned_books: active.rows.length })
   } catch (err) {
+    await client.query('ROLLBACK').catch(() => {})
     console.error('Delete student error:', err)
-    return NextResponse.json({ error: err.message }, { status: 500 })
+    return NextResponse.json({ error: 'Не удалось удалить ученика' }, { status: 500 })
+  } finally {
+    client.release()
   }
 }
