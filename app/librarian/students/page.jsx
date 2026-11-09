@@ -7,7 +7,9 @@ import { useRouter } from 'next/navigation'
 import { useArea } from '../../../lib/useArea'
 import { toast } from 'sonner'
 import AddStudentsModal from '../../../components/librarian/AddStudentsModal'
-import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check } from 'lucide-react'
+import PasswordsModal from '../../../components/librarian/PasswordsModal'
+import { useTeamMe } from '../../../lib/useTeamMe'
+import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check, KeyRound } from 'lucide-react'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -17,6 +19,10 @@ export default function StudentsPage() {
   const [search, setSearch] = useState('')
   const [classFilter, setClassFilter] = useState('')
   const [showAddModal, setShowAddModal] = useState(false)
+  const [showPasswords, setShowPasswords] = useState(false)
+  const teamMe = useTeamMe()
+  // Пароли списком: библиотекарь или тимлид
+  const canPasswords = !team || !!teamMe?.is_lead
 
   const fetchStudents = async () => {
     setLoading(true)
@@ -54,12 +60,22 @@ export default function StudentsPage() {
           </h1>
           <p className="text-[15px] text-[var(--color-text-secondary)]">{students.length} зарегистрировано</p>
         </div>
+        <div className="flex gap-2">
+        {canPasswords && (
+          <button
+            onClick={() => setShowPasswords(true)}
+            className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-[13px] font-medium transition-colors flex items-center gap-2"
+          >
+            <KeyRound size={14} /> Пароли списком
+          </button>
+        )}
         <button
           onClick={() => setShowAddModal(true)}
           className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium transition-colors flex items-center gap-2"
         >
           <UserPlus size={14} /> Добавить учеников
         </button>
+        </div>
       </div>
 
       <div className="flex flex-col md:flex-row gap-3 mb-5">
@@ -123,6 +139,7 @@ export default function StudentsPage() {
         </div>
       )}
 
+      <PasswordsModal open={showPasswords} onClose={() => setShowPasswords(false)} onDone={() => fetchStudents()} />
       <AddStudentsModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
