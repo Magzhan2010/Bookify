@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { BONUSES } from '../../../../lib/points'
+import { getGameStart } from '../../../../lib/game'
 
 /**
  * GET /api/team/monitoring?class=
@@ -14,17 +15,19 @@ export async function GET(req) {
   if (!guard.ok) return guard.response
 
   const className = new URL(req.url).searchParams.get('class')?.trim()
-  const params = []
-  let classCond = ''
-  if (className) { params.push(className); classCond = `AND u.class_name = $1` }
-
   try {
+    // Учитываем только то, что было после старта программы
+    const start = await getGameStart(pool)
+    const params = [start || '-infinity']
+    let classCond = ''
+    if (className) { params.push(className); classCond = `AND u.class_name = $2` }
+
     const res = await pool.query(`
       WITH b AS (
         SELECT user_id,
-               COUNT(*)::int AS borrowed,
+               COUNT(*) FILTER (WHERE status = 'active' OR borrowed_at >= $1::timestamptz OR returned_at >= $1::timestamptz)::int AS borrowed,
                COUNT(*) FILTER (WHERE status = 'active')::int AS reading,
-               COUNT(*) FILTER (WHERE status <> 'active')::int AS finished,
+               COUNT(*) FILTER (WHERE status <> 'active' AND returned_at >= $1::timestamptz)::int AS finished,
                MAX(GREATEST(borrowed_at, COALESCE(returned_at, borrowed_at))) AS last_borrow
           FROM borrows GROUP BY user_id
       ),
@@ -34,7 +37,7 @@ export async function GET(req) {
                COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
                COUNT(*) FILTER (WHERE status = 'rejected')::int AS rejected,
                MAX(created_at) AS last_review
-          FROM book_reviews GROUP BY user_id
+          FROM book_reviews WHERE created_at >= $1::timestamptz GROUP BY user_id
       ),
       miss AS (
         SELECT br.user_id, COUNT(*)::int AS missing,
@@ -43,6 +46,7 @@ export async function GET(req) {
           FROM borrows br
           JOIN books bk ON bk.id = br.book_id
          WHERE br.status <> 'active'
+           AND br.returned_at >= $1::timestamptz
            AND NOT EXISTS (SELECT 1 FROM book_reviews r WHERE r.borrow_id = br.id)
          GROUP BY br.user_id
       ),
@@ -94,7 +98,7 @@ export async function GET(req) {
       tedx_students: rows.filter(r => r.tedx > 0).length
     }
 
-    return NextResponse.json({ summary, classes: classes.rows.map(r => r.class_name), students: rows })
+    return NextResponse.json({ summary, game_start: start, classes: classes.rows.map(r => r.class_name), students: rows })
   } catch (err) {
     console.error('[team/monitoring]', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })

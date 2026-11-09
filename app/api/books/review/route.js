@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { getGameStart } from '../../../../lib/game'
 
 /**
  * POST /api/books/review
@@ -55,6 +56,14 @@ export async function POST(req) {
       await client.query('ROLLBACK')
       return NextResponse.json(
         { error: 'Сначала верни книгу в библиотеку' },
+        { status: 400 }
+      )
+    }
+    const start = await getGameStart(client)
+    if (start && borrow.returned_at && new Date(borrow.returned_at) < new Date(start)) {
+      await client.query('ROLLBACK')
+      return NextResponse.json(
+        { error: 'Эта книга сдана до старта программы — за неё монеты не начисляются' },
         { status: 400 }
       )
     }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { TASK_SELECT, REPORT_SELECT } from '../../../../lib/teamQueries'
+import { getGameStart } from '../../../../lib/game'
 
 /**
  * GET /api/team/overview — главная платформы: мои задачи, свежие отчёты,
@@ -13,6 +14,7 @@ export async function GET(req) {
   const me = guard.payload.id
 
   try {
+    const start = (await getGameStart(pool)) || '-infinity'
     const [counts, mine, reports, teams, students, weekly] = await Promise.all([
       pool.query(`
         SELECT COUNT(*) FILTER (WHERE status = 'todo')::int AS todo,
@@ -38,9 +40,11 @@ export async function GET(req) {
               AND NOT EXISTS (SELECT 1 FROM team_members tm WHERE tm.user_id = u.id))::int AS students,
           (SELECT COUNT(*) FROM book_reviews WHERE status = 'pending')::int AS reviews_pending,
           (SELECT COUNT(*) FROM borrows br WHERE br.status <> 'active'
+              AND br.returned_at >= $1::timestamptz
               AND NOT EXISTS (SELECT 1 FROM book_reviews r WHERE r.borrow_id = br.id))::int AS reviews_missing,
+          (SELECT COUNT(*) FROM borrows WHERE status = 'active' AND due_date < NOW())::int AS overdue_loans,
           (SELECT COUNT(*) FROM user_points WHERE reason = 'tedx')::int AS tedx,
-          (SELECT COUNT(*) FROM user_points WHERE reason = 'video')::int AS videos`),
+          (SELECT COUNT(*) FROM user_points WHERE reason = 'video')::int AS videos`, [start]),
       pool.query(`
         SELECT to_char(d, 'YYYY-MM-DD') AS day,
                (SELECT COUNT(*) FROM task_reports r WHERE r.created_at::date = d)::int AS reports,

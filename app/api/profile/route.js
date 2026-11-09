@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import pool from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
+import { getGameStart } from '../../../lib/game'
 
 export async function GET(req) {
   const guard = await requireAuth(req)
@@ -42,8 +43,10 @@ export async function GET(req) {
     JOIN books ON borrows.book_id = books.id
     LEFT JOIN book_reviews reviews ON reviews.borrow_id = borrows.id
     WHERE borrows.user_id = $1 AND borrows.status IN ('returned', 'reviewed')
+      -- книги, сданные до старта программы, отзыва не требуют (если отзыва ещё нет)
+      AND (reviews.id IS NOT NULL OR borrows.returned_at >= $2::timestamptz)
     ORDER BY borrows.returned_at DESC
-  `, [userId])
+  `, [userId, (await getGameStart(pool)) || '-infinity'])
 
   // Личная полка — прочитанные и одобренные книги
   const finishedBooks = await pool.query(`

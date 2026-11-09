@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
+import ExtendDue from '../../../../components/librarian/ExtendDue'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
@@ -276,7 +277,18 @@ export default function StudentDetailPage() {
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-semibold truncate">{h.title}</div>
                       <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{h.author}</div>
+                      {(h.status === 'active' || h.status === 'overdue') && h.due_date && (
+                        <div className={`text-[11px] mt-0.5 ${new Date(h.due_date) < new Date() ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}`}>
+                          Вернуть до {new Date(h.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
+                        </div>
+                      )}
                     </div>
+                    {(h.status === 'active' || h.status === 'overdue') && (
+                      <ExtendDue
+                        loan={{ ...h, student_name: student.name }}
+                        onExtended={due => setHistory(hs => hs.map(x => x.id === h.id ? { ...x, due_date: due } : x))}
+                      />
+                    )}
                     <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
                       h.status === 'active' || h.status === 'overdue'
                         ? 'bg-[var(--color-brand)]/15 text-[var(--color-brand)]'

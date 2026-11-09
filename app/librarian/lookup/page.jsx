@@ -2,6 +2,7 @@
 
 import { motion } from 'framer-motion'
 import UserAvatar from '../../../components/UserAvatar'
+import ExtendDue from '../../../components/librarian/ExtendDue'
 import { useEffect, useState } from 'react'
 import { Search, BookOpen, User as UserIcon, Calendar, AlertTriangle } from 'lucide-react'
 
@@ -143,6 +144,13 @@ export default function LookupPage() {
                       <span className={overdue ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}>
                         Вернуть: {new Date(r.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                       </span>
+                      <ExtendDue
+                        loan={r}
+                        className="ml-auto"
+                        onExtended={due => setResults(rs => filter === 'overdue'
+                          ? rs.filter(x => x.id !== r.id)
+                          : rs.map(x => x.id === r.id ? { ...x, due_date: due } : x))}
+                      />
                     </div>
                   </div>
                 </div>

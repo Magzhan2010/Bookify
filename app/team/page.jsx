@@ -90,6 +90,7 @@ export default function TeamOverview() {
                 <MiniStat icon={Hourglass} label="Отзывов ждут проверки" value={data.students.reviews_pending} />
                 <MiniStat icon={Mic} label="Выступлений TEDx" value={data.students.tedx} href="/team/monitoring?filter=tedx" />
                 <MiniStat icon={Video} label="Видео о книгах" value={data.students.videos} href="/team/monitoring?filter=video" />
+                <MiniStat icon={AlertTriangle} label="Просрочено книг — продлить" value={data.students.overdue_loans} tone={data.students.overdue_loans > 0 ? 'warn' : undefined} href="/team/loans" />
               </div>
               <p className="text-[12px] text-[var(--color-text-tertiary)] mt-4">Всего учеников: {data.students.students}</p>
             </Surface>

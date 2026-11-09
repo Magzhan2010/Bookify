@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Search, Check, BookOpen, AlertTriangle, Clock, User as UserIcon } from 'lucide-react'
+import ExtendDue from '../../../components/librarian/ExtendDue'
 
 export default function ReturnsPage() {
   const [loans, setLoans] = useState([])
@@ -191,6 +192,11 @@ export default function ReturnsPage() {
                     </div>
                   </div>
 
+                  <ExtendDue
+                    loan={loan}
+                    size="md"
+                    onExtended={due => setLoans(ls => ls.map(x => x.id === loan.id ? { ...x, due_date: due } : x))}
+                  />
                   <button
                     onClick={() => handleReturn(loan.id)}
                     disabled={isSubmitting}
