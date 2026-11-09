@@ -29,8 +29,8 @@ export async function GET(req) {
         [userId]
       ),
       pool.query(
-        `SELECT id, title, price, image FROM prizes
-          WHERE active ORDER BY price ASC`
+        `SELECT id, title, price FROM prizes
+          WHERE active AND (stock IS NULL OR stock > 0) ORDER BY price ASC`
       ),
       pool.query(
         `SELECT COUNT(*)::int AS n FROM borrows WHERE user_id = $1 AND status = 'approved'`,

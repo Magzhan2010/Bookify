@@ -33,7 +33,7 @@ export async function POST(req) {
     await client.query('SELECT id FROM users WHERE id = $1 FOR UPDATE', [userId])
 
     const prizeRes = await client.query(
-      'SELECT id, code, title, price, needs_note FROM prizes WHERE id = $1 AND active',
+      'SELECT id, code, title, price, needs_note, stock FROM prizes WHERE id = $1 AND active FOR UPDATE',
       [prizeId]
     )
     const prize = prizeRes.rows[0]
@@ -51,6 +51,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Напиши, какую книгу ты хочешь' }, { status: 400 })
     }
 
+    if (prize.stock !== null && prize.stock <= 0) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Этот приз закончился' }, { status: 400 })
+    }
+
     const balance = await getBalance(client, userId)
     if (balance.available < prize.price) {
       await client.query('ROLLBACK')
@@ -66,6 +71,9 @@ export async function POST(req) {
        RETURNING id, price, note, status, created_at`,
       [userId, prize.id, prize.price, note]
     )
+    if (prize.stock !== null) {
+      await client.query('UPDATE prizes SET stock = stock - 1 WHERE id = $1', [prize.id])
+    }
     await client.query('COMMIT')
 
     return NextResponse.json({
@@ -102,12 +110,14 @@ export async function DELETE(req) {
     const res = await pool.query(
       `UPDATE prize_orders SET status = 'cancelled', processed_at = NOW()
         WHERE id = $1 AND user_id = $2 AND status = 'pending'
-        RETURNING id`,
+        RETURNING id, prize_id`,
       [parseInt(body?.orderId), guard.payload.id]
     )
     if (!res.rows[0]) {
       return NextResponse.json({ error: 'Заказ не найден или уже выдан' }, { status: 404 })
     }
+    // приз возвращается на склад
+    await pool.query('UPDATE prizes SET stock = stock + 1 WHERE id = $1 AND stock IS NOT NULL', [res.rows[0].prize_id])
     return NextResponse.json({ success: true })
   } catch (err) {
     console.error('Cancel order error:', err)

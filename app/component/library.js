@@ -1,6 +1,8 @@
 'use client'
 
 import { useRouter, useSearchParams } from "next/navigation"
+import TeacherPicks from '../../components/TeacherPicks'
+import { useT } from '../../lib/i18n'
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { Search, X, BookOpen, CheckCircle, Plus, ChevronDown } from 'lucide-react'
@@ -10,6 +12,7 @@ import Books from "./books"
 import SkeletonGrid from "./skeleton"
 
 export default function Library() {
+  const { t } = useT()
   const router = useRouter()
   const searchParams = useSearchParams()
 
@@ -308,16 +311,18 @@ export default function Library() {
         <section className="pt-10 md:pt-14 pb-6">
           <motion.div initial={{ opacity: 0, y: 12 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 0.5 }}>
             <div className="text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em] mb-3">
-              {totalBooks} книг в каталоге
+              {t('{n} книг в каталоге', { n: totalBooks })}
             </div>
             <h1 className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-3 text-[var(--color-text-primary)]">
-              Каталог DLS
+              {t('Каталог DLS')}
             </h1>
             <p className="text-[17px] text-[var(--color-text-secondary)] max-w-xl leading-[1.5]">
-              Используй фильтры — книги остаются, меняется только подборка
+              {t('Используй фильтры — книги остаются, меняется только подборка')}
             </p>
           </motion.div>
         </section>
+
+        <TeacherPicks />
 
         {/* Stats */}
         <div className="grid grid-cols-3 gap-3 mb-6">

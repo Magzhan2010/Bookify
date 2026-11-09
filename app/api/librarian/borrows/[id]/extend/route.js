@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../../lib/db'
 import { requireAuth } from '../../../../../../lib/auth'
+import { notify, fmtDate } from '../../../../../../lib/notify'
 
 /**
  * POST /api/librarian/borrows/[id]/extend — продлить срок возврата книги.
@@ -48,6 +49,11 @@ export async function POST(req, { params }) {
           WHERE id = $2
           RETURNING due_date, extensions`, [days, id])
     }
+    const owner = await pool.query('SELECT user_id FROM borrows WHERE id = $1', [id])
+    await notify(pool, owner.rows[0]?.user_id, {
+      kind: 'extended', title: `Срок продлён: ${loan.title}`,
+      body: `Теперь вернуть до ${fmtDate(res.rows[0].due_date)}.`, link: '/profile'
+    })
     return NextResponse.json({ success: true, due_date: res.rows[0].due_date, extensions: res.rows[0].extensions, title: loan.title, student_name: loan.student_name })
   } catch (err) {
     console.error('[extend]', err)

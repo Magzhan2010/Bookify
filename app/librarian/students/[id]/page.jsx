@@ -4,6 +4,7 @@ import { motion } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
 import ExtendDue from '../../../../components/librarian/ExtendDue'
 import DeleteStudent from '../../../../components/librarian/DeleteStudent'
+import Achievements from '../../../../components/game/Achievements'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
@@ -240,6 +241,8 @@ export default function StudentDetailPage() {
             </div>
             )}
           </motion.div>
+
+          {student.role !== 'teacher' && <Achievements userId={student.id} compact />}
 
           {/* История книг */}
           <motion.div

@@ -18,6 +18,8 @@ import CoinCard from '../../../components/game/CoinCard'
 import { useGame } from '../../../components/game/GameContext'
 import Link from 'next/link'
 import AvatarPicker from '../../../components/AvatarPicker'
+import Achievements from '../../../components/game/Achievements'
+import { LangSwitch } from '../../../lib/i18n'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
@@ -302,6 +304,7 @@ export default function ProfilePage() {
         {userData.role === 'student' && (
           <PointsPanel points={points} history={pointsHistory} />
         )}
+        {userData.role === 'student' && <Achievements />}
 
         <motion.div
           initial={{ opacity: 0, y: 12 }}
@@ -890,6 +893,15 @@ const SettingsPanel = ({ user, onUpdated }) => {
 
   return (
     <div className="grid gap-4 lg:grid-cols-2 items-start">
+      <Card padding="lg">
+        <div className="flex items-center justify-between gap-3">
+          <div>
+            <h3 className="text-[16px] font-semibold text-[var(--color-text-primary)]">Язык · Тіл</h3>
+            <p className="text-[13px] text-[var(--color-text-tertiary)]">Русский или қазақша</p>
+          </div>
+          <LangSwitch />
+        </div>
+      </Card>
       {/* Личные данные */}
       <Card padding="lg">
         <div className="flex items-center gap-3 mb-5">

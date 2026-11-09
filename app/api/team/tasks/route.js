@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { notifyMany, fmtDate } from '../../../../lib/notify'
 import { TASK_SELECT } from '../../../../lib/teamQueries'
 
 
@@ -83,6 +84,16 @@ export async function POST(req) {
       )
       created.push(res.rows[0].id)
     }
+    // Уведомляем исполнителей (или всю команду, если исполнитель не выбран)
+    let to = ids
+    if (!ids.length && teamId) {
+      const m = await pool.query('SELECT user_id FROM team_memberships WHERE team_id = $1', [teamId])
+      to = m.rows.map(r => r.user_id)
+    }
+    await notifyMany(pool, to.filter(u => u !== guard.payload.id), {
+      kind: 'task', title: `Новая задача: ${title}`,
+      body: dueDate ? `Срок: ${fmtDate(dueDate)}` : null, link: '/team/tasks'
+    })
     return NextResponse.json({ success: true, id: created[0], ids: created })
   } catch (err) {
     console.error('[team/tasks POST]', err)

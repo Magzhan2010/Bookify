@@ -26,7 +26,8 @@ export async function GET(req) {
     const [orders, counts] = await Promise.all([
       pool.query(
         `SELECT o.id, o.price, o.note, o.status, o.created_at, o.processed_at,
-                p.title AS prize_title, p.image AS prize_image, p.code AS prize_code,
+                p.title AS prize_title, p.id AS prize_id, p.updated_at AS prize_updated, p.code AS prize_code,
+                CASE WHEN p.image LIKE 'data:%' THEN 1 ELSE 0 END AS has_custom,
                 u.id AS student_id, u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class,
                 lib.name AS processed_by_name
            FROM prize_orders o
@@ -42,7 +43,10 @@ export async function GET(req) {
     ])
     const byStatus = { pending: 0, issued: 0, cancelled: 0 }
     counts.rows.forEach(r => { byStatus[r.status] = r.n })
-    return NextResponse.json({ orders: orders.rows, counts: byStatus })
+    const rows = orders.rows.map(({ has_custom, prize_updated, ...o }) => ({
+      ...o, prize_custom_image: has_custom ? `/api/prizes/${o.prize_id}/image?v=${new Date(prize_updated).getTime()}` : null
+    }))
+    return NextResponse.json({ orders: rows, counts: byStatus })
   } catch (err) {
     console.error('Librarian orders error:', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })

@@ -10,6 +10,7 @@ import CoinCard from '../../../components/game/CoinCard'
 import Confetti from '../../../components/game/Confetti'
 import PrizeVisual, { ColorSwatches } from '../../../components/game/PrizeVisual'
 import { HIGHLIGHTER_COLORS, colorKeyFromNote } from '../../../lib/points'
+import { useT } from '../../../lib/i18n'
 import { motion } from 'framer-motion'
 
 const ORDER_STATUS = {
@@ -19,6 +20,7 @@ const ORDER_STATUS = {
 }
 
 export default function ShopPage() {
+  const { t } = useT()
   const { summary, refresh } = useGame()
   const [data, setData] = useState(null)
   const [loading, setLoading] = useState(true)
@@ -110,7 +112,7 @@ export default function ShopPage() {
         <div className="relative z-10 flex flex-col sm:flex-row sm:items-end justify-between gap-6">
           <div>
             <div className="flex items-center gap-2 text-white/70 text-[13px] font-semibold uppercase tracking-wider mb-2">
-              <ShoppingBag size={16} /> Магазин призов
+              <ShoppingBag size={16} /> {t('Магазин призов')}
             </div>
             <h1 className="text-[30px] sm:text-[40px] font-extrabold leading-tight">Обменяй монеты на призы</h1>
             <p className="text-white/70 mt-1 text-[15px]">Выбери приз — библиотекарь выдаст его тебе в библиотеке.</p>
@@ -153,10 +155,10 @@ export default function ShopPage() {
                 className="apple-card card-lift p-3 sm:p-4 flex flex-col"
               >
                 <div className="relative">
-                  <PrizeVisual code={p.code} variant={p.code === 'highlighter' ? color : undefined} className={enough ? '' : 'saturate-[0.6]'} />
+                  <PrizeVisual code={p.code} image={p.custom_image} variant={p.code === 'highlighter' ? color : undefined} className={enough ? '' : 'saturate-[0.6]'} />
                   {enough && (
                     <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[#1d1d1f] shadow-sm">
-                      Доступно
+                      {t('Доступно')}
                     </span>
                   )}
                 </div>
@@ -166,10 +168,15 @@ export default function ShopPage() {
                     <div className="text-[15px] font-semibold text-[var(--color-text-primary)] tabular-nums whitespace-nowrap">{p.price}</div>
                   </div>
                   <div className="text-[12px] text-[var(--color-text-tertiary)] mt-1 line-clamp-2">{p.description}</div>
+                  {p.stock !== null && p.stock !== undefined && p.stock <= 5 && (
+                    <div className="mt-1.5 inline-flex w-fit px-2 py-0.5 rounded-full bg-[#ff9500]/15 text-[#b86e00] text-[11px] font-semibold">
+                      {t('Осталось {n} шт.', { n: p.stock })}
+                    </div>
+                  )}
                   {p.code === 'highlighter' && (
                     <div className="mt-3">
                       <ColorSwatches colors={HIGHLIGHTER_COLORS} value={color} onChange={setColor} size={20} />
-                      <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">Цвет: {colorLabel}</div>
+                      <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">{t('Цвет: {c}', { c: t(colorLabel) })}</div>
                     </div>
                   )}
 
@@ -184,7 +191,7 @@ export default function ShopPage() {
                             className="h-full rounded-full bg-[var(--color-brand)]"
                           />
                         </div>
-                        <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">ещё {p.price - available} монет</div>
+                        <div className="text-[11px] text-[var(--color-text-tertiary)] mt-1.5">{t('ещё {n} монет', { n: p.price - available })}</div>
                       </div>
                     )}
                     {isStudent && (
@@ -197,7 +204,7 @@ export default function ShopPage() {
                             : 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)] cursor-not-allowed'
                         }`}
                       >
-                        {enough ? 'Обменять' : 'Пока не хватает'}
+                        {t(enough ? 'Обменять' : 'Пока не хватает')}
                       </button>
                     )}
                   </div>
@@ -211,14 +218,14 @@ export default function ShopPage() {
       {/* Мои заказы */}
       {isStudent && data?.orders?.length > 0 && (
         <section className="mt-10">
-          <h2 className="text-[22px] font-extrabold text-[var(--color-text-primary)] mb-3">Мои призы</h2>
+          <h2 className="text-[22px] font-extrabold text-[var(--color-text-primary)] mb-3">{t('Мои призы')}</h2>
           <div className="space-y-2">
             {data.orders.map(o => {
               const st = ORDER_STATUS[o.status]
               const Icon = st.icon
               return (
                 <div key={o.id} className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
-                  <PrizeVisual code={o.code} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0" />
+                  <PrizeVisual code={o.code} image={o.custom_image} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-[14px] text-[var(--color-text-primary)] truncate">{o.title}</div>
                     <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">
@@ -227,14 +234,14 @@ export default function ShopPage() {
                     </div>
                   </div>
                   <span className={`px-2.5 py-1 rounded-full text-[11px] font-semibold flex items-center gap-1 ${st.cls}`}>
-                    <Icon size={12} /> {st.label}
+                    <Icon size={12} /> {t(st.label)}
                   </span>
                   {o.status === 'pending' && (
                     <button
                       onClick={() => cancel(o.id)}
                       className="text-[12px] text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] px-2"
                     >
-                      Отменить
+                      {t('Отменить')}
                     </button>
                   )}
                 </div>
@@ -251,34 +258,34 @@ export default function ShopPage() {
       <Modal
         open={!!buying}
         onClose={() => setBuying(null)}
-        title="Обменять монеты?"
+        title={t('Обменять монеты?')}
         footer={
           <>
-            <Button variant="secondary" onClick={() => setBuying(null)}>Отмена</Button>
-            <Button onClick={order} loading={saving} icon={Gift}>Обменять</Button>
+            <Button variant="secondary" onClick={() => setBuying(null)}>{t('Отмена')}</Button>
+            <Button onClick={order} loading={saving} icon={Gift}>{t('Обменять')}</Button>
           </>
         }
       >
         {buying && (
           <div>
             <div className="flex items-center gap-4 mb-4">
-              <PrizeVisual code={buying.code} variant={buying.code === 'highlighter' ? color : undefined} size="lg" className="shrink-0" />
+              <PrizeVisual code={buying.code} image={buying.custom_image} variant={buying.code === 'highlighter' ? color : undefined} size="lg" className="shrink-0" />
               <div>
                 <div className="font-bold text-[17px] text-[var(--color-text-primary)]">{buying.title}</div>
                 <div className="text-[13px] text-[var(--color-text-secondary)]">
-                  {buying.price} монет · останется <b>{available - buying.price}</b>
+                  {t('{p} монет · останется {r}', { p: buying.price, r: available - buying.price })}
                 </div>
               </div>
             </div>
             {buying.code === 'highlighter' && (
               <div className="mb-1">
-                <div className="text-[13px] font-medium text-[var(--color-text-primary)] mb-2">Цвет: {colorLabel}</div>
+                <div className="text-[13px] font-medium text-[var(--color-text-primary)] mb-2">{t('Цвет: {c}', { c: t(colorLabel) })}</div>
                 <ColorSwatches colors={HIGHLIGHTER_COLORS} value={color} onChange={setColor} size={28} className="gap-2.5" />
               </div>
             )}
             {buying.needs_note && (
               <Input
-                label="Какую книгу ты хочешь?"
+                label={t('Какую книгу ты хочешь?')}
                 value={note}
                 onChange={e => setNote(e.target.value)}
                 placeholder="Название и автор"
@@ -286,7 +293,7 @@ export default function ShopPage() {
               />
             )}
             <p className="mt-3 text-[12px] text-[var(--color-text-tertiary)]">
-              Монеты спишутся сразу. Пока библиотекарь не выдал приз, заказ можно отменить — монеты вернутся.
+              {t('Монеты спишутся сразу. Пока библиотекарь не выдал приз, заказ можно отменить — монеты вернутся.')}
             </p>
           </div>
         )}

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { notify } from '../../../../lib/notify'
 import { BONUSES } from '../../../../lib/points'
 import { getGameStart } from '../../../../lib/game'
 
@@ -127,6 +128,10 @@ export async function POST(req) {
       `INSERT INTO user_points (user_id, points, reason, description, created_by) VALUES ($1, $2, $3, $4, $5)`,
       [userId, bonus.points, bonus.code, note ? `${bonus.title}: ${note}` : bonus.title, guard.payload.id]
     )
+    await notify(pool, userId, {
+      kind: 'bonus', title: `+${bonus.points} монет: ${bonus.short}`,
+      body: note ? `${bonus.title}: ${note}` : bonus.title, link: '/profile'
+    })
     return NextResponse.json({ success: true, points: bonus.points })
   } catch (err) {
     console.error('[team/monitoring POST]', err)

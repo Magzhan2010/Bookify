@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { notify, fmtDate } from '../../../../../lib/notify'
 
 /**
  * POST /api/librarian/requests/[id]
@@ -43,6 +44,11 @@ export async function POST(req, { params }) {
          WHERE id = $3`,
         [guard.payload.id, notes || null, id]
       )
+      const t = await client.query('SELECT title FROM books WHERE id = $1', [request.book_id])
+      await notify(client, request.user_id, {
+        kind: 'request_rejected', title: `Заявка отклонена: ${t.rows[0]?.title || 'книга'}`,
+        body: notes || 'Подойди к библиотекарю, если есть вопросы.', link: '/library'
+      })
       await client.query('COMMIT')
       return NextResponse.json({ success: true, status: 'rejected' })
     }
@@ -70,6 +76,10 @@ export async function POST(req, { params }) {
          WHERE id = $3`,
         [guard.payload.id, notes || null, id]
       )
+      await notify(client, request.user_id, {
+        kind: 'request_approved', title: `Книга ждёт тебя: ${bookRes.rows[0].title}`,
+        body: 'Заявка одобрена — забери книгу в библиотеке.', link: `/books/${request.book_id}`
+      })
       await client.query('COMMIT')
       return NextResponse.json({ success: true, status: 'approved' })
     }
@@ -113,6 +123,10 @@ export async function POST(req, { params }) {
         [request.book_id]
       )
 
+      await notify(client, request.user_id, {
+        kind: 'book_issued', title: `Книга у тебя: ${bookRes.rows[0].title}`,
+        body: `Вернуть до ${fmtDate(due)}. Приятного чтения!`, link: `/books/${request.book_id}`
+      })
       await client.query('COMMIT')
 
       return NextResponse.json({

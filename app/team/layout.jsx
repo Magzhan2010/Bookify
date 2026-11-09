@@ -13,6 +13,7 @@ import { ThemeToggle } from '../../components/ThemeContext'
 import { Avatar } from '../../components/team/ui'
 import { TeamCtx } from '../../components/team/TeamContext'
 import { fetchTeamMe, clearTeamMe } from '../../lib/useTeamMe'
+import NotificationBell from '../../components/NotificationBell'
 
 const GROUPS = [
   {
@@ -109,7 +110,7 @@ export default function TeamLayout({ children }) {
             <div className="text-[11px] text-[var(--color-text-tertiary)]">Платформа команды проекта</div>
           </div>
         </Link>
-        <ThemeToggle size="sm" />
+        <div className="flex items-center"><NotificationBell /><ThemeToggle size="sm" /></div>
       </div>
 
       <nav className="flex-1 overflow-y-auto px-3 pb-4">

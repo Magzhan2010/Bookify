@@ -14,6 +14,7 @@ export default function Register() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
   const [className, setClassName] = useState('')
+  const [isTeacher, setIsTeacher] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -27,12 +28,12 @@ export default function Register() {
       const res = await fetch('/api/auth/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ name, email, password, className })
+        body: JSON.stringify({ name, email, password, className, isTeacher })
       })
       const data = await res.json()
 
       if (data.success) {
-        toast.success('Аккаунт создан')
+        toast.success(isTeacher ? 'Аккаунт создан. Библиотекарь подтвердит, что вы учитель' : 'Аккаунт создан')
         setTimeout(() => router.push('/login'), 800)
       } else {
         toast.error(data.error || 'Не удалось зарегистрироваться', { duration: 6000 })
@@ -97,7 +98,24 @@ export default function Register() {
             <Field label="Имя" value={name} onChange={setName} />
             <Field label="Email" type="email" value={email} onChange={setEmail} />
             <Field label="Пароль" type="password" value={password} onChange={setPassword} />
+            <div className="flex p-1 rounded-xl bg-[var(--color-bg-soft)]">
+              {[[false, 'Я ученик'], [true, 'Я учитель']].map(([v, l]) => (
+                <button
+                  key={l}
+                  type="button"
+                  onClick={() => setIsTeacher(v)}
+                  className={`flex-1 py-2 rounded-lg text-[13px] font-medium transition-colors ${isTeacher === v ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm' : 'text-[var(--color-text-secondary)]'}`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
             <Field label="Класс" value={className} onChange={setClassName} />
+            {isTeacher && (
+              <p className="text-[12px] text-[var(--color-text-tertiary)] -mt-1">
+                Укажите класс, где вы классный руководитель. Кабинет учителя откроется после подтверждения библиотекарем.
+              </p>
+            )}
 
             <motion.button
               whileTap={{ scale: 0.98 }}

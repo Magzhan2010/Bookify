@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { useArea } from '../../../lib/useArea'
+import TvLink from '../../../components/librarian/TvLink'
 import { motion } from 'framer-motion'
 import {
   ArrowUpRight, ArrowDownRight, Minus, BookOpen, Users, MessageSquare, Coins, Gift, Clock,
@@ -65,6 +66,8 @@ export default function AnalyticsPage() {
             Как читает школа — в сравнении с предыдущим периодом такой же длины.
           </p>
         </div>
+        <div className="flex flex-wrap items-center gap-2">
+        <TvLink />
         <div className="flex p-1 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] w-fit">
           {PERIODS.map(p => (
             <button
@@ -80,6 +83,7 @@ export default function AnalyticsPage() {
               <span className="relative">{p.label}</span>
             </button>
           ))}
+        </div>
         </div>
       </div>
 

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { notify } from '../../../../../lib/notify'
 import { BONUSES, tierForPages } from '../../../../../lib/points'
 
 /**
@@ -60,6 +61,12 @@ export async function PATCH(req, { params }) {
         "UPDATE borrows SET status = 'returned', updated_at = NOW() WHERE id = $1",
         [review.borrow_id]
       )
+      await notify(client, review.user_id, {
+        kind: 'review_rejected',
+        title: 'Отзыв нужно переписать',
+        body: note ? `Библиотекарь: ${note}` : 'Открой профиль и напиши отзыв своими словами ещё раз.',
+        link: '/profile'
+      })
       await client.query('COMMIT')
       return NextResponse.json({ success: true, status: 'rejected' })
     }
@@ -109,6 +116,12 @@ export async function PATCH(req, { params }) {
       }
     }
 
+    await notify(client, review.user_id, {
+      kind: 'review_approved',
+      title: `Отзыв одобрен · +${totalPoints} монет`,
+      body: awarded.map(a => `${a.reason} +${a.points}`).join(' · '),
+      link: '/profile'
+    })
     await client.query('COMMIT')
 
     return NextResponse.json({

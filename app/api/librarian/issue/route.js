@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { notify, fmtDate } from '../../../../lib/notify'
 
 /**
  * POST /api/librarian/issue
@@ -136,6 +137,12 @@ export async function POST(req) {
       [bookId]
     )
 
+    await notify(client, student.id, {
+      kind: 'book_issued',
+      title: `Книга у тебя: ${book.title}`,
+      body: `Вернуть до ${fmtDate(due)}. Приятного чтения!`,
+      link: `/books/${book.id}`
+    })
     await client.query('COMMIT')
 
     return NextResponse.json({

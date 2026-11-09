@@ -7,7 +7,7 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote, Users2
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote, Users2, ShoppingBag, GraduationCap
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 import { useTeamMe } from '../../lib/useTeamMe'
@@ -22,7 +22,7 @@ const navGroups = [
       { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
       { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
       { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
-      { href: '/librarian/orders', label: 'Призы', icon: Gift, badge: 'orders' }
+      { href: '/librarian/orders', label: 'Заказы призов', icon: Gift, badge: 'orders' }
     ]
   },
   {
@@ -31,14 +31,16 @@ const navGroups = [
       { href: '/librarian/books', label: 'Книги', icon: Library, exact: true },
       { href: '/librarian/books/add', label: 'Добавить книгу', icon: PlusCircle },
       { href: '/librarian/lookup', label: 'У кого книга?', icon: Search },
-      { href: '/librarian/quotes', label: 'Цитаты', icon: Quote }
+      { href: '/librarian/quotes', label: 'Цитаты', icon: Quote },
+      { href: '/librarian/prizes', label: 'Магазин призов', icon: ShoppingBag }
     ]
   },
   {
     title: 'Ученики',
     items: [
       { href: '/librarian/students', label: 'Ученики', icon: Users },
-      { href: '/librarian/leaders', label: 'Лидеры чтения', icon: Trophy }
+      { href: '/librarian/leaders', label: 'Лидеры чтения', icon: Trophy },
+      { href: '/librarian/teachers', label: 'Учителя', icon: GraduationCap }
     ]
   },
   {

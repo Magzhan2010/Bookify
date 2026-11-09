@@ -4,7 +4,7 @@ import bcrypt from 'bcryptjs'
 import { detectRoleFromEmail } from '../../../../lib/auth'
 
 export async function POST(req) {
-  const { name, email, password, className } = await req.json()
+  const { name, email, password, className, isTeacher } = await req.json()
 
   if (!name || !email || !password) {
     return NextResponse.json(
@@ -34,12 +34,15 @@ export async function POST(req) {
     }
 
     const hash = await bcrypt.hash(password, 10)
-    const role = detectRoleFromEmail(email)
+    let role = detectRoleFromEmail(email)
+    // Учитель регистрируется сам, но кабинет откроется после подтверждения библиотекарем
+    const pending = role !== 'librarian' && isTeacher === true
+    if (pending) role = 'teacher'
 
     await pool.query(
-      `INSERT INTO users (name, email, password, role, class_name)
-       VALUES ($1, $2, $3, $4, $5)`,
-      [name, email, hash, role, className || null]
+      `INSERT INTO users (name, email, password, role, class_name, teacher_pending)
+       VALUES ($1, $2, $3, $4, $5, $6)`,
+      [name, email, hash, role, className || null, pending]
     )
 
     return NextResponse.json({ success: true, role })

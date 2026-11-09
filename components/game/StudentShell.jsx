@@ -5,13 +5,15 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2, GraduationCap
 } from 'lucide-react'
 import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
 import { parseJwt } from '../../lib/jwt'
 import { useTeamMe } from '../../lib/useTeamMe'
 import { useMyAvatar } from '../../lib/useMyAvatar'
+import NotificationBell from '../NotificationBell'
+import { useT, LangSwitch } from '../../lib/i18n'
 
 // Меню сгруппировано по смыслу: читать → играть → я
 const NAV_GROUPS = [
@@ -35,6 +37,20 @@ const NAV_GROUPS = [
     items: [{ href: '/profile', label: 'Мой профиль', short: 'Профиль', icon: UserRound }]
   }
 ]
+// Учителю игра не нужна: каталог, свой класс, профиль
+const TEACHER_GROUPS = [
+  { title: 'Читать', items: [NAV_GROUPS[0].items[0], NAV_GROUPS[0].items[1]] },
+  {
+    title: 'Учитель',
+    items: [
+      { href: '/teacher', label: 'Мой класс', short: 'Класс', icon: GraduationCap },
+      { href: '/leaderboard', label: 'Лидеры', short: 'Лидеры', icon: Trophy }
+    ]
+  },
+  { title: 'Я', items: [NAV_GROUPS[2].items[0]] }
+]
+const TEACHER_NAV = [TEACHER_GROUPS[0].items[0], TEACHER_GROUPS[1].items[0], TEACHER_GROUPS[0].items[1], TEACHER_GROUPS[1].items[1], TEACHER_GROUPS[2].items[0]]
+
 // Нижняя панель на телефоне — плоский список в привычном порядке
 const NAV = [
   NAV_GROUPS[0].items[0], NAV_GROUPS[2].items[0], NAV_GROUPS[1].items[0],
@@ -79,7 +95,11 @@ export default function StudentShell({ children }) {
         <div className="lg:pl-[256px] pb-20 lg:pb-0 min-w-0">
           {children}
         </div>
-        <BottomNav isStudent={isStudent} />
+        <BottomNav isStudent={isStudent} isTeacher={user?.role === 'teacher'} />
+        {/* На телефоне колокольчик — плавающая кнопка над нижней панелью */}
+        <div className="lg:hidden fixed bottom-[calc(76px+env(safe-area-inset-bottom))] right-3 z-50 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] shadow-[0_6px_20px_rgba(0,0,0,0.12)]">
+          <NotificationBell align="right" up />
+        </div>
       </div>
     </GameProvider>
   )
@@ -92,6 +112,7 @@ function useActive() {
 }
 
 function Sidebar({ user, isStudent }) {
+  const { t } = useT()
   const router = useRouter()
   const isActive = useActive()
   const { summary } = useGame()
@@ -105,20 +126,23 @@ function Sidebar({ user, isStudent }) {
 
   return (
     <aside className="hidden lg:flex fixed inset-y-0 left-0 w-[256px] z-40 flex-col bg-[var(--color-bg-card)] border-r border-[var(--color-border)]">
-      <Link href="/library" className="flex items-center gap-2.5 px-5 h-16 border-b border-[var(--color-border)] shrink-0">
-        <Image src="/lb_logo.png" width={40} height={40} alt="Bookify" className="w-10 h-10 object-contain" />
-        <div>
-          <div className="font-semibold text-[15px] leading-tight text-[var(--color-text-primary)]">Bookify</div>
-          <div className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-brand)]">Read · Think · Lead</div>
-        </div>
-      </Link>
+      <div className="flex items-center gap-1 pl-5 pr-3 h-16 border-b border-[var(--color-border)] shrink-0">
+        <Link href="/library" className="flex items-center gap-2.5 flex-1 min-w-0">
+          <Image src="/lb_logo.png" width={40} height={40} alt="Bookify" className="w-10 h-10 object-contain" />
+          <div>
+            <div className="font-semibold text-[15px] leading-tight text-[var(--color-text-primary)]">Bookify</div>
+            <div className="text-[10px] uppercase tracking-wider font-semibold text-[var(--color-brand)]">Read · Think · Lead</div>
+          </div>
+        </Link>
+        <NotificationBell />
+      </div>
 
       {isStudent && <PointsWidget summary={summary} />}
 
       <nav className="flex-1 overflow-y-auto px-3 py-3">
-        {NAV_GROUPS.map(group => (
+        {(user?.role === 'teacher' ? TEACHER_GROUPS : NAV_GROUPS).map(group => (
           <div key={group.title} className="mb-3 space-y-0.5">
-            <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">{group.title}</div>
+            <div className="px-3 pt-1 pb-1 text-[11px] font-semibold uppercase tracking-[0.08em] text-[var(--color-text-tertiary)]">{t(group.title)}</div>
             {group.items.map(item => {
               const Icon = item.icon
               const active = isActive(item.href)
@@ -135,7 +159,7 @@ function Sidebar({ user, isStudent }) {
                   }`}
                 >
                   <Icon size={17} />
-                  <span className="flex-1">{item.label}</span>
+                  <span className="flex-1">{t(item.label)}</span>
                   {badge && (
                     <span
                       title="Призов, на которые уже хватает баллов"
@@ -158,7 +182,7 @@ function Sidebar({ user, isStudent }) {
             className="mt-1 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--color-text-primary)] bg-[var(--color-text-primary)]/[0.05] hover:bg-[var(--color-text-primary)]/[0.08] transition-colors"
           >
             <Users2 size={17} />
-            <span className="flex-1">Командная платформа</span>
+            <span className="flex-1">{t('Командная платформа')}</span>
           </Link>
         )}
 
@@ -168,7 +192,7 @@ function Sidebar({ user, isStudent }) {
             className="mt-3 flex items-center gap-3 px-3 py-2.5 rounded-xl text-[14px] font-medium text-[var(--color-brand)] bg-[var(--color-brand)]/8 hover:bg-[var(--color-brand)]/12 transition-colors"
           >
             <BookMarked size={17} />
-            <span className="flex-1">Панель библиотекаря</span>
+            <span className="flex-1">{t('Панель библиотекаря')}</span>
           </Link>
         )}
       </nav>
@@ -184,10 +208,14 @@ function Sidebar({ user, isStudent }) {
           <div className="flex-1 min-w-0">
             <div className="text-[13px] font-semibold truncate text-[var(--color-text-primary)]">{user?.name}</div>
             <div className="text-[11px] text-[var(--color-text-tertiary)]">
-              {user?.role === 'librarian' ? 'Библиотекарь' : 'Ученик'}
+              {t(user?.role === 'librarian' ? 'Библиотекарь' : user?.role === 'teacher' ? 'Учитель' : 'Ученик')}
             </div>
           </div>
           <ThemeToggle size="sm" />
+        </div>
+        <div className="flex items-center justify-between px-2">
+          <span className="text-[11px] text-[var(--color-text-tertiary)]">{t('Язык')}</span>
+          <LangSwitch />
         </div>
         <div className="flex gap-2">
           <a
@@ -196,13 +224,13 @@ function Sidebar({ user, isStudent }) {
             rel="noopener noreferrer"
             className="flex-1 flex items-center justify-center gap-1 py-2 rounded-lg text-[12px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:bg-[var(--color-bg-soft)] transition-colors"
           >
-            Сайт школы <ArrowUpRight size={12} />
+            {t('Сайт школы')} <ArrowUpRight size={12} />
           </a>
           <button
             onClick={logout}
             className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-[12px] font-medium text-[var(--color-danger)] bg-[var(--color-danger)]/8 hover:bg-[var(--color-danger)]/14 transition-colors"
           >
-            <LogOut size={13} /> Выйти
+            <LogOut size={13} /> {t('Выйти')}
           </button>
         </div>
       </div>
@@ -212,6 +240,7 @@ function Sidebar({ user, isStudent }) {
 
 /** Баланс, уровень и прогресс — главный «игровой» блок меню. */
 function PointsWidget({ summary }) {
+  const { t } = useT()
   if (!summary) {
     return <div className="mx-3 mt-3 h-[118px] rounded-2xl bg-[var(--color-bg-soft)] animate-pulse" />
   }
@@ -222,18 +251,18 @@ function PointsWidget({ summary }) {
       className="mx-3 mt-3 block rounded-2xl p-4 text-white bg-gradient-to-br from-[#1f2a5c] via-[#22348a] to-[#2f5bea] hover:brightness-110 transition"
     >
       <div className="flex items-center justify-between">
-        <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">Мои баллы</span>
+        <span className="text-[11px] uppercase tracking-wider text-white/70 font-semibold">{t('Мои баллы')}</span>
         {ranks?.school_rank && (
-          <span className="text-[11px] font-semibold text-[#ffc93c]">#{ranks.school_rank} в школе</span>
+          <span className="text-[11px] font-semibold text-[#ffc93c]">{t('#{n} в школе', { n: ranks.school_rank })}</span>
         )}
       </div>
       <div className="flex items-baseline gap-1.5 mt-1">
         <span className="text-[34px] font-extrabold leading-none text-[#ffc93c]">{balance.available}</span>
-        <span className="text-[12px] text-white/70">монет</span>
+        <span className="text-[12px] text-white/70">{t('монет')}</span>
       </div>
       <div className="mt-3 flex items-center justify-between text-[11px]">
-        <span className="font-semibold">{level.emoji} {level.title}</span>
-        {level.next && <span className="text-white/60">ещё {level.toNext} до «{level.next.title}»</span>}
+        <span className="font-semibold">{level.emoji} {t(level.title)}</span>
+        {level.next && <span className="text-white/60">{t('ещё {n} до «{x}»', { n: level.toNext, x: t(level.next.title) })}</span>}
       </div>
       <div className="mt-1.5 h-1.5 rounded-full bg-white/15 overflow-hidden">
         <div className="h-full rounded-full bg-[#ffc93c]" style={{ width: `${level.progress}%` }} />
@@ -242,17 +271,18 @@ function PointsWidget({ summary }) {
   )
 }
 
-function BottomNav({ isStudent }) {
+function BottomNav({ isStudent, isTeacher }) {
+  const { t } = useT()
   const isActive = useActive()
   const { summary } = useGame()
   const teamMe = useTeamMe()
   // Участникам платформы вместо «Правил» показываем вход в командную платформу
-  const items = teamMe
+  const items = isTeacher ? TEACHER_NAV : teamMe
     ? [...NAV.slice(0, 5), { href: '/team', label: 'Команда', short: 'Команда', icon: Users2 }]
     : NAV
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]">
-      <div className="grid grid-cols-6">
+      <div className={`grid ${items.length === 5 ? 'grid-cols-5' : 'grid-cols-6'}`}>
         {items.map(item => {
           const Icon = item.icon
           const active = isActive(item.href)
@@ -273,7 +303,7 @@ function BottomNav({ isStudent }) {
                   </span>
                 )}
               </span>
-              {item.short}
+              {t(item.short)}
             </Link>
           )
         })}

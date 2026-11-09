@@ -23,11 +23,14 @@ export function prizeImage(code, variant) {
   return GALLERY[code]?.photos[0] || null
 }
 
-export default function PrizeVisual({ code, variant, size = 'md', className = '' }) {
+export default function PrizeVisual({ code, variant, image, size = 'md', className = '' }) {
   const [idx, setIdx] = useState(0)
-  const g = code === 'highlighter'
-    ? { fit: 'contain', photos: [prizeImage(code, variant)] }
-    : GALLERY[code]
+  // image — своё фото, загруженное библиотекарем (важнее встроенных)
+  const g = image
+    ? { fit: 'cover', photos: [image] }
+    : code === 'highlighter'
+      ? { fit: 'contain', photos: [prizeImage(code, variant)] }
+      : GALLERY[code]
   const photos = g?.photos || []
   const many = size === 'md' && photos.length > 1
   const src = photos[many ? idx % photos.length : 0]

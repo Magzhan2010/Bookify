@@ -102,7 +102,7 @@ export default function LibrarianOrdersPage() {
           {orders.map(o => (
             <div key={o.id} className="flex flex-col sm:flex-row sm:items-center gap-3 p-4 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
               <div className="flex items-center gap-3 flex-1 min-w-0">
-                <PrizeVisual code={o.prize_code} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0 !w-14 !h-14" />
+                <PrizeVisual code={o.prize_code} image={o.prize_custom_image} variant={colorKeyFromNote(o.note)} size="sm" className="shrink-0 !w-14 !h-14" />
                 <div className="min-w-0">
                   <div className="font-semibold text-[15px] text-[var(--color-text-primary)]">
                     {o.prize_title} <span className="text-[var(--color-text-tertiary)] font-normal">· {o.price} монет</span>
