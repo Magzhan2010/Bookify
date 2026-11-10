@@ -88,7 +88,7 @@ export default function TeamOverview() {
               <SectionTitle title="Ученики" href="/team/monitoring" />
               <div className="grid grid-cols-2 gap-3">
                 <MiniStat icon={MessageSquareOff} label="Книг без отзыва" value={data.students.reviews_missing} tone={data.students.reviews_missing > 0 ? 'warn' : undefined} href="/team/monitoring?filter=missing" />
-                <MiniStat icon={Hourglass} label="Отзывов ждут проверки" value={data.students.reviews_pending} />
+                <MiniStat icon={Hourglass} label="Отзывов ждут проверки" value={data.students.reviews_pending} tone={data.students.reviews_pending > 0 ? 'warn' : undefined} href="/team/reviews" />
                 <MiniStat icon={Mic} label="Выступлений TEDx" value={data.students.tedx} href="/team/monitoring?filter=tedx" />
                 <MiniStat icon={Video} label="Видео о книгах" value={data.students.videos} href="/team/monitoring?filter=video" />
                 <MiniStat icon={AlertTriangle} label="Просрочено книг — продлить" value={data.students.overdue_loans} tone={data.students.overdue_loans > 0 ? 'warn' : undefined} href="/team/loans" />

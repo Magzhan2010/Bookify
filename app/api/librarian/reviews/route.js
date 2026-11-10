@@ -8,7 +8,7 @@ import { requireAuth } from '../../../../lib/auth'
  * Query: ?status=pending|approved|rejected|all
  */
 export async function GET(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { searchParams } = new URL(req.url)

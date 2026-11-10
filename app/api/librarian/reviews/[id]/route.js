@@ -6,7 +6,8 @@ import { BONUSES, tierForPages } from '../../../../../lib/points'
 
 /**
  * PATCH /api/librarian/reviews/[id]
- * Библиотекарь одобряет или отклоняет отзыв.
+ * Библиотекарь или участник команды одобряет / отклоняет отзыв.
+ * Свой собственный отзыв проверить нельзя — иначе можно самому себе начислить монеты.
  * Body: { action: 'approve' | 'reject', note?, bonuses?: ['video','tedx'], pagesRead? }
  *
  * При approve:
@@ -15,7 +16,7 @@ import { BONUSES, tierForPages } from '../../../../../lib/points'
  * - начисляются баллы: +5 за отзыв, за объём книги, бонусы за видео/TEDx
  */
 export async function PATCH(req, { params }) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { id } = await params
@@ -43,6 +44,11 @@ export async function PATCH(req, { params }) {
     }
 
     const review = reviewRes.rows[0]
+
+    if (Number(review.user_id) === Number(guard.payload.id)) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Свой отзыв проверяет другой участник или библиотекарь' }, { status: 403 })
+    }
 
     if (review.status !== 'pending') {
       await client.query('ROLLBACK')

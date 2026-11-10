@@ -7,7 +7,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutGrid, ListChecks, FileText, Users2, Activity, GraduationCap,
-  BarChart3, Trophy, Library, Quote, LogOut, BookOpen, BookMarked, Menu, X, Crown, CalendarClock
+  BarChart3, Trophy, Library, Quote, LogOut, BookOpen, BookMarked, Menu, X, Crown, CalendarClock, MessageSquareText
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 import { Avatar } from '../../components/team/ui'
@@ -32,6 +32,7 @@ const GROUPS = [
     title: 'Ученики',
     items: [
       { href: '/team/monitoring', label: 'Мониторинг', icon: Activity },
+      { href: '/team/reviews', label: 'Отзывы', icon: MessageSquareText },
       { href: '/team/students', label: 'Ученики', icon: GraduationCap },
       { href: '/team/analytics', label: 'Аналитика', icon: BarChart3 },
       { href: '/team/leaders', label: 'Лидеры', icon: Trophy }
