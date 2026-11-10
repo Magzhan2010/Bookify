@@ -41,7 +41,8 @@ export default function HistoryPage() {
       active: { label: 'Активна', bg: '#1a56db', color: '#fff', icon: ArrowUpFromLine },
       returned: { label: 'Возвращена', bg: '#34c759', color: '#fff', icon: ArrowDownToLine },
       reviewed: { label: 'Отзыв на проверке', bg: '#ff9500', color: '#fff', icon: ArrowDownToLine },
-      approved: { label: 'Прочитана', bg: '#34c759', color: '#fff', icon: ArrowDownToLine }
+      approved: { label: 'Прочитана', bg: '#34c759', color: '#fff', icon: ArrowDownToLine },
+      cancelled: { label: 'Вернул без отзыва', bg: '#86868b', color: '#fff', icon: ArrowDownToLine }
     }
     return map[status] || { label: status, bg: '#86868b', color: '#fff', icon: RefreshCw }
   }
@@ -57,7 +58,7 @@ export default function HistoryPage() {
   })
 
   const activeCount = history.filter(h => h.status === 'active').length
-  const returnedCount = history.filter(h => ['returned', 'reviewed', 'approved'].includes(h.status)).length
+  const returnedCount = history.filter(h => ['returned', 'reviewed', 'approved', 'cancelled'].includes(h.status)).length
 
   return (
     <div className="max-w-[1300px] mx-auto">

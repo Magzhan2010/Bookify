@@ -27,7 +27,7 @@ export async function GET(req) {
       SELECT u.id, u.name, u.avatar_url,
              (SELECT COUNT(*) FROM borrows b WHERE b.user_id = u.id AND b.status = 'active')::int AS reading,
              (SELECT COUNT(*) FROM borrows b WHERE b.user_id = u.id AND b.status = 'active' AND b.due_date < NOW())::int AS overdue,
-             (SELECT COUNT(*) FROM borrows b WHERE b.user_id = u.id AND b.status <> 'active' AND b.returned_at >= $2::timestamptz)::int AS finished,
+             (SELECT COUNT(*) FROM borrows b WHERE b.user_id = u.id AND b.status NOT IN ('active', 'cancelled') AND b.returned_at >= $2::timestamptz)::int AS finished,
              (SELECT COUNT(*) FROM book_reviews r WHERE r.user_id = u.id AND r.status = 'approved' AND r.created_at >= $2::timestamptz)::int AS reviews,
              (SELECT COALESCE(SUM(points), 0) FROM user_points p WHERE p.user_id = u.id AND p.created_at >= ${MONTH_START})::int AS coins_month,
              (SELECT COALESCE(SUM(points), 0) FROM user_points p WHERE p.user_id = u.id)::int AS coins_total,

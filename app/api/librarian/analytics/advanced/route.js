@@ -119,7 +119,7 @@ export async function GET(req) {
            (SELECT COUNT(*) FROM users WHERE role = 'student')::int AS students,
            (SELECT COUNT(DISTINCT b.user_id) FROM borrows b JOIN users u ON u.id = b.user_id WHERE u.role = 'student')::int AS borrowed,
            (SELECT COUNT(DISTINCT b.user_id) FROM borrows b JOIN users u ON u.id = b.user_id
-             WHERE u.role = 'student' AND b.status <> 'active')::int AS finished,
+             WHERE u.role = 'student' AND b.status NOT IN ('active', 'cancelled'))::int AS finished,
            (SELECT COUNT(DISTINCT user_id) FROM book_reviews)::int AS reviewed,
            (SELECT COUNT(DISTINCT user_id) FROM user_points)::int AS earned,
            (SELECT COUNT(DISTINCT user_id) FROM prize_orders WHERE status <> 'cancelled')::int AS prized`

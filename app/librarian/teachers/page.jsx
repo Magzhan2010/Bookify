@@ -3,9 +3,10 @@
 import { useCallback, useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { toast } from 'sonner'
-import { Check, X, Search, GraduationCap, UserMinus } from 'lucide-react'
+import { Check, X, Search, GraduationCap, UserMinus, School } from 'lucide-react'
 import { Button, Modal, Skeleton } from '../../../components/ui'
 import UserAvatar from '../../../components/UserAvatar'
+import SchoolTeachersImport from '../../../components/librarian/SchoolTeachersImport'
 
 /**
  * Учителя: заявки (учитель отметил «Я учитель» при регистрации), список учителей,
@@ -28,6 +29,7 @@ async function api(url, method = 'GET', body) {
 export default function TeachersPage() {
   const [data, setData] = useState(null)
   const [adding, setAdding] = useState(false)
+  const [importing, setImporting] = useState(false)
 
   const load = useCallback(async () => {
     try { setData(await api('/api/librarian/teachers')) } catch (e) { toast.error(e.message); setData({ pending: [], teachers: [] }) }
@@ -47,8 +49,12 @@ export default function TeachersPage() {
             Учитель участвует наравне с учениками: берёт книги, пишет отзывы, получает монеты и призы. Плюс видит, как читает любой класс, и советует книги. Классный руководитель — по желанию.
           </p>
         </div>
-        <Button icon={GraduationCap} onClick={() => setAdding(true)}>Сделать учителем</Button>
+        <div className="flex flex-wrap gap-2">
+          <Button icon={School} onClick={() => setImporting(true)}>Из школьной базы</Button>
+          <Button variant="secondary" icon={GraduationCap} onClick={() => setAdding(true)}>Сделать учителем</Button>
+        </div>
       </div>
+      <SchoolTeachersImport open={importing} onClose={() => setImporting(false)} onDone={load} />
 
       {!data ? <Skeleton className="h-40 rounded-2xl" /> : (
         <>

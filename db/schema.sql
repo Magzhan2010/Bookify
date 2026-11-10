@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS borrows (
   user_id INT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   book_id INT NOT NULL REFERENCES books(id) ON DELETE CASCADE,
   status TEXT NOT NULL DEFAULT 'active'
-        CHECK (status IN ('active','returned','reviewed','approved')),
+        CHECK (status IN ('active','returned','reviewed','approved','cancelled')),
   borrowed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   due_date TIMESTAMPTZ,
   returned_at TIMESTAMPTZ,

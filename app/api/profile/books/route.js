@@ -15,7 +15,7 @@ export async function GET(req) {
   try {
     const [res, req] = await Promise.all([
       pool.query(
-        `SELECT book_id, bool_or(status = 'active') AS reading, bool_or(status <> 'active') AS read
+        `SELECT book_id, bool_or(status = 'active') AS reading, bool_or(status NOT IN ('active', 'cancelled')) AS read
            FROM borrows WHERE user_id = $1 GROUP BY book_id`,
         [guard.payload.id]
       ),

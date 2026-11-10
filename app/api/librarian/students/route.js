@@ -51,7 +51,7 @@ export async function GET(req) {
         u.id, u.name, u.email, u.class_name, u.role, u.phone, u.avatar_url, u.created_at,
         COUNT(b.id) AS total_borrows,
         COUNT(b.id) FILTER (WHERE b.status = 'active') AS currently_holding,
-        COUNT(b.id) FILTER (WHERE b.status <> 'active') AS returned_count,
+        COUNT(b.id) FILTER (WHERE b.status NOT IN ('active', 'cancelled')) AS returned_count,
         COUNT(b.id) FILTER (WHERE b.status = 'active' AND b.due_date < NOW()) AS overdue_count,
         MAX(b.borrowed_at) AS last_borrowed_at
       FROM users u

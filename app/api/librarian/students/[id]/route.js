@@ -26,7 +26,7 @@ export async function GET(req, { params }) {
     const statsRes = await pool.query(
       `SELECT
          COUNT(*) AS total_borrows,
-         COUNT(*) FILTER (WHERE status <> 'active') AS returned_count,
+         COUNT(*) FILTER (WHERE status NOT IN ('active', 'cancelled')) AS returned_count,
          COUNT(*) FILTER (WHERE status = 'active') AS active_count,
          COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count,
          COUNT(DISTINCT bk.genre) AS genres_count

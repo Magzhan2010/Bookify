@@ -3,7 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Search, Check, BookOpen, AlertTriangle, Clock, User as UserIcon } from 'lucide-react'
+import { Search, Check, BookOpen, AlertTriangle, Clock, User as UserIcon, Undo2 } from 'lucide-react'
 import ExtendDue from '../../../components/librarian/ExtendDue'
 
 export default function ReturnsPage() {
@@ -48,20 +48,20 @@ export default function ReturnsPage() {
     return () => clearTimeout(t)
   }, [search])
 
-  const handleReturn = async (borrowId) => {
+  const handleReturn = async (borrowId, noReview = false) => {
     setSubmitting(borrowId)
     try {
       const token = localStorage.getItem('token')
       const res = await fetch('/api/librarian/return', {
         method: 'POST',
         headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ borrowId })
+        body: JSON.stringify({ borrowId, noReview })
       })
       const data = await res.json()
       if (data.success) {
         setSuccessId(borrowId)
         setLoans(prev => prev.filter(l => l.id !== borrowId))
-        toast.success(`«${data.book_title}» возвращена`)
+        toast.success(noReview ? `«${data.book_title}» возвращена без отзыва` : `«${data.book_title}» возвращена`, noReview ? { description: 'Отзыв не нужен, монет нет' } : undefined)
         setTimeout(() => setSuccessId(null), 1500)
       } else {
         toast.error(data.error)
@@ -154,7 +154,7 @@ export default function ReturnsPage() {
                   initial={{ opacity: 0, y: 8 }}
                   animate={{ opacity: isSuccess ? 0.5 : 1, y: 0, scale: isSuccess ? 0.98 : 1 }}
                   exit={{ opacity: 0, x: 100 }}
-                  className={`flex items-center gap-4 p-4 rounded-2xl border transition-all ${
+                  className={`flex flex-wrap sm:flex-nowrap items-center gap-3 sm:gap-4 p-4 rounded-2xl border transition-all ${
                     overdue
                       ? 'bg-[var(--color-danger)]/5 border-[var(--color-danger)]/30'
                       : 'bg-[var(--color-bg-card)] border-[var(--color-border)] hover:border-[var(--color-border-strong)]'
@@ -166,7 +166,7 @@ export default function ReturnsPage() {
                     </div>
                   </div>
 
-                  <div className="flex-1 min-w-0">
+                  <div className="flex-1 min-w-[55%] sm:min-w-0">
                     <div className="flex items-center gap-2 mb-1">
                       <BookOpen size={13} className="text-[var(--color-brand)] shrink-0" />
                       <div className="font-semibold text-[14px] truncate text-[var(--color-text-primary)]">{loan.book_title}</div>
@@ -197,6 +197,14 @@ export default function ReturnsPage() {
                     size="md"
                     onExtended={due => setLoans(ls => ls.map(x => x.id === loan.id ? { ...x, due_date: due } : x))}
                   />
+                  <button
+                    onClick={() => handleReturn(loan.id, true)}
+                    disabled={isSubmitting}
+                    title="Не понравилась / не читал — вернуть без отзыва"
+                    className="shrink-0 px-3.5 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors disabled:opacity-50"
+                  >
+                    <Undo2 size={14} /> Без отзыва
+                  </button>
                   <button
                     onClick={() => handleReturn(loan.id)}
                     disabled={isSubmitting}

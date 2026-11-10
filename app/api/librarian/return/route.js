@@ -5,14 +5,16 @@ import { NextResponse } from 'next/server'
 /**
  * POST /api/librarian/return
  * Принимает возврат книги от ученика.
- * Body: { borrowId, rating?, notes? }
+ * Body: { borrowId, rating?, notes?, noReview? }
+ *   noReview: true — ученик вернул, не прочитав (не понравилась): книга на полку,
+ *   отзыв не нужен, монет нет, в «прочитанные» и «без отзыва» не попадает.
  *   rating: 1-5 (опционально) — ученик сам поставил оценку, библиотекарь передаёт
  */
 export async function POST(req) {
   const guard = await requireAuth(req, ['librarian'])
   if (!guard.ok) return guard.response
 
-  const { borrowId, rating, notes } = await req.json()
+  const { borrowId, rating, notes, noReview } = await req.json()
   if (!borrowId) return NextResponse.json({ error: 'Не указан ID займа' }, { status: 400 })
 
   const client = await pool.connect()
@@ -42,9 +44,9 @@ export async function POST(req) {
 
     await client.query(
       `UPDATE borrows
-       SET status = 'returned', returned_at = NOW(), rating = $2, notes = COALESCE($3, notes), updated_at = NOW()
+       SET status = $4, returned_at = NOW(), rating = $2, notes = COALESCE($3, notes), updated_at = NOW()
        WHERE id = $1`,
-      [borrowId, validRating, notes || null]
+      [borrowId, validRating, notes || (noReview === true ? 'Вернул без отзыва' : null), noReview === true ? 'cancelled' : 'returned']
     )
 
     await client.query(
@@ -56,7 +58,8 @@ export async function POST(req) {
     return NextResponse.json({
       success: true,
       student_name: borrow.student_name,
-      book_title: borrow.book_title
+      book_title: borrow.book_title,
+      no_review: noReview === true
     })
   } catch (err) {
     await client.query('ROLLBACK')

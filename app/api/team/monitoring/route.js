@@ -28,7 +28,7 @@ export async function GET(req) {
         SELECT user_id,
                COUNT(*) FILTER (WHERE status = 'active' OR borrowed_at >= $1::timestamptz OR returned_at >= $1::timestamptz)::int AS borrowed,
                COUNT(*) FILTER (WHERE status = 'active')::int AS reading,
-               COUNT(*) FILTER (WHERE status <> 'active' AND returned_at >= $1::timestamptz)::int AS finished,
+               COUNT(*) FILTER (WHERE status NOT IN ('active', 'cancelled') AND returned_at >= $1::timestamptz)::int AS finished,
                MAX(GREATEST(borrowed_at, COALESCE(returned_at, borrowed_at))) AS last_borrow
           FROM borrows GROUP BY user_id
       ),
@@ -46,7 +46,7 @@ export async function GET(req) {
                           ORDER BY br.returned_at DESC NULLS LAST), '[]') AS missing_books
           FROM borrows br
           JOIN books bk ON bk.id = br.book_id
-         WHERE br.status <> 'active'
+         WHERE br.status NOT IN ('active', 'cancelled')
            AND br.returned_at >= $1::timestamptz
            AND NOT EXISTS (SELECT 1 FROM book_reviews r WHERE r.borrow_id = br.id)
          GROUP BY br.user_id

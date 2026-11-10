@@ -39,7 +39,7 @@ export async function GET(req) {
           (SELECT COUNT(*) FROM users u WHERE role = 'student'
               AND NOT EXISTS (SELECT 1 FROM team_members tm WHERE tm.user_id = u.id))::int AS students,
           (SELECT COUNT(*) FROM book_reviews WHERE status = 'pending')::int AS reviews_pending,
-          (SELECT COUNT(*) FROM borrows br WHERE br.status <> 'active'
+          (SELECT COUNT(*) FROM borrows br WHERE br.status NOT IN ('active', 'cancelled')
               AND br.returned_at >= $1::timestamptz
               AND NOT EXISTS (SELECT 1 FROM book_reviews r WHERE r.borrow_id = br.id))::int AS reviews_missing,
           (SELECT COUNT(*) FROM borrows WHERE status = 'active' AND due_date < NOW())::int AS overdue_loans,

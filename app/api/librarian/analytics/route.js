@@ -30,7 +30,7 @@ export async function GET(req) {
     const topReaders = await pool.query(`
       SELECT u.id, u.name, u.class_name,
              COUNT(*) AS total_borrows,
-             COUNT(*) FILTER (WHERE status <> 'active') AS returned_count,
+             COUNT(*) FILTER (WHERE status NOT IN ('active', 'cancelled')) AS returned_count,
              COUNT(*) FILTER (WHERE status = 'active') AS currently_holding,
              COUNT(*) FILTER (WHERE status = 'active' AND due_date < NOW()) AS overdue_count
       FROM borrows b
