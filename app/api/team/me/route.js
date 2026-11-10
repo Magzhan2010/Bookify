@@ -22,6 +22,16 @@ export async function GET(req) {
       )
     }
 
+    // Библиотекарь всегда на платформе: ставит задачи команде
+    if (me.role === 'librarian') {
+      await pool.query(
+        `INSERT INTO team_members (user_id, platform_role, title)
+         VALUES ($1, 'member', 'Библиотекарь')
+         ON CONFLICT (user_id) DO NOTHING`,
+        [me.id]
+      )
+    }
+
     const res = await pool.query(
       `SELECT tm.platform_role, tm.title, u.class_name, u.avatar_url,
               COALESCE(json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color))
@@ -45,6 +55,7 @@ export async function GET(req) {
       role: me.role,
       platform_role: row.platform_role,
       is_lead: row.platform_role === 'lead',
+      can_assign: row.platform_role === 'lead' || me.role === 'librarian',
       title: row.title,
       avatar_url: row.avatar_url,
       teams: row.teams

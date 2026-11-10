@@ -77,10 +77,10 @@ function Tasks() {
       <PageHeader
         eyebrow="Работа"
         title="Задачи"
-        subtitle={me.is_lead
+        subtitle={me.can_assign
           ? 'Ставь задачи командам и людям. Участники двигают их по доске и пишут отчёты.'
           : 'Твои задачи и задачи команды. Сделал — напиши отчёт и отправь на проверку.'}
-        actions={me.is_lead && <Button icon={Plus} onClick={() => setCreating(true)}>Новая задача</Button>}
+        actions={me.can_assign && <Button icon={Plus} onClick={() => setCreating(true)}>Новая задача</Button>}
       />
 
       <div className="mb-5"><Segmented value={scope} onChange={setScope} options={options} /></div>
@@ -106,9 +106,9 @@ function Tasks() {
                         key={t.id}
                         task={t}
                         onOpen={() => setOpen(t.id)}
-                        canMove={me.is_lead || t.assignee_id === me.id || (!t.assignee_id && myTeamIds.has(t.team_id))}
+                        canMove={me.can_assign || t.assignee_id === me.id || (!t.assignee_id && myTeamIds.has(t.team_id))}
                         onPrev={ci > 0 ? () => move(t, TASK_STATUSES[ci - 1].key) : null}
-                        onNext={ci < TASK_STATUSES.length - 1 && (me.is_lead || col.key !== 'review')
+                        onNext={ci < TASK_STATUSES.length - 1 && (me.can_assign || col.key !== 'review')
                           ? () => move(t, TASK_STATUSES[ci + 1].key) : null}
                       />
                     ))}
@@ -359,7 +359,7 @@ function TaskDetails({ id, onClose, teams, people, onChanged }) {
   }
 
   const due = task && dueLabel(task.due_date)
-  const statuses = me.is_lead ? TASK_STATUSES : TASK_STATUSES.filter(s => s.key !== 'done')
+  const statuses = me.can_assign ? TASK_STATUSES : TASK_STATUSES.filter(s => s.key !== 'done')
 
   return (
     <>
@@ -383,7 +383,7 @@ function TaskDetails({ id, onClose, teams, people, onChanged }) {
               <div>
                 <div className="text-[12px] font-medium text-[var(--color-text-secondary)] mb-2">Статус</div>
                 <Segmented value={task.status} onChange={setStatus} options={statuses.map(s => ({ value: s.key, label: s.label }))} />
-                {!me.is_lead && task.status === 'review' && (
+                {!me.can_assign && task.status === 'review' && (
                   <p className="text-[12px] text-[var(--color-text-tertiary)] mt-2">Задача у тимлида на проверке — он закроет её или вернёт в работу.</p>
                 )}
               </div>
@@ -394,7 +394,7 @@ function TaskDetails({ id, onClose, teams, people, onChanged }) {
               <div className="space-y-3">
                 {task.reports.map((r, i) => (
                   <ReportCard key={r.id} report={r} i={i} showTask={false}
-                    canDelete={r.user_id === me.id || me.is_lead} onDelete={deleteReport} />
+                    canDelete={r.user_id === me.id || me.can_assign} onDelete={deleteReport} />
                 ))}
                 {task.reports.length === 0 && <p className="text-[13px] text-[var(--color-text-tertiary)]">Отчётов пока нет.</p>}
               </div>
@@ -403,11 +403,11 @@ function TaskDetails({ id, onClose, teams, people, onChanged }) {
             {task.can_work && (
               <div className="rounded-[20px] bg-[var(--color-bg-soft)] p-4">
                 <h3 className="text-[14px] font-semibold mb-3">Написать отчёт</h3>
-                <ReportForm task={task} isLead={me.is_lead} onDone={() => { load(); onChanged() }} />
+                <ReportForm task={task} isLead={me.can_assign} onDone={() => { load(); onChanged() }} />
               </div>
             )}
 
-            {me.is_lead && (
+            {me.can_assign && (
               <div className="flex justify-between pt-1">
                 <Button variant="ghost" icon={Trash2} onClick={remove} className="!text-[var(--color-danger)]">Удалить</Button>
                 <Button variant="secondary" onClick={() => setEditing(true)}>Изменить</Button>

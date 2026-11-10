@@ -2,6 +2,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Toaster } from 'sonner';
 import { ThemeProvider } from '../components/ThemeContext';
+import DevCredit from '../components/DevCredit';
 
 const inter = Inter({
   variable: "--font-inter",
@@ -44,6 +45,7 @@ export default function RootLayout({ children }) {
       <body className="min-h-screen flex flex-col antialiased bg-[var(--color-bg)] text-[var(--color-text-primary)]">
         <ThemeProvider>
           {children}
+          <DevCredit />
         </ThemeProvider>
         <Toaster
           position="top-center"

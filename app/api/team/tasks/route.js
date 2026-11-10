@@ -50,7 +50,7 @@ export async function GET(req) {
  * Несколько исполнителей — каждый получает свою копию задачи (свой статус и отчёты).
  */
 export async function POST(req) {
-  const guard = await requireAuth(req, ['teamlead'])
+  const guard = await requireAuth(req, ['tasker'])
   if (!guard.ok) return guard.response
 
   let body

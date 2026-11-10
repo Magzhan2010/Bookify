@@ -8,6 +8,7 @@ import Image from 'next/image'
 import { ArrowRight, ArrowUpRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '../../components/ThemeContext'
+import PasswordEye from '../../components/ui/PasswordEye'
 
 export default function Register() {
   const [name, setName] = useState('')
@@ -139,15 +140,24 @@ export default function Register() {
   )
 }
 
-const Field = ({ label, value, onChange, type = 'text' }) => (
-  <div>
-    <label className="block text-[13px] text-[var(--color-text-primary)] font-medium mb-1.5">{label}</label>
-    <input
-      type={type}
-      required={label !== 'Класс'}
-      value={value}
-      onChange={e => onChange(e.target.value)}
-      className="w-full bg-[var(--color-bg-soft)] border border-transparent px-4 py-3 rounded-xl text-[15px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:bg-[var(--color-bg-card)] transition-all"
-    />
-  </div>
-)
+function Field({ label, value, onChange, type = 'text' }) {
+  const [shown, setShown] = useState(false)
+  const isPassword = type === 'password'
+  return (
+    <div>
+      <label className="block text-[13px] text-[var(--color-text-primary)] font-medium mb-1.5">{label}</label>
+      <div className="relative">
+        <input
+          type={isPassword && shown ? 'text' : type}
+          required={label !== 'Класс'}
+          value={value}
+          onChange={e => onChange(e.target.value)}
+          autoComplete={isPassword ? 'new-password' : type === 'email' ? 'username' : undefined}
+          autoCapitalize={type === 'email' ? 'none' : undefined}
+          className={`w-full bg-[var(--color-bg-soft)] border border-transparent pl-4 ${isPassword ? 'pr-12' : 'pr-4'} py-3 rounded-xl text-[15px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:bg-[var(--color-bg-card)] transition-all`}
+        />
+        {isPassword && <PasswordEye shown={shown} onToggle={() => setShown(v => !v)} />}
+      </div>
+    </div>
+  )
+}

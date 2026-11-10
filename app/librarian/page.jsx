@@ -11,6 +11,7 @@ import {
 import {
   ResponsiveContainer, AreaChart, Area, XAxis, YAxis, Tooltip, CartesianGrid
 } from 'recharts'
+import GameStart from '../../components/GameStart'
 
 const StatCard = ({ icon: Icon, label, value, accent, href, delay = 0 }) => (
   <motion.div
@@ -152,6 +153,7 @@ export default function LibrarianDashboard() {
           <p className="text-[14px] text-[var(--color-text-secondary)]">
             {new Date().toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', weekday: 'long' })}
           </p>
+          <GameStart className="mt-3" />
         </div>
         <div className="flex flex-wrap gap-2">
           <Link href="/librarian/issue" className="px-4 py-2.5 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-white text-[13px] font-medium transition-colors flex items-center gap-2">

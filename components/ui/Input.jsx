@@ -1,6 +1,7 @@
 'use client'
 
-import { useId } from 'react'
+import { useId, useState } from 'react'
+import PasswordEye from './PasswordEye'
 
 /**
  * Input — единое поле ввода.
@@ -18,6 +19,8 @@ export default function Input({
   ...props
 }) {
   const id = useId()
+  const [shown, setShown] = useState(false)
+  const isPassword = type === 'password'
   const describedBy = error ? `${id}-error` : hint ? `${id}-hint` : undefined
 
   return (
@@ -41,7 +44,7 @@ export default function Input({
         )}
         <input
           id={id}
-          type={type}
+          type={isPassword && shown ? 'text' : type}
           aria-invalid={error ? 'true' : undefined}
           aria-describedby={describedBy}
           className={`
@@ -52,7 +55,7 @@ export default function Input({
             focus:border-[var(--color-brand)]/50
             focus:ring-4 focus:ring-[var(--color-brand)]/10
             disabled:opacity-50
-            ${Icon ? 'pl-11 pr-3.5' : 'px-3.5'}
+            ${Icon ? 'pl-11' : 'pl-3.5'} ${isPassword ? 'pr-12' : 'pr-3.5'}
             ${error
               ? 'border-[var(--color-danger)]/60'
               : 'border-transparent hover:border-[var(--color-border)]'}
@@ -60,6 +63,7 @@ export default function Input({
           `}
           {...props}
         />
+        {isPassword && <PasswordEye shown={shown} onToggle={() => setShown(v => !v)} />}
       </div>
 
       {error && (

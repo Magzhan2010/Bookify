@@ -4,7 +4,10 @@ import bcrypt from 'bcryptjs'
 import { signToken } from '../../../../lib/auth'
 
 export async function POST(req) {
-  const { email, password } = await req.json()
+  const body = await req.json()
+  // Телефон часто добавляет пробел после почты — убираем
+  const email = String(body?.email || '').trim()
+  const password = body?.password
 
   if (!email || !password) {
     return NextResponse.json(

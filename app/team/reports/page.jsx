@@ -76,7 +76,7 @@ export default function ReportsPage() {
         <div className="space-y-3 max-w-3xl">
           <AnimatePresence initial={false}>
             {shown.map((r, i) => (
-              <ReportCard key={r.id} report={r} i={i} canDelete={r.user_id === me.id || me.is_lead} onDelete={remove} />
+              <ReportCard key={r.id} report={r} i={i} canDelete={r.user_id === me.id || me.can_assign} onDelete={remove} />
             ))}
           </AnimatePresence>
         </div>

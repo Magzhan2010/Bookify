@@ -66,18 +66,26 @@ function rowsFromText(text) {
   })
 }
 
-const HEADER = /^(фио|ф\.и\.о|имя|аты|оқушы|ученик|name|student|пароль|password|№)/i
+const HEADER = /^(фио|ф\.и\.о|имя|аты|оқушы|ученик|name|student|пароль|password|№|почта|email|e-mail|логин|login)/i
+const EMAIL = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 
-/** Ячейки строки → { name, password }: номер отбрасываем, имя — первое, пароль — последнее. */
+/**
+ * Ячейки строки → { name?, email?, password }: номер отбрасываем,
+ * почта (если есть) — главный ключ, пароль — последняя ячейка.
+ */
 function toEntries(rows) {
   const out = []
   for (const cells of rows) {
-    const c = cells.filter(Boolean)
+    const c = cells.map(x => x.trim()).filter(Boolean)
     if (c.length && /^\d+[.)]?$/.test(c[0])) c.shift()
     if (c.length < 2) continue
-    const name = c[0], password = c[c.length - 1]
-    if (HEADER.test(name) || HEADER.test(password) || !/\p{L}/u.test(name)) continue
-    out.push({ name, password })
+    const password = c[c.length - 1]
+    const rest = c.slice(0, -1)
+    if (rest.some(x => HEADER.test(x)) || HEADER.test(password)) continue
+    const email = rest.find(x => EMAIL.test(x))
+    const name = rest.find(x => !EMAIL.test(x) && /\p{L}/u.test(x))
+    if (!email && !name) continue
+    out.push({ ...(name ? { name } : {}), ...(email ? { email: email.toLowerCase() } : {}), password })
   }
   return out
 }
@@ -114,7 +122,7 @@ export default function PasswordsModal({ open, onClose, onDone }) {
     try {
       const rows = /\.docx$/i.test(f.name) ? rowsFromDocx(await docxXml(f)) : rowsFromText(await f.text())
       const list = toEntries(rows)
-      if (!list.length) throw new Error('Не нашли строк «имя — пароль»')
+      if (!list.length) throw new Error('Не нашли строк «почта или имя — пароль»')
       setEntries(list); setFileName(f.name); setText(''); setReport(null)
     } catch (err) {
       toast.error(err.message || 'Не получилось прочитать файл')
@@ -130,6 +138,7 @@ export default function PasswordsModal({ open, onClose, onDone }) {
     setBusy(true)
     try {
       const result = []
+      let duplicates = 0
       for (let i = 0; i < entries.length; i += 40) {
         const res = await fetch('/api/librarian/students/passwords', {
           method: 'POST',
@@ -139,8 +148,9 @@ export default function PasswordsModal({ open, onClose, onDone }) {
         const data = await res.json()
         if (!res.ok) throw new Error(data.error || 'Ошибка')
         result.push(...data.result)
+        duplicates += data.duplicates || 0
       }
-      setReport({ applied: apply, result })
+      setReport({ applied: apply, result, duplicates })
       if (apply) {
         const n = result.filter(r => r.status === 'updated' || r.status === 'created').length
         toast.success(`Готово: пароли у ${n} учеников`)
@@ -171,7 +181,7 @@ export default function PasswordsModal({ open, onClose, onDone }) {
       open={open}
       onClose={close}
       title="Пароли списком"
-      description="Загрузи таблицу Word (№ · имя · пароль) или вставь список. Пароли участников команды не меняются."
+      description="Загрузи таблицу Word (№ · почта · пароль или № · имя · пароль) или вставь список. Если есть почта — ученик ищется по ней. Пароли участников команды не меняются."
       size="lg"
       footer={
         report?.applied ? (
@@ -182,7 +192,7 @@ export default function PasswordsModal({ open, onClose, onDone }) {
         ) : report ? (
           <>
             <Button variant="secondary" onClick={() => setReport(null)}>Назад</Button>
-            <Button icon={KeyRound} loading={busy} disabled={!willChange} onClick={() => run(true)}>
+            <Button icon={KeyRound} loading={busy} disabled={!willChange && !report?.duplicates} onClick={() => run(true)}>
               Сохранить пароли ({willChange})
             </Button>
           </>
@@ -211,12 +221,12 @@ export default function PasswordsModal({ open, onClose, onDone }) {
             value={text}
             onChange={e => fromText(e.target.value)}
             rows={5}
-            placeholder={'Adamov Musa\tпароль\nAbdilbar Khalid\tпароль'}
+            placeholder={'musa.adamov@dls.school\tпароль\nAdamov Musa\tпароль'}
             className="w-full px-3.5 py-2.5 rounded-xl bg-[var(--color-bg-soft)] border border-transparent text-[13px] font-mono outline-none focus:border-[var(--color-brand)]/40 resize-y"
           />
           {entries.length > 0 && (
             <div className="text-[13px] text-[var(--color-text-secondary)]">
-              Найдено строк: <b className="text-[var(--color-text-primary)]">{entries.length}</b> · первая: {entries[0].name}
+              Найдено строк: <b className="text-[var(--color-text-primary)]">{entries.length}</b> · первая: {entries[0].email || entries[0].name}
             </div>
           )}
           <label className="flex items-center gap-2.5 text-[13px] cursor-pointer">
@@ -233,6 +243,12 @@ export default function PasswordsModal({ open, onClose, onDone }) {
               </span>
             ))}
           </div>
+          {report.duplicates > 0 && (
+            <p className="text-[13px] text-[var(--color-text-secondary)] mb-3">
+              {report.applied ? 'Удалено' : 'Будет удалено'} лишних пустых аккаунтов от прошлой загрузки: <b>{report.duplicates}</b>
+              <span className="text-[var(--color-text-tertiary)]"> (у них вместо имени стояла почта, ни одной книги и монеты)</span>
+            </p>
+          )}
           {!report.applied && (
             <p className="text-[13px] text-[var(--color-text-secondary)] mb-3 flex items-start gap-2">
               <AlertTriangle size={15} className="text-[#c97a00] shrink-0 mt-0.5" />

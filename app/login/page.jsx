@@ -8,10 +8,12 @@ import Image from 'next/image'
 import { Mail, Lock, ArrowRight, ArrowUpRight, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { ThemeToggle } from '../../components/ThemeContext'
+import PasswordEye from '../../components/ui/PasswordEye'
 
 export default function Login() {
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
+  const [showPw, setShowPw] = useState(false)
   const [loading, setLoading] = useState(false)
   const router = useRouter()
 
@@ -140,6 +142,10 @@ export default function Login() {
                 <input
                   type="email"
                   required
+                  autoComplete="username"
+                  autoCapitalize="none"
+                  autoCorrect="off"
+                  spellCheck={false}
                   value={email}
                   onChange={e => setEmail(e.target.value)}
                   className="w-full bg-[var(--color-bg-soft)] border border-transparent pl-11 pr-4 py-3 rounded-xl text-[15px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:bg-[var(--color-bg-card)] transition-all"
@@ -152,12 +158,14 @@ export default function Login() {
               <div className="relative">
                 <Lock size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)] pointer-events-none" />
                 <input
-                  type="password"
+                  type={showPw ? 'text' : 'password'}
                   required
+                  autoComplete="current-password"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  className="w-full bg-[var(--color-bg-soft)] border border-transparent pl-11 pr-4 py-3 rounded-xl text-[15px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:bg-[var(--color-bg-card)] transition-all"
+                  className="w-full bg-[var(--color-bg-soft)] border border-transparent pl-11 pr-12 py-3 rounded-xl text-[15px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)] focus:bg-[var(--color-bg-card)] transition-all"
                 />
+                <PasswordEye shown={showPw} onToggle={() => setShowPw(v => !v)} />
               </div>
             </div>
 

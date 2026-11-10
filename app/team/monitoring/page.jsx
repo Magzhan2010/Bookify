@@ -11,6 +11,7 @@ import {
 import { Button, Modal, Skeleton, EmptyState } from '../../../components/ui'
 import { PageHeader, Segmented, Stat, Avatar, Field, inputCls, timeAgo, api } from '../../../components/team/ui'
 import { useTeam } from '../../../components/team/TeamContext'
+import GameStart from '../../../components/GameStart'
 
 export default function MonitoringPage() {
   return (
@@ -36,7 +37,6 @@ function Monitoring() {
   const [filter, setFilter] = useState(FILTERS.some(f => f.value === params.get('filter')) ? params.get('filter') : 'all')
   const [q, setQ] = useState('')
   const [award, setAward] = useState(null) // { student, kind }
-  const [startOpen, setStartOpen] = useState(false)
   const { me } = useTeam()
 
   const load = useCallback(async () => {
@@ -60,16 +60,7 @@ function Monitoring() {
         eyebrow="Ученики"
         title="Мониторинг"
         subtitle="Кто читает, кто сдал книгу без отзыва, кто выступил на TEDx или снял видео."
-        actions={data?.game_start && (
-          <button
-            onClick={() => me.is_lead && setStartOpen(true)}
-            className={`inline-flex items-center gap-2 px-4 py-2 rounded-full bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium ${me.is_lead ? 'hover:border-[var(--color-border-strong)]' : 'cursor-default'}`}
-            title={me.is_lead ? 'Изменить дату старта' : undefined}
-          >
-            <Flag size={14} className="text-[var(--color-brand)]" />
-            Считаем с {new Date(data.game_start).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', year: 'numeric' })}
-          </button>
-        )}
+        actions={<GameStart onChanged={load} />}
       />
 
       {!data ? (
@@ -118,7 +109,6 @@ function Monitoring() {
       )}
 
       <AwardModal award={award} onClose={() => setAward(null)} onDone={() => { setAward(null); load() }} />
-      <StartModal open={startOpen} current={data?.game_start} onClose={() => setStartOpen(false)} onDone={() => { setStartOpen(false); load() }} />
     </div>
   )
 }
@@ -229,39 +219,6 @@ function AwardModal({ award, onClose, onDone }) {
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Отмена</Button>
           <Button type="submit" loading={saving}>Отметить</Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
-
-/** Дата старта программы: всё, что раньше, в мониторинге не считается. */
-function StartModal({ open, current, onClose, onDone }) {
-  const [date, setDate] = useState('')
-  const [saving, setSaving] = useState(false)
-  useEffect(() => {
-    if (open && current) setDate(new Date(new Date(current).getTime() + 5 * 3600000).toISOString().slice(0, 10))
-  }, [open, current])
-
-  const save = async e => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      await api('/api/team/settings', { method: 'PATCH', body: { gameStart: date } })
-      toast.success('Дата старта сохранена')
-      onDone()
-    } catch (err) { toast.error(err.message) } finally { setSaving(false) }
-  }
-
-  return (
-    <Modal open={open} onClose={onClose} title="Старт программы" description="Книги, сданные раньше этой даты, не требуют отзыва и не дают монет." size="sm">
-      <form onSubmit={save} className="space-y-4">
-        <Field label="Считаем с">
-          <input type="date" value={date} onChange={e => setDate(e.target.value)} className={inputCls} />
-        </Field>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>Отмена</Button>
-          <Button type="submit" loading={saving}>Сохранить</Button>
         </div>
       </form>
     </Modal>

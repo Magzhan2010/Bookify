@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
-import { TASK_SELECT, REPORT_SELECT, canWorkOnTask } from '../../../../../lib/teamQueries'
+import { TASK_SELECT, REPORT_SELECT, canWorkOnTask, canAssign } from '../../../../../lib/teamQueries'
 
 /** GET /api/team/tasks/[id] — задача и все отчёты по ней. */
 export async function GET(req, { params }) {
@@ -32,7 +32,7 @@ export async function PATCH(req, { params }) {
   if (!guard.ok) return guard.response
   const id = parseInt((await params).id)
   const me = guard.payload
-  const isLead = me.platform_role === 'lead'
+  const isLead = canAssign(me)
 
   let body
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Неверный запрос' }, { status: 400 }) }
@@ -79,9 +79,9 @@ export async function PATCH(req, { params }) {
   }
 }
 
-/** DELETE /api/team/tasks/[id] — только тимлид. */
+/** DELETE /api/team/tasks/[id] — тимлид или библиотекарь. */
 export async function DELETE(req, { params }) {
-  const guard = await requireAuth(req, ['teamlead'])
+  const guard = await requireAuth(req, ['tasker'])
   if (!guard.ok) return guard.response
   const id = parseInt((await params).id)
   try {

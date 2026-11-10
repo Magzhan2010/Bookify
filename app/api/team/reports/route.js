@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
-import { REPORT_SELECT, canWorkOnTask } from '../../../../lib/teamQueries'
+import { REPORT_SELECT, canWorkOnTask, canAssign } from '../../../../lib/teamQueries'
 
 /**
  * GET /api/team/reports?user=&team=&limit= — лента отчётов (видят все участники).
@@ -66,7 +66,7 @@ export async function POST(req) {
       }
       const status = ['in_progress', 'review', 'done'].includes(body?.status) ? body.status : null
       // Участник может отправить на проверку; закрыть сам — только тимлид
-      const allowed = status === 'done' && me.platform_role !== 'lead' ? 'review' : status
+      const allowed = status === 'done' && !canAssign(me) ? 'review' : status
       if (allowed) {
         await client.query(
           `UPDATE team_tasks SET status = $1, updated_at = NOW(),

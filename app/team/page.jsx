@@ -11,15 +11,15 @@ import { useTeam } from '../../components/team/TeamContext'
 import { PageHeader, Surface, Stat, Avatar, timeAgo, dueLabel, api } from '../../components/team/ui'
 import { statusLabel } from '../../lib/team'
 import { Skeleton } from '../../components/ui'
+import GameStart from '../../components/GameStart'
 
 export default function TeamOverview() {
   const { me } = useTeam()
   const [data, setData] = useState(null)
   const [error, setError] = useState(null)
 
-  useEffect(() => {
-    api('/api/team/overview').then(setData).catch(e => setError(e.message))
-  }, [])
+  const load = () => api('/api/team/overview').then(setData).catch(e => setError(e.message))
+  useEffect(() => { load() }, [])
 
   const hour = new Date().getHours()
   const hello = hour < 12 ? 'Доброе утро' : hour < 18 ? 'Добрый день' : 'Добрый вечер'
@@ -30,6 +30,7 @@ export default function TeamOverview() {
         eyebrow={new Date().toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' })}
         title={`${hello}, ${me.name.split(' ')[0]}`}
         subtitle="Задачи команды, свежие отчёты и как идут дела у учеников — на одном экране."
+        actions={<GameStart onChanged={load} />}
       />
 
       {error && <Surface className="p-5 text-[14px] text-[var(--color-danger)]">{error}</Surface>}
