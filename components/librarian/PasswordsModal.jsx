@@ -94,6 +94,7 @@ function toEntries(rows) {
 
 const STATUS = {
   updated: { label: 'Пароль поставлен', cls: 'text-[var(--color-success)]' },
+  relogin: { label: 'Пароль + новый логин', cls: 'text-[var(--color-success)]' },
   created: { label: 'Новый аккаунт', cls: 'text-[var(--color-brand)]' },
   team: { label: 'Команда — не трогаем', cls: 'text-[var(--color-text-tertiary)]' },
   not_found: { label: 'Не найден', cls: 'text-[var(--color-danger)]' },
@@ -152,7 +153,7 @@ export default function PasswordsModal({ open, onClose, onDone }) {
       }
       setReport({ applied: apply, result, duplicates })
       if (apply) {
-        const n = result.filter(r => r.status === 'updated' || r.status === 'created').length
+        const n = result.filter(r => ['updated', 'created', 'relogin'].includes(r.status)).length
         toast.success(`Готово: пароли у ${n} учеников`)
         onDone?.()
       }
@@ -164,11 +165,11 @@ export default function PasswordsModal({ open, onClose, onDone }) {
   }
 
   const counts = report ? report.result.reduce((m, r) => ({ ...m, [r.status]: (m[r.status] || 0) + 1 }), {}) : {}
-  const willChange = (counts.updated || 0) + (counts.created || 0)
+  const willChange = (counts.updated || 0) + (counts.created || 0) + (counts.relogin || 0)
 
   const copyList = async () => {
     const lines = report.result
-      .filter(r => r.status === 'updated' || r.status === 'created')
+      .filter(r => ['updated', 'created', 'relogin'].includes(r.status))
       .map(r => `${r.name}\t${r.email}\t${r.password}`)
     try {
       await navigator.clipboard.writeText(['Имя\tЛогин\tПароль', ...lines].join('\n'))
@@ -259,7 +260,9 @@ export default function PasswordsModal({ open, onClose, onDone }) {
             {report.result.map((r, i) => (
               <div key={i} className="flex items-center gap-3 px-3.5 py-2.5 text-[13px]">
                 <span className="flex-1 min-w-0 truncate font-medium">{r.name}</span>
-                <span className="hidden sm:block w-56 truncate text-[var(--color-text-tertiary)]">{r.email || '—'}</span>
+                <span className="hidden sm:block w-64 truncate text-[var(--color-text-tertiary)]" title={r.note || undefined}>
+                  {r.old_email ? <><s>{r.old_email}</s> → {r.email}</> : r.note && !r.email ? r.note : (r.email || '—')}
+                </span>
                 <span className={`shrink-0 text-[12px] font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
               </div>
             ))}

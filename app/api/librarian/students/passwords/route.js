@@ -9,6 +9,8 @@ import { emailBaseFromName, pickFreeEmail, nameKey } from '../../../../../lib/st
  * Body: { rows: [{ name?, email?, password }], apply?: boolean, createMissing?: boolean }
  *
  * Если в строке есть почта — ученик ищется по почте (точно, это и есть логин).
+ * Нет такой почты — ищем по имени из почты (musa.adamov → «Adamov Musa», порядок слов не важен)
+ * и меняем ученику логин на почту из списка, чтобы выданные листочки работали.
  * Иначе — по имени (без учёта регистра, порядка слов, казахских/русских букв).
  * Аккаунты-«двойники», которые раньше по ошибке создавались с почтой вместо имени
  * (имя = эта почта, ни одной книги/монеты/отзыва), удаляются при сохранении.
@@ -24,6 +26,14 @@ function nameFromEmail(email) {
   return email.split('@')[0].split(/[._-]+/).filter(Boolean)
     .map(w => w.replace(/\d+$/, '')).filter(Boolean)
     .map(w => w[0].toUpperCase() + w.slice(1)).join(' ') || email
+}
+
+/** Мягкий ключ: одно имя в разной латинице (Abdilbar / Abdylbar, Zhanibek / Janibek, Khalid / Halid). */
+function looseKey(name) {
+  return nameKey(name).split(' ').map(w => w
+    .replace(/kh/g, 'h').replace(/dzh|zh|j/g, 'z').replace(/ch|sh|sch/g, 's').replace(/ts/g, 's')
+    .replace(/yu|iu/g, 'u').replace(/ya|ia/g, 'a').replace(/[yi]+/g, 'i').replace(/q/g, 'k').replace(/w/g, 'u')
+    .replace(/(.)\1+/g, '$1')).sort().join(' ')
 }
 
 export async function POST(req) {
@@ -58,6 +68,12 @@ export async function POST(req) {
       if (!byKey.has(k)) byKey.set(k, [])
       byKey.get(k).push(u)
     }
+    const byLoose = new Map()
+    for (const u of users.rows) {
+      const k = looseKey(u.name)
+      if (!byLoose.has(k)) byLoose.set(k, [])
+      byLoose.get(k).push(u)
+    }
     const taken = new Set(users.rows.map(u => u.email.toLowerCase()))
     const byEmail = new Map(users.rows.map(u => [u.email.toLowerCase(), u]))
 
@@ -66,9 +82,22 @@ export async function POST(req) {
       const label = r.name || r.email
       if (r.password.length < 4) { result.push({ name: label, email: r.email || undefined, status: 'invalid', note: 'Пароль короче 4 символов' }); continue }
       let u
+      let newLogin = null
       if (r.email) {
         if (!EMAIL_RE.test(r.email)) { result.push({ name: label, status: 'invalid', note: 'Неверная почта' }); continue }
         u = byEmail.get(r.email)
+        if (!u) {
+          const nm = r.name || nameFromEmail(r.email)
+          let found = byKey.get(nameKey(nm)) || []
+          if (!found.length) found = byLoose.get(looseKey(nm)) || []
+          if (found.length > 1) {
+            result.push({ name: label, email: r.email, status: 'ambiguous', note: `Найдено ${found.length} ученика с таким именем` }); continue
+          }
+          if (found[0]) { u = found[0]; newLogin = r.email }
+          if (u && taken.has(r.email)) {
+            result.push({ name: u.name, email: r.email, status: 'invalid', note: 'Эта почта уже занята другим аккаунтом' }); continue
+          }
+        }
       } else {
         const found = byKey.get(nameKey(r.name)) || []
         if (found.length > 1) {
@@ -89,11 +118,17 @@ export async function POST(req) {
       }
       if (u.in_team) { result.push({ name: u.name, status: 'team', email: u.email, note: 'Участник команды — пароль не меняем' }); continue }
       if (u.role !== 'student') { result.push({ name: u.name, status: 'skipped', email: u.email, note: 'Не ученик' }); continue }
+      const oldEmail = u.email
       if (apply) {
         const hash = await bcrypt.hash(r.password, 10)
         await client.query(
-          `UPDATE users SET password = $1, token_version = COALESCE(token_version, 0) + 1, updated_at = NOW() WHERE id = $2`,
-          [hash, u.id])
+          `UPDATE users SET password = $1, email = $3, token_version = COALESCE(token_version, 0) + 1, updated_at = NOW() WHERE id = $2`,
+          [hash, u.id, newLogin || u.email])
+        if (newLogin) { byEmail.delete(u.email.toLowerCase()); byEmail.set(newLogin, u); u.email = newLogin }
+      }
+      if (newLogin) {
+        result.push({ name: u.name, status: 'relogin', old_email: oldEmail, email: newLogin, class_name: u.class_name, password: r.password })
+        continue
       }
       result.push({ name: u.name, status: 'updated', email: u.email, class_name: u.class_name, password: r.password })
     }
