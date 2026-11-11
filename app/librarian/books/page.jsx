@@ -10,6 +10,7 @@ import {
   ChevronLeft, ChevronRight, Plus, RotateCcw
 } from 'lucide-react'
 import { Button, EmptyState, SkeletonRows } from '../../../components/ui'
+import BookPagesImport from '../../../components/librarian/BookPagesImport'
 
 const PAGE_SIZE = 25
 
@@ -159,13 +160,16 @@ export default function LibrarianBooksPage() {
             </p>
           </div>
         </div>
-        <Button
-          onClick={() => router.push(`${base}/books/add`)}
-          icon={Plus}
-          size="sm"
-        >
-          Добавить книгу
-        </Button>
+        <div className="flex flex-wrap gap-2">
+          <BookPagesImport />
+          <Button
+            onClick={() => router.push(`${base}/books/add`)}
+            icon={Plus}
+            size="sm"
+          >
+            Добавить книгу
+          </Button>
+        </div>
       </div>
 
       {/* Сводка по текущей выборке */}

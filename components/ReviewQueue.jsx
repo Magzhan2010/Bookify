@@ -114,6 +114,27 @@ export default function ReviewQueue({ onChanged, meId }) {
     } catch (e) { toast.error(e.message) }
   }
 
+  // Всем, у кого страницы книги уже известны (например, после загрузки страниц списком)
+  const [bulk, setBulk] = useState(false)
+  const ready = topup.filter(r => parseInt(r.book_pages) && !(meId && r.user_id === meId))
+  const topupAll = async () => {
+    setBulk(true)
+    let ok = 0, coins = 0
+    for (const row of ready) {
+      try {
+        const res = await fetch('/api/librarian/reviews/topup', {
+          method: 'POST',
+          headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+          body: JSON.stringify({ borrowId: row.borrow_id })
+        })
+        if (res.ok) { ok++; coins += (await res.json()).points || 0 }
+      } catch {}
+    }
+    setBulk(false)
+    toast.success(`Начислено ${ok} ученикам · ${coins} монет`)
+    fetchTopup(); onChanged?.()
+  }
+
   return (
     <>
       <ShelfRequestsQueue meId={meId} />
@@ -121,7 +142,13 @@ export default function ReviewQueue({ onChanged, meId }) {
         <div className="mb-6 bg-[var(--color-bg-card)] border border-[#ffc93c]/60 rounded-2xl p-5">
           <div className="flex items-center gap-2.5 mb-1">
             <Coins size={18} className="text-[#c97a00]" />
-            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">Не начислено за прочитанную книгу: {topup.length}</h3>
+            <h3 className="flex-1 text-[15px] font-semibold text-[var(--color-text-primary)]">Не начислено за прочитанную книгу: {topup.length}</h3>
+            {ready.length > 0 && (
+              <button onClick={topupAll} disabled={bulk}
+                className="px-3 py-1.5 rounded-lg bg-[#ffc93c] text-[#1f2a5c] text-[12px] font-semibold hover:opacity-90 disabled:opacity-50 flex items-center gap-1.5">
+                {bulk && <Loader2 size={12} className="animate-spin" />} Начислить всем ({ready.length})
+              </button>
+            )}
           </div>
           <p className="text-[12px] text-[var(--color-text-tertiary)] mb-3">
             Отзыв одобрен, но у книги не было числа страниц — монеты за объём не пришли. Впиши страницы и начисли.
