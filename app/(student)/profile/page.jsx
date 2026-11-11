@@ -1213,7 +1213,9 @@ function buildGenreData(finished) {
 /**
  * Баллы ученика: баланс, уровень, место и все полученные карточки-монеты.
  */
-const PointsPanel = ({ points, history }) => {
+const PointsPanel = ({ points, history: rawHistory }) => {
+  // Отменённые и списания — не карточками: о них ученик узнаёт из уведомления, баланс уже учтён
+  const history = (rawHistory || []).filter(h => h.points > 0 && !h.reverted)
   const { summary } = useGame()
   const level = summary?.level
   const ranks = summary?.ranks

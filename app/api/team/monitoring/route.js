@@ -54,8 +54,8 @@ export async function GET(req) {
       pt AS (
         SELECT user_id,
                COALESCE(SUM(points), 0)::int AS earned,
-               COUNT(*) FILTER (WHERE reason = 'video')::int AS videos,
-               COUNT(*) FILTER (WHERE reason = 'tedx')::int AS tedx
+               COUNT(*) FILTER (WHERE reason = 'video' AND NOT reverted)::int AS videos,
+               COUNT(*) FILTER (WHERE reason = 'tedx' AND NOT reverted)::int AS tedx
           FROM user_points GROUP BY user_id
       )
       SELECT u.id, u.name, u.class_name, u.avatar_url,

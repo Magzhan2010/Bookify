@@ -34,7 +34,7 @@ export async function GET(req) {
            SELECT u.id, u.name, CASE WHEN u.role = 'teacher' THEN NULL ELSE u.class_name END AS class_name, u.avatar_url,
                   (u.role = 'teacher') AS is_teacher,
                   COALESCE(SUM(p.points), 0)::int AS earned,
-                  COUNT(DISTINCT p.book_id) FILTER (WHERE p.reason LIKE 'pages%')::int AS books
+                  COUNT(DISTINCT p.book_id) FILTER (WHERE p.reason LIKE 'pages%' AND NOT p.reverted)::int AS books
              FROM users u
              LEFT JOIN user_points p ON p.user_id = u.id ${period === 'month' ? `AND p.created_at >= ${MONTH_START}` : ''}
             WHERE (u.role = 'student' OR (u.role = 'teacher' AND NOT COALESCE(u.teacher_pending, FALSE))) ${classFilter}

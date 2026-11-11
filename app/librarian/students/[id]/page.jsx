@@ -7,6 +7,7 @@ import DeleteStudent from '../../../../components/librarian/DeleteStudent'
 import AddTrophy from '../../../../components/librarian/AddTrophy'
 import { TROPHY_NOTE } from '../../../../lib/trophy'
 import Achievements from '../../../../components/game/Achievements'
+import StudentCoins from '../../../../components/librarian/StudentCoins'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
@@ -244,6 +245,7 @@ export default function StudentDetailPage() {
             )}
           </motion.div>
 
+          <StudentCoins studentId={student.id} />
           {student.role !== 'teacher' && <Achievements userId={student.id} compact />}
 
           {/* История книг */}

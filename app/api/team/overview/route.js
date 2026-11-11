@@ -43,8 +43,8 @@ export async function GET(req) {
               AND br.returned_at >= $1::timestamptz
               AND NOT EXISTS (SELECT 1 FROM book_reviews r WHERE r.borrow_id = br.id))::int AS reviews_missing,
           (SELECT COUNT(*) FROM borrows WHERE status = 'active' AND due_date < NOW())::int AS overdue_loans,
-          (SELECT COUNT(*) FROM user_points WHERE reason = 'tedx')::int AS tedx,
-          (SELECT COUNT(*) FROM user_points WHERE reason = 'video')::int AS videos`, [start]),
+          (SELECT COUNT(*) FROM user_points WHERE reason = 'tedx' AND NOT reverted)::int AS tedx,
+          (SELECT COUNT(*) FROM user_points WHERE reason = 'video' AND NOT reverted)::int AS videos`, [start]),
       pool.query(`
         SELECT to_char(d, 'YYYY-MM-DD') AS day,
                (SELECT COUNT(*) FROM task_reports r WHERE r.created_at::date = d)::int AS reports,

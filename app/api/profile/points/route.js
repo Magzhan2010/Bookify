@@ -17,7 +17,7 @@ export async function GET(req) {
     const [balance, historyRes, rulesRes] = await Promise.all([
       getBalance(pool, userId),
       pool.query(
-        `SELECT up.id, up.points, up.reason, up.description, up.created_at,
+        `SELECT up.id, up.points, up.reason, up.description, up.created_at, up.reverted,
                 b.id AS book_id, b.title AS book_title, b.cover_url AS book_cover
            FROM user_points up
            LEFT JOIN books b ON b.id = up.book_id
