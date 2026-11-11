@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../../../lib/db'
 import { requireAuth } from '../../../../../../lib/auth'
 import { getGameStart } from '../../../../../../lib/game'
-import { TROPHY_NOTE } from '../../../../../../lib/trophy'
+import { TROPHY_NOTE, addShelfBook } from '../../../../../../lib/trophy'
 
 /**
  * «Трофей»: книга, которую ученик прочитал до запуска Bookify, — на полку без отзыва и без монет.
@@ -31,13 +31,8 @@ export async function POST(req, { params }) {
       [userId, bookId])
     if (dup.rows[0]) return NextResponse.json({ error: 'Эта книга уже есть у ученика' }, { status: 400 })
 
-    const start = await getGameStart(pool)
-    const at = start ? new Date(new Date(start).getTime() - 86400000) : new Date()
-    const r = await pool.query(
-      `INSERT INTO borrows (user_id, book_id, status, borrowed_at, due_date, returned_at, issued_by, notes)
-       VALUES ($1, $2, 'approved', $3, $3, $3, $4, $5) RETURNING id`,
-      [userId, bookId, at.toISOString(), guard.payload.id, TROPHY_NOTE])
-    return NextResponse.json({ success: true, id: r.rows[0].id, title: b.rows[0].title })
+    const newId = await addShelfBook(pool, { userId, bookId, byId: guard.payload.id, gameStart: await getGameStart(pool) })
+    return NextResponse.json({ success: true, id: newId, title: b.rows[0].title })
   } catch (err) {
     console.error('[trophy POST]', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })

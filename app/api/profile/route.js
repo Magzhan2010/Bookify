@@ -84,7 +84,7 @@ export async function GET(req) {
   // Личная полка прочитанных книг (approved)
   const shelfBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
-           books.id as book_id, books.genre, borrows.rating,
+           books.id as book_id, books.genre, borrows.rating, borrows.notes,
            borrows.returned_at, borrows.borrowed_at,
            reviews.content as review_content, reviews.created_at as review_at
     FROM borrows

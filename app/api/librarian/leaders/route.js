@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
+import { TROPHY_NOTE } from '../../../../lib/trophy'
 import { requireAuth } from '../../../../lib/auth'
 
 /**
@@ -32,7 +33,7 @@ export async function GET(req) {
                   ROW_NUMBER() OVER (PARTITION BY b.user_id ORDER BY b.returned_at DESC NULLS LAST) AS rn
              FROM borrows b
              JOIN books bk ON bk.id = b.book_id
-            WHERE b.status NOT IN ('active', 'cancelled')
+            WHERE b.status NOT IN ('active', 'cancelled') AND b.notes IS DISTINCT FROM '${TROPHY_NOTE}'
          ), pts AS (
            SELECT user_id, COALESCE(SUM(points), 0)::int AS points FROM user_points GROUP BY user_id
          )
@@ -65,7 +66,7 @@ export async function GET(req) {
            JOIN users u ON u.id = b.user_id
            JOIN books bk ON bk.id = b.book_id
            LEFT JOIN book_reviews r ON r.borrow_id = b.id
-          WHERE b.status NOT IN ('active', 'cancelled') AND u.role = 'student' ${classFilter}
+          WHERE b.status NOT IN ('active', 'cancelled') AND b.notes IS DISTINCT FROM '${TROPHY_NOTE}' AND u.role = 'student' ${classFilter}
           ORDER BY b.returned_at DESC NULLS LAST
           LIMIT 15`,
         params
@@ -73,7 +74,7 @@ export async function GET(req) {
       pool.query(
         `SELECT u.class_name,
                 COUNT(DISTINCT u.id)::int AS students,
-                COUNT(b.id) FILTER (WHERE b.status NOT IN ('active', 'cancelled'))::int AS books
+                COUNT(b.id) FILTER (WHERE b.status NOT IN ('active', 'cancelled') AND b.notes IS DISTINCT FROM '${TROPHY_NOTE}')::int AS books
            FROM users u
            LEFT JOIN borrows b ON b.user_id = u.id
           WHERE u.role = 'student' AND u.class_name IS NOT NULL AND u.class_name <> ''

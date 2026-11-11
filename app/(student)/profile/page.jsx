@@ -21,6 +21,7 @@ import AvatarPicker from '../../../components/AvatarPicker'
 import Achievements from '../../../components/game/Achievements'
 import { LangSwitch } from '../../../lib/i18n'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../../../lib/reviewRules'
+import { TROPHY_NOTE } from '../../../lib/trophy'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
@@ -178,6 +179,29 @@ export default function ProfilePage() {
     } finally {
       setReviewLoading(false)
     }
+  }
+
+  // Сданная книга без отзыва → просто на полку (без монет)
+  const shelfWithoutReview = async (b) => {
+    try {
+      const res = await fetch('/api/profile/shelf', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ borrowId: b.borrow_id })
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Ошибка')
+      toast.success(`«${b.title}» на полке`, { description: 'Без отзыва и без монет' })
+      fetchAll()
+    } catch (e) { toast.error(e.message) }
+  }
+  const removeFromShelf = async (b) => {
+    try {
+      const res = await fetch(`/api/profile/shelf?bookId=${b.book_id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      if (!res.ok) throw new Error((await res.json()).error || 'Ошибка')
+      toast.success('Убрали с полки')
+      fetchAll()
+    } catch (e) { toast.error(e.message) }
   }
 
   const removeFavorite = async (bookId) => {
@@ -549,14 +573,24 @@ export default function ProfilePage() {
                           >
                             <PenLine size={12} /> Переписать отзыв
                           </button>
+                          <button onClick={() => shelfWithoutReview(b)}
+                            className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] text-[12px] font-medium hover:text-[var(--color-text-primary)] transition-colors">
+                            Без отзыва — на полку
+                          </button>
                         </div>
                       ) : (
-                        <button
-                          onClick={() => openReviewModal(b)}
-                          className="px-3 py-1.5 rounded-lg bg-[var(--color-brand)] text-white text-[12px] font-medium hover:bg-[var(--color-brand-hover)] transition-colors flex items-center gap-1.5"
-                        >
-                          <PenLine size={12} /> Написать отзыв (+5 баллов)
-                        </button>
+                        <div className="flex flex-wrap gap-2">
+                          <button
+                            onClick={() => openReviewModal(b)}
+                            className="px-3 py-1.5 rounded-lg bg-[var(--color-brand)] text-white text-[12px] font-medium hover:bg-[var(--color-brand-hover)] transition-colors flex items-center gap-1.5"
+                          >
+                            <PenLine size={12} /> Написать отзыв (+5 баллов)
+                          </button>
+                          <button onClick={() => shelfWithoutReview(b)} title="Не хочу писать отзыв — просто поставить книгу на полку, без монет"
+                            className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] text-[12px] font-medium hover:text-[var(--color-text-primary)] transition-colors">
+                            Без отзыва — на полку
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>
@@ -572,7 +606,7 @@ export default function ProfilePage() {
                 <Trophy size={32} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
                 <p className="text-[var(--color-text-primary)] font-medium mb-1">Полка пока пуста</p>
                 <p className="text-[13px] text-[var(--color-text-tertiary)]">
-                  Прочитай книгу, напиши отзыв — и она окажется здесь навсегда
+                  Прочитай книгу и напиши отзыв — или нажми «На мою полку» на странице книги
                 </p>
               </div>
             ) : (
@@ -601,6 +635,11 @@ export default function ProfilePage() {
                         {b.cover_url && (
                           <img src={b.cover_url} alt={b.title} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" loading="lazy" />
                         )}
+                        {b.notes === TROPHY_NOTE && (
+                          <div className="absolute top-2 left-2 px-1.5 py-0.5 rounded-full bg-black/60 backdrop-blur-sm text-[9px] font-semibold text-white">
+                            без отзыва
+                          </div>
+                        )}
                         {b.rating && (
                           <div className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-black/70 backdrop-blur-sm text-[10px] font-bold text-[#ffd66b]">
                             {b.rating} ★
@@ -619,6 +658,11 @@ export default function ProfilePage() {
                           {b.title}
                         </div>
                         <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{b.author}</div>
+                        {b.notes === TROPHY_NOTE && (
+                          <button onClick={() => removeFromShelf(b)} className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors">
+                            Убрать с полки
+                          </button>
+                        )}
                         {b.review_content && (
                           <div className="mt-2 pt-2 border-t border-[var(--color-border)] text-[11px] text-[var(--color-text-secondary)] italic line-clamp-3 leading-relaxed">
                             «{b.review_content}»

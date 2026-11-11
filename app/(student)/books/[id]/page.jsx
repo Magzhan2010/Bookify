@@ -2,6 +2,7 @@
 
 import { motion, AnimatePresence } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
+import ShelfButton from '../../../../components/ShelfButton'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useTeamMe } from '../../../../lib/useTeamMe'
@@ -970,6 +971,8 @@ const Book = () => {
                     </button>
                   )
                 )}
+
+                {!isLibrarian && !myBorrow && <ShelfButton bookId={book.id} />}
 
                 <button
                   onClick={handleFavorite}
