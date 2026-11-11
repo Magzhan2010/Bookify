@@ -26,12 +26,15 @@ export async function POST(req, { params }) {
 
   try {
     const cur = await pool.query(
-      `SELECT b.id, b.status, b.due_date, u.name AS student_name, bk.title
+      `SELECT b.id, b.user_id, b.status, b.due_date, u.name AS student_name, bk.title
          FROM borrows b JOIN users u ON u.id = b.user_id JOIN books bk ON bk.id = b.book_id
         WHERE b.id = $1`, [id])
     const loan = cur.rows[0]
     if (!loan) return NextResponse.json({ error: 'Выдача не найдена' }, { status: 404 })
     if (loan.status !== 'active') return NextResponse.json({ error: 'Книга уже сдана' }, { status: 400 })
+    if (Number(loan.user_id) === Number(guard.payload.id) && guard.payload.role !== 'librarian') {
+      return NextResponse.json({ error: 'Свой срок продлевает другой участник или библиотекарь' }, { status: 403 })
+    }
 
     let res
     if (dueDate) {

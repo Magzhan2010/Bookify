@@ -122,8 +122,16 @@ export async function POST(req) {
   const note = String(body?.note || '').trim().slice(0, 200)
 
   try {
-    const u = await pool.query(`SELECT id FROM users WHERE id = $1 AND role = 'student'`, [userId])
+    if (userId === Number(guard.payload.id)) {
+      return NextResponse.json({ error: 'Себе бонус отмечает другой участник или библиотекарь' }, { status: 403 })
+    }
+    const u = await pool.query(`SELECT id FROM users WHERE id = $1 AND role IN ('student', 'teacher')`, [userId])
     if (!u.rows[0]) return NextResponse.json({ error: 'Ученик не найден' }, { status: 404 })
+    // Двойной клик / два участника одновременно — один и тот же бонус за минуту не дублируем
+    const recent = await pool.query(
+      `SELECT 1 FROM user_points WHERE user_id = $1 AND reason = $2 AND created_at > NOW() - INTERVAL '2 minutes' LIMIT 1`,
+      [userId, bonus.code])
+    if (recent.rows[0]) return NextResponse.json({ error: 'Этот бонус уже отмечен только что' }, { status: 409 })
     await pool.query(
       `INSERT INTO user_points (user_id, points, reason, description, created_by) VALUES ($1, $2, $3, $4, $5)`,
       [userId, bonus.points, bonus.code, note ? `${bonus.title}: ${note}` : bonus.title, guard.payload.id]

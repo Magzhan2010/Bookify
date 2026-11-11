@@ -11,7 +11,7 @@ import { NextResponse } from 'next/server'
  *   rating: 1-5 (опционально) — ученик сам поставил оценку, библиотекарь передаёт
  */
 export async function POST(req) {
-  const guard = await requireAuth(req, ['librarian'])
+  const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
 
   const { borrowId, rating, notes, noReview } = await req.json()
@@ -34,6 +34,11 @@ export async function POST(req) {
       return NextResponse.json({ error: 'Запись не найдена' }, { status: 404 })
     }
     const borrow = borrowRes.rows[0]
+    // Участник команды не принимает возврат сам у себя
+    if (Number(borrow.user_id) === Number(guard.payload.id) && guard.payload.role !== 'librarian') {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Свою книгу сдай другому участнику или библиотекарю' }, { status: 403 })
+    }
     if (borrow.status !== 'active') {
       await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Уже возвращена' }, { status: 400 })

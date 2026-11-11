@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { getGameStart } from '../../../../lib/game'
+import { reviewLengthError } from '../../../../lib/reviewRules'
 
 /**
  * POST /api/books/review
@@ -11,7 +12,7 @@ import { getGameStart } from '../../../../lib/game'
  * Правила:
  * - книга должна быть у ученика и возвращена (status = 'returned')
  * - один отзыв на книгу (UNIQUE borrow_id)
- * - минимум 50 символов (чтобы не писать "прочитал")
+ * - от 150 до 300 слов (требования школы, lib/reviewRules.js)
  */
 export async function POST(req) {
   const guard = await requireAuth(req)
@@ -23,14 +24,10 @@ export async function POST(req) {
   if (!rating || rating < 1 || rating > 5) {
     return NextResponse.json({ error: 'Поставь оценку от 1 до 5' }, { status: 400 })
   }
-  if (!content || content.trim().length < 50) {
-    return NextResponse.json(
-      { error: 'Напиши отзыв подлиннее — минимум 50 символов' },
-      { status: 400 }
-    )
-  }
-  if (content.length > 2000) {
-    return NextResponse.json({ error: 'Максимум 2000 символов' }, { status: 400 })
+  const lengthError = reviewLengthError(content)
+  if (lengthError) return NextResponse.json({ error: lengthError }, { status: 400 })
+  if (content.length > 4000) {
+    return NextResponse.json({ error: 'Слишком длинный текст' }, { status: 400 })
   }
 
   const client = await pool.connect()

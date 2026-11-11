@@ -20,6 +20,7 @@ import Link from 'next/link'
 import AvatarPicker from '../../../components/AvatarPicker'
 import Achievements from '../../../components/game/Achievements'
 import { LangSwitch } from '../../../lib/i18n'
+import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../../../lib/reviewRules'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
@@ -147,8 +148,9 @@ export default function ProfilePage() {
 
   const submitReview = async () => {
     if (!reviewModal) return
-    if (reviewText.trim().length < 50) {
-      return toast.error('Напиши минимум 50 символов')
+    const words = countWords(reviewText)
+    if (words < REVIEW_MIN_WORDS || words > REVIEW_MAX_WORDS) {
+      return toast.error(`Нужно от ${REVIEW_MIN_WORDS} до ${REVIEW_MAX_WORDS} слов, сейчас ${words}`)
     }
 
     setReviewLoading(true)
@@ -706,6 +708,19 @@ export default function ProfilePage() {
               </div>
             </div>
 
+            {/* Требования к отзыву */}
+            <div className="mb-4 p-3.5 rounded-xl bg-[var(--color-brand-soft)]">
+              <div className="text-[12px] font-semibold text-[var(--color-brand)] mb-2">Требования к отзыву · Пікір талаптары</div>
+              <ol className="space-y-1">
+                {REVIEW_CRITERIA.map((c, i) => (
+                  <li key={c.code} className="flex gap-2 text-[12px] leading-snug text-[var(--color-text-secondary)]">
+                    <span className="font-bold text-[var(--color-brand)] tabular-nums">0{i + 1}</span>
+                    <span>{c.ru} <span className="text-[var(--color-text-tertiary)]">· {c.kk}</span></span>
+                  </li>
+                ))}
+              </ol>
+            </div>
+
             {/* Текст отзыва */}
             <div className="mb-4">
               <label className="block text-[12px] text-[var(--color-text-tertiary)] uppercase tracking-wider font-medium mb-2">
@@ -714,20 +729,30 @@ export default function ProfilePage() {
               <textarea
                 value={reviewText}
                 onChange={e => setReviewText(e.target.value)}
-                rows={6}
-                maxLength={2000}
+                rows={9}
+                maxLength={4000}
                 autoFocus
-                placeholder="Что эта книга изменила в тебе? Какая мысль запомнилась больше всего? Где пригодится?"
-                className="w-full bg-[var(--color-bg-soft)] border border-transparent rounded-xl p-3.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-brand)]/40 focus:bg-[var(--color-bg-card)] transition-all resize-none leading-relaxed"
+                placeholder="О чём книга? Какая в ней главная мысль? Приведи примеры из книги. Что ты понял и чем она тебе полезна?"
+                className="w-full bg-[var(--color-bg-soft)] border border-transparent rounded-xl p-3.5 text-[14px] text-[var(--color-text-primary)] placeholder-[var(--color-text-tertiary)] focus:outline-none focus:border-[var(--color-brand)]/40 focus:bg-[var(--color-bg-card)] transition-all resize-y leading-relaxed"
               />
-              <div className="flex items-center justify-between mt-1.5">
-                <span className={`text-[11px] ${reviewText.trim().length >= 50 ? 'text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)]'}`}>
-                  {reviewText.trim().length >= 50
-                    ? '✓ Можно отправлять'
-                    : `Ещё ${50 - reviewText.trim().length} символов`}
-                </span>
-                <span className="text-[11px] text-[var(--color-text-tertiary)]">{reviewText.length}/2000</span>
-              </div>
+              {(() => {
+                const w = countWords(reviewText)
+                const ok = w >= REVIEW_MIN_WORDS && w <= REVIEW_MAX_WORDS
+                return (
+                  <div className="mt-1.5">
+                    <div className="h-1.5 rounded-full bg-[var(--color-bg-soft)] overflow-hidden">
+                      <div className={`h-full rounded-full transition-all ${w > REVIEW_MAX_WORDS ? 'bg-[var(--color-danger)]' : ok ? 'bg-[var(--color-success)]' : 'bg-[var(--color-brand)]'}`}
+                        style={{ width: `${Math.min(100, (w / REVIEW_MAX_WORDS) * 100)}%` }} />
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className={`text-[11px] ${ok ? 'text-[var(--color-success)]' : w > REVIEW_MAX_WORDS ? 'text-[var(--color-danger)]' : 'text-[var(--color-text-tertiary)]'}`}>
+                        {ok ? '✓ Объём подходит' : w > REVIEW_MAX_WORDS ? `Слишком длинно — убери ${w - REVIEW_MAX_WORDS} сл.` : `Ещё ${REVIEW_MIN_WORDS - w} сл. до минимума`}
+                      </span>
+                      <span className="text-[11px] tabular-nums text-[var(--color-text-tertiary)]">{w} / {REVIEW_MIN_WORDS}–{REVIEW_MAX_WORDS} слов</span>
+                    </div>
+                  </div>
+                )
+              })()}
             </div>
 
             {/* Предупреждение про ИИ */}
@@ -740,7 +765,7 @@ export default function ProfilePage() {
 
             <button
               onClick={submitReview}
-              disabled={reviewLoading || reviewText.trim().length < 50}
+              disabled={reviewLoading || countWords(reviewText) < REVIEW_MIN_WORDS || countWords(reviewText) > REVIEW_MAX_WORDS}
               className="w-full py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[15px] font-semibold flex items-center justify-center gap-2 disabled:opacity-40 transition-colors"
             >
               {reviewLoading ? (

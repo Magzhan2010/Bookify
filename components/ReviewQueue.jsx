@@ -2,12 +2,16 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Check, X, Loader2, Award, PenLine } from 'lucide-react'
+import { Check, X, Loader2, Award, PenLine, Coins } from 'lucide-react'
+import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../lib/reviewRules'
+import { tierForPages } from '../lib/points'
 
 /**
  * Очередь отзывов на проверку — у библиотекаря и на командной платформе.
  * Свой собственный отзыв проверить нельзя (кнопки скрыты, сервер тоже не даст).
  */
+const lengthOk = r => { const n = countWords(r?.content); return n >= REVIEW_MIN_WORDS && n <= REVIEW_MAX_WORDS }
+
 export default function ReviewQueue({ onChanged, meId }) {
   const [reviews, setReviews] = useState([])
   const [reviewAction, setReviewAction] = useState(null)
@@ -15,6 +19,11 @@ export default function ReviewQueue({ onChanged, meId }) {
   const [bonusSel, setBonusSel] = useState({})
   const [notes, setNotes] = useState({})
   const [showReviews, setShowReviews] = useState(true)
+  // Страницы — для книг, у которых объём не указан в карточке
+  const [pages, setPages] = useState({})
+  // Чек-лист требований к отзыву (только для проверяющего)
+  const [checks, setChecks] = useState({})
+  const [topup, setTopup] = useState([])
 
   const fetchReviews = useCallback(async () => {
     try {
@@ -27,6 +36,14 @@ export default function ReviewQueue({ onChanged, meId }) {
     }
   }, [])
 
+  const fetchTopup = useCallback(async () => {
+    try {
+      const res = await fetch('/api/librarian/reviews/topup', { headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+      if (res.ok) setTopup(await res.json())
+    } catch {}
+  }, [])
+  useEffect(() => { fetchTopup() }, [fetchTopup])
+
   useEffect(() => {
     fetchReviews()
     const i = setInterval(fetchReviews, 60000)
@@ -34,10 +51,19 @@ export default function ReviewQueue({ onChanged, meId }) {
   }, [fetchReviews])
 
   const handleReviewAction = async (reviewId, action) => {
-    // Без причины ученик не поймёт, что исправить
-    const reviewNote = notes[reviewId] || ''
+    // Без причины ученик не поймёт, что исправить. Не отмеченные пункты чек-листа подставляем сами.
+    const r = reviews.find(x => x.id === reviewId)
+    let reviewNote = notes[reviewId] || ''
     if (action === 'reject' && !reviewNote.trim()) {
-      toast.error('Напиши в заметке, что ученику исправить')
+      const miss = REVIEW_CRITERIA.filter(c => !(checks[reviewId] || {})[c.code] && !(c.code === 'length' && lengthOk(r)))
+      if (!miss.length) {
+        toast.error('Напиши в заметке, что ученику исправить')
+        return
+      }
+      reviewNote = 'Доработай: ' + miss.map(c => c.ru.toLowerCase()).join('; ')
+    }
+    if (action === 'approve' && r && !parseInt(r.book_pages) && !parseInt(pages[reviewId])) {
+      toast.error('Впиши, сколько страниц в книге — иначе за объём начислится 0')
       return
     }
     setReviewAction(reviewId)
@@ -45,7 +71,7 @@ export default function ReviewQueue({ onChanged, meId }) {
       const res = await fetch(`/api/librarian/reviews/${reviewId}`, {
         method: 'PATCH',
         headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action, note: reviewNote || null, bonuses: bonusSel[reviewId] || [] })
+        body: JSON.stringify({ action, note: reviewNote || null, bonuses: bonusSel[reviewId] || [], pagesRead: parseInt(pages[reviewId]) || undefined })
       })
       const data = await res.json()
       if (res.ok) {
@@ -71,8 +97,62 @@ export default function ReviewQueue({ onChanged, meId }) {
     }
   }
 
+  const doTopup = async row => {
+    const n = parseInt(pages[`t${row.borrow_id}`]) || parseInt(row.book_pages)
+    if (!n) return toast.error('Впиши число страниц')
+    try {
+      const res = await fetch('/api/librarian/reviews/topup', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ borrowId: row.borrow_id, pages: n })
+      })
+      const d = await res.json()
+      if (!res.ok) throw new Error(d.error || 'Ошибка')
+      toast.success(d.points ? `${d.student_name}: +${d.points} за книгу` : 'Книга короче 100 стр. — за объём 0, отмечено')
+      fetchTopup(); onChanged?.()
+    } catch (e) { toast.error(e.message) }
+  }
+
   return (
     <>
+      {topup.length > 0 && (
+        <div className="mb-6 bg-[var(--color-bg-card)] border border-[#ffc93c]/60 rounded-2xl p-5">
+          <div className="flex items-center gap-2.5 mb-1">
+            <Coins size={18} className="text-[#c97a00]" />
+            <h3 className="text-[15px] font-semibold text-[var(--color-text-primary)]">Не начислено за прочитанную книгу: {topup.length}</h3>
+          </div>
+          <p className="text-[12px] text-[var(--color-text-tertiary)] mb-3">
+            Отзыв одобрен, но у книги не было числа страниц — монеты за объём не пришли. Впиши страницы и начисли.
+          </p>
+          <div className="divide-y divide-[var(--color-border)] max-h-[320px] overflow-y-auto">
+            {topup.map(row => {
+              const own = meId && row.user_id === meId
+              const key = `t${row.borrow_id}`
+              const n = parseInt(pages[key]) || parseInt(row.book_pages) || 0
+              const tier = tierForPages(n)
+              return (
+                <div key={row.borrow_id} className="flex flex-wrap items-center gap-2 py-2.5 text-[13px]">
+                  <div className="flex-1 min-w-[180px]">
+                    <div className="font-medium text-[var(--color-text-primary)] truncate">{row.student_name}{row.student_class ? ` · ${row.student_class}` : ''}</div>
+                    <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">{row.book_title}</div>
+                  </div>
+                  {own ? <span className="text-[12px] text-[var(--color-text-tertiary)]">Твой — начислит другой участник</span> : (
+                    <>
+                      {!parseInt(row.book_pages) && (
+                        <input inputMode="numeric" placeholder="стр." value={pages[key] || ''}
+                          onChange={e => setPages(p => ({ ...p, [key]: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                          className="w-20 bg-[var(--color-bg-soft)] rounded-lg px-2.5 py-1.5 text-[13px] outline-none" />
+                      )}
+                      <span className="w-16 text-[12px] text-[var(--color-text-tertiary)] tabular-nums">{n ? (tier ? `+${tier.points}` : '+0') : ''}</span>
+                      <button onClick={() => doTopup(row)} className="px-3 py-1.5 rounded-lg bg-[#ffc93c] text-[#1f2a5c] text-[12px] font-semibold hover:opacity-90">Начислить</button>
+                    </>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
       {/* === НОВЫЕ ОТЗЫВЫ === */}
       <div id="reviews" className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-6">
         <div className="flex items-center justify-between mb-5">
@@ -155,7 +235,36 @@ export default function ReviewQueue({ onChanged, meId }) {
                   <p className="text-[14px] text-[var(--color-text-primary)] leading-relaxed whitespace-pre-wrap">
                     {r.content}
                   </p>
+                  <div className={`mt-2 text-[11px] font-semibold ${lengthOk(r) ? 'text-[var(--color-success)]' : 'text-[var(--color-danger)]'}`}>
+                    {countWords(r.content)} слов · нужно {REVIEW_MIN_WORDS}–{REVIEW_MAX_WORDS}
+                  </div>
                 </div>
+
+                {!(meId && r.user_id === meId) && (
+                  <div className="mb-3 flex flex-wrap gap-1.5">
+                    {REVIEW_CRITERIA.filter(c => c.code !== 'length').map(c => {
+                      const on = !!(checks[r.id] || {})[c.code]
+                      return (
+                        <button key={c.code} type="button"
+                          onClick={() => setChecks(p => ({ ...p, [r.id]: { ...(p[r.id] || {}), [c.code]: !on } }))}
+                          className={`px-2.5 py-1.5 rounded-lg text-[11px] font-medium border transition-colors flex items-center gap-1 ${
+                            on ? 'bg-[var(--color-success)]/12 border-[var(--color-success)]/40 text-[var(--color-success)]' : 'bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)]'}`}>
+                          {on ? <Check size={11} /> : <span className="w-[11px]" />} {c.ru}
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+
+                {!parseInt(r.book_pages) && !(meId && r.user_id === meId) && (
+                  <div className="mb-3 flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-[#ffc93c]/15 text-[12px] text-[var(--color-text-secondary)]">
+                    <span>У книги не указан объём — сколько в ней страниц?</span>
+                    <input inputMode="numeric" placeholder="стр." value={pages[r.id] || ''}
+                      onChange={e => setPages(p => ({ ...p, [r.id]: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
+                      className="w-20 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-[13px] outline-none" />
+                    {parseInt(pages[r.id]) > 0 && <span className="font-semibold">{tierForPages(pages[r.id]) ? `+${tierForPages(pages[r.id]).points} за объём` : 'меньше 100 стр. — +0'}</span>}
+                  </div>
+                )}
 
                 {meId && r.user_id === meId ? (
                   <p className="text-[12px] text-[var(--color-text-tertiary)]">Это твой отзыв — его проверит другой участник или библиотекарь.</p>
@@ -186,7 +295,7 @@ export default function ReviewQueue({ onChanged, meId }) {
                     </div>
                     <input
                       type="text"
-                      placeholder="Заметка (причина отклонения обязательна)"
+                      placeholder="Заметка ученику (пусто — подставим неотмеченные пункты)"
                       value={notes[r.id] || ''}
                       onChange={e => setNotes(prev => ({ ...prev, [r.id]: e.target.value }))}
                       className="flex-1 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-2 text-[12px] outline-none focus:border-[var(--color-brand)]"

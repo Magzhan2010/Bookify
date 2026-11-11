@@ -78,6 +78,17 @@ export async function PATCH(req, { params }) {
     }
 
     // === APPROVE ===
+    // Без числа страниц баллы за объём не посчитать — раньше ученик тогда получал только +5
+    const pagesGiven = parseInt(pagesRead) || 0
+    const bookPages = parseInt(review.book_pages) || 0
+    if (!pagesGiven && !bookPages) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'У книги не указано число страниц — впиши его, чтобы начислить баллы за объём', need_pages: true }, { status: 400 })
+    }
+    if (pagesGiven && !bookPages) {
+      await client.query('UPDATE books SET pages = $1, updated_at = NOW() WHERE id = $2 AND (pages IS NULL OR pages = 0)', [pagesGiven, review.book_id])
+    }
+
     await client.query(
       `UPDATE book_reviews
        SET status = 'approved', reviewed_by = $1, reviewed_at = NOW(), review_note = $2
@@ -107,10 +118,16 @@ export async function PATCH(req, { params }) {
     // За отзыв
     await award(BONUSES.review.points, 'review', BONUSES.review.title)
 
-    // За объём книги (страницы из карточки книги или указанные библиотекарем)
-    const tier = tierForPages(parseInt(pagesRead) || parseInt(review.book_pages) || 0)
-    if (tier) {
+    // За объём книги (страницы из карточки книги или указанные проверяющим).
+    // Одну и ту же книгу за объём засчитываем один раз — перечитал = без повторных монет.
+    const tier = tierForPages(bookPages || pagesGiven)
+    const already = await client.query(
+      `SELECT 1 FROM user_points WHERE user_id = $1 AND book_id = $2 AND reason LIKE 'pages%' LIMIT 1`,
+      [review.user_id, review.book_id])
+    if (tier && !already.rows[0]) {
       await award(tier.points, tier.code, `Прочитал книгу: ${tier.label}`)
+    } else if (tier) {
+      awarded.push({ reason: 'За объём уже начисляли раньше (книга прочитана повторно)', points: 0 })
     }
 
     // Бонусы за видео / TEDx — библиотекарь отмечает галочками.
@@ -164,11 +181,13 @@ export async function DELETE(req, { params }) {
     if (!res.rows[0]) {
       return NextResponse.json({ error: 'Отзыв не найден' }, { status: 404 })
     }
-    // Возвращаем заём в returned
+    // Возвращаем заём в returned и забираем монеты за этот отзыв —
+    // иначе ученик написал бы отзыв заново и получил их второй раз
     await pool.query(
       "UPDATE borrows SET status = 'returned', updated_at = NOW() WHERE id = $1",
       [res.rows[0].borrow_id]
     )
+    await pool.query('DELETE FROM user_points WHERE borrow_id = $1', [res.rows[0].borrow_id])
     return NextResponse.json({ success: true })
   } catch (err) {
     return NextResponse.json({ error: err.message }, { status: 500 })

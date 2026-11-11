@@ -17,6 +17,11 @@ import { requireAuth } from '../../../../lib/auth'
 export async function POST(req) {
   const guard = await requireAuth(req)
   if (!guard.ok) return guard.response
+  // Книгу сдают библиотекарю (или команде) — иначе можно было «вернуть» её, не принеся,
+  // и сразу писать отзыв за монеты. Требование школы: пока книга не сдана, отзыв писать нельзя.
+  if (guard.payload.role !== 'librarian') {
+    return NextResponse.json({ error: 'Книгу нужно сдать в библиотеку — там её отметят возвращённой' }, { status: 403 })
+  }
 
   const client = await pool.connect()
   let inTx = false

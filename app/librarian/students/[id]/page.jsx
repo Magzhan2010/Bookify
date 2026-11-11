@@ -4,6 +4,8 @@ import { motion } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
 import ExtendDue from '../../../../components/librarian/ExtendDue'
 import DeleteStudent from '../../../../components/librarian/DeleteStudent'
+import AddTrophy from '../../../../components/librarian/AddTrophy'
+import { TROPHY_NOTE } from '../../../../lib/trophy'
 import Achievements from '../../../../components/game/Achievements'
 import { useEffect, useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
@@ -251,7 +253,10 @@ export default function StudentDetailPage() {
             transition={{ delay: 0.15 }}
             className="bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-2xl p-5"
           >
-            <h3 className="text-[14px] font-semibold text-[var(--color-text-primary)] mb-3">История чтения ({history.length})</h3>
+            <div className="flex items-center justify-between gap-2 mb-3">
+              <h3 className="text-[14px] font-semibold text-[var(--color-text-primary)]">История чтения ({history.length})</h3>
+              <AddTrophy studentId={student.id} onAdded={h => setHistory(hs => [h, ...hs])} />
+            </div>
             {history.length === 0 ? (
               <p className="text-[13px] text-[var(--color-text-tertiary)] text-center py-6">Пока не брал книг</p>
             ) : (
@@ -276,13 +281,26 @@ export default function StudentDetailPage() {
                         onExtended={due => setHistory(hs => hs.map(x => x.id === h.id ? { ...x, due_date: due } : x))}
                       />
                     )}
-                    <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${
-                      h.status === 'active' || h.status === 'overdue'
-                        ? 'bg-[var(--color-brand)]/15 text-[var(--color-brand)]'
-                        : 'bg-[var(--color-success)]/15 text-[var(--color-success)]'
-                    }`}>
-                      {h.status === 'active' || h.status === 'overdue' ? 'Активна' : 'Прочитано'}
-                    </span>
+                    {(() => {
+                      const trophy = h.notes === TROPHY_NOTE
+                      const [label, cls] = trophy ? ['Трофей', 'bg-[#ffc93c]/25 text-[#9a6b00]']
+                        : h.status === 'active' || h.status === 'overdue' ? ['Активна', 'bg-[var(--color-brand)]/15 text-[var(--color-brand)]']
+                        : h.status === 'approved' ? ['Прочитано', 'bg-[var(--color-success)]/15 text-[var(--color-success)]']
+                        : h.status === 'reviewed' ? ['Отзыв на проверке', 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]']
+                        : h.status === 'cancelled' ? ['Без отзыва', 'bg-[var(--color-bg-card)] text-[var(--color-text-tertiary)]']
+                        : ['Сдана, нет отзыва', 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]']
+                      return (
+                        <span className="flex items-center gap-1 shrink-0">
+                          <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${cls}`}>{label}</span>
+                          {trophy && (
+                            <button title="Убрать трофей" onClick={async () => {
+                              const res = await fetch(`/api/librarian/students/${student.id}/trophy?borrowId=${h.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
+                              if (res.ok) setHistory(hs => hs.filter(x => x.id !== h.id)); else toast.error('Не удалось убрать')
+                            }} className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)]">×</button>
+                          )}
+                        </span>
+                      )
+                    })()}
                   </div>
                 ))}
               </div>
