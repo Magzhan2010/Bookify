@@ -2,11 +2,11 @@
 
 import { useEffect, useState } from 'react'
 import { toast } from 'sonner'
-import { Library, Check, Loader2 } from 'lucide-react'
+import { Library, Check, Loader2, Clock } from 'lucide-react'
 
 /**
- * «На мою полку»: книга просто стоит в профиле — без отзыва, без страниц, без монет.
- * Если книга уже прочитана по-настоящему или сейчас у ученика — кнопки нет.
+ * «На мою полку»: заявка поставить книгу в профиль без отзыва и без монет.
+ * Ставит библиотекарь или команда; пока не решили — «Ждёт подтверждения» (нажать — отменить).
  */
 export default function ShelfButton({ bookId, onChange }) {
   const [state, setState] = useState(null)
@@ -24,12 +24,11 @@ export default function ShelfButton({ bookId, onChange }) {
   const add = async () => {
     setBusy(true)
     try {
-      const body = state === 'returned' ? { bookId } : { bookId }
-      const res = await fetch('/api/profile/shelf', { method: 'POST', headers: { ...auth(), 'Content-Type': 'application/json' }, body: JSON.stringify(body) })
+      const res = await fetch('/api/profile/shelf', { method: 'POST', headers: { ...auth(), 'Content-Type': 'application/json' }, body: JSON.stringify({ bookId }) })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
-      setState('shelf'); onChange?.('shelf')
-      toast.success('Книга на твоей полке', { description: 'Без отзыва и без монет' })
+      setState('pending'); onChange?.('pending')
+      toast.success('Заявка отправлена', { description: 'Библиотекарь или команда поставят книгу на полку' })
     } catch (e) { toast.error(e.message) } finally { setBusy(false) }
   }
   const remove = async () => {
@@ -38,12 +37,19 @@ export default function ShelfButton({ bookId, onChange }) {
       const res = await fetch(`/api/profile/shelf?bookId=${bookId}`, { method: 'DELETE', headers: auth() })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
+      toast.success(state === 'pending' ? 'Заявка отменена' : 'Убрали с полки')
       setState('none'); onChange?.('none')
-      toast.success('Убрали с полки')
     } catch (e) { toast.error(e.message) } finally { setBusy(false) }
   }
 
   if (state === 'returned') return null // для сданной книги — кнопка в профиле «Без отзыва — на полку»
+
+  if (state === 'pending') return (
+    <button onClick={remove} disabled={busy} title="Отменить заявку"
+      className="px-4 py-2.5 rounded-xl border text-[14px] font-medium flex items-center gap-2 transition-all bg-[var(--color-warning)]/10 border-[var(--color-warning)]/30 text-[var(--color-warning)] disabled:opacity-50">
+      {busy ? <Loader2 size={14} className="animate-spin" /> : <Clock size={14} />} Ждёт подтверждения
+    </button>
+  )
 
   return state === 'shelf' ? (
     <button onClick={remove} disabled={busy} title="Убрать с полки"
@@ -53,7 +59,7 @@ export default function ShelfButton({ bookId, onChange }) {
   ) : (
     <button onClick={add} disabled={busy}
       className="px-4 py-2.5 rounded-xl border text-[14px] font-medium flex items-center gap-2 transition-all bg-[var(--color-bg-card)] border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] disabled:opacity-50">
-      {busy ? <Loader2 size={14} className="animate-spin" /> : <Library size={14} />} На мою полку
+      {busy ? <Loader2 size={14} className="animate-spin" /> : <Library size={14} />} Попросить на полку
     </button>
   )
 }

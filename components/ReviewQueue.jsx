@@ -5,6 +5,7 @@ import { toast } from 'sonner'
 import { Check, X, Loader2, Award, PenLine, Coins } from 'lucide-react'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../lib/reviewRules'
 import { tierForPages } from '../lib/points'
+import ShelfRequestsQueue from './ShelfRequestsQueue'
 
 /**
  * Очередь отзывов на проверку — у библиотекаря и на командной платформе.
@@ -115,6 +116,7 @@ export default function ReviewQueue({ onChanged, meId }) {
 
   return (
     <>
+      <ShelfRequestsQueue meId={meId} />
       {topup.length > 0 && (
         <div className="mb-6 bg-[var(--color-bg-card)] border border-[#ffc93c]/60 rounded-2xl p-5">
           <div className="flex items-center gap-2.5 mb-1">

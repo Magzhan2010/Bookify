@@ -38,6 +38,7 @@ export async function GET(req) {
   const submittedBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author, books.id as book_id,
            borrows.returned_at, borrows.rating, reviews.status as review_status,
+           EXISTS (SELECT 1 FROM shelf_requests sr WHERE sr.borrow_id = borrows.id AND sr.status = 'pending') AS shelf_pending,
            reviews.review_note, reviews.content as review_content
     FROM borrows
     JOIN books ON borrows.book_id = books.id

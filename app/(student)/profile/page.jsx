@@ -191,7 +191,7 @@ export default function ProfilePage() {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
-      toast.success(`«${b.title}» на полке`, { description: 'Без отзыва и без монет' })
+      toast.success('Заявка отправлена', { description: 'Библиотекарь или команда поставят книгу на полку' })
       fetchAll()
     } catch (e) { toast.error(e.message) }
   }
@@ -573,10 +573,12 @@ export default function ProfilePage() {
                           >
                             <PenLine size={12} /> Переписать отзыв
                           </button>
-                          <button onClick={() => shelfWithoutReview(b)}
+                          {b.shelf_pending ? (
+                            <span className="px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/10 text-[var(--color-warning)] text-[12px] font-medium">Ждёт подтверждения: на полку</span>
+                          ) : <button onClick={() => shelfWithoutReview(b)}
                             className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] text-[12px] font-medium hover:text-[var(--color-text-primary)] transition-colors">
                             Без отзыва — на полку
-                          </button>
+                          </button>}
                         </div>
                       ) : (
                         <div className="flex flex-wrap gap-2">
@@ -586,10 +588,12 @@ export default function ProfilePage() {
                           >
                             <PenLine size={12} /> Написать отзыв (+5 баллов)
                           </button>
-                          <button onClick={() => shelfWithoutReview(b)} title="Не хочу писать отзыв — просто поставить книгу на полку, без монет"
+                          {b.shelf_pending ? (
+                            <span className="px-3 py-1.5 rounded-lg bg-[var(--color-warning)]/10 text-[var(--color-warning)] text-[12px] font-medium">Ждёт подтверждения: на полку</span>
+                          ) : <button onClick={() => shelfWithoutReview(b)} title="Не хочу писать отзыв — просто поставить книгу на полку, без монет"
                             className="px-3 py-1.5 rounded-lg bg-[var(--color-bg-soft)] text-[var(--color-text-secondary)] text-[12px] font-medium hover:text-[var(--color-text-primary)] transition-colors">
                             Без отзыва — на полку
-                          </button>
+                          </button>}
                         </div>
                       )}
                     </div>
@@ -606,7 +610,7 @@ export default function ProfilePage() {
                 <Trophy size={32} className="text-[var(--color-text-tertiary)] mx-auto mb-3" />
                 <p className="text-[var(--color-text-primary)] font-medium mb-1">Полка пока пуста</p>
                 <p className="text-[13px] text-[var(--color-text-tertiary)]">
-                  Прочитай книгу и напиши отзыв — или нажми «На мою полку» на странице книги
+                  Прочитай книгу и напиши отзыв — или попроси поставить книгу на полку на её странице
                 </p>
               </div>
             ) : (
