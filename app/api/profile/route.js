@@ -26,7 +26,7 @@ export async function GET(req) {
   const activeBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
            books.id as book_id, books.genre, borrows.due_date, borrows.borrowed_at,
-           borrows.rating,
+           borrows.rating, borrows.own_book,
            (borrows.due_date IS NOT NULL AND borrows.due_date < NOW()) AS is_overdue
     FROM borrows
     JOIN books ON borrows.book_id = books.id
@@ -85,8 +85,12 @@ export async function GET(req) {
   // Личная полка прочитанных книг (approved)
   const shelfBooks = await pool.query(`
     SELECT borrows.id as borrow_id, books.title, books.cover_url, books.author,
-           books.id as book_id, books.genre, borrows.rating, borrows.notes,
-           borrows.returned_at, borrows.borrowed_at,
+           books.id as book_id, books.genre, borrows.rating, borrows.notes, borrows.own_book,
+           borrows.returned_at, borrows.borrowed_at, (reviews.status = 'approved') AS review_ok,
+           CASE WHEN EXISTS (SELECT 1 FROM user_points p WHERE p.borrow_id = borrows.id AND p.reason = 'video' AND NOT p.reverted) THEN 'done'
+                WHEN EXISTS (SELECT 1 FROM bonus_requests q WHERE q.borrow_id = borrows.id AND q.kind = 'video' AND q.status = 'pending') THEN 'pending' END AS video_state,
+           CASE WHEN EXISTS (SELECT 1 FROM user_points p WHERE p.borrow_id = borrows.id AND p.reason = 'tedx' AND NOT p.reverted) THEN 'done'
+                WHEN EXISTS (SELECT 1 FROM bonus_requests q WHERE q.borrow_id = borrows.id AND q.kind = 'tedx' AND q.status = 'pending') THEN 'pending' END AS tedx_state,
            reviews.content as review_content, reviews.created_at as review_at
     FROM borrows
     JOIN books ON borrows.book_id = books.id

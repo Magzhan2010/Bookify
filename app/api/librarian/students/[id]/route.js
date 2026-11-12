@@ -37,7 +37,7 @@ export async function GET(req, { params }) {
     )
 
     const historyRes = await pool.query(
-      `SELECT b.id, b.status, b.borrowed_at, b.due_date, b.returned_at, b.notes,
+      `SELECT b.id, b.status, b.borrowed_at, b.due_date, b.returned_at, b.notes, b.own_book,
               bk.id AS book_id, bk.title, bk.author, bk.cover_url, bk.genre,
               lib.name AS issued_by_name
        FROM borrows b

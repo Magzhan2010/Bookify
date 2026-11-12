@@ -22,6 +22,8 @@ import Achievements from '../../../components/game/Achievements'
 import { LangSwitch } from '../../../lib/i18n'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../../../lib/reviewRules'
 import { TROPHY_NOTE } from '../../../lib/trophy'
+import OwnBooks from '../../../components/OwnBooks'
+import BonusButtons from '../../../components/BonusButtons'
 
 const TABS = [
   { key: 'reading', label: 'На руках', icon: BookOpen },
@@ -482,9 +484,10 @@ export default function ProfilePage() {
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.25 }}
         >
+          {activeTab === 'reading' && userData.role !== 'librarian' && <OwnBooks onChanged={fetchAll} />}
           {activeTab === 'reading' && (
             <BookGrid
-              books={active}
+              books={active.filter(b => !b.own_book)}
               emptyText="Сейчас ничего не читаешь"
               extra={(book) => book.due_date && (
                 <div className="text-[11px] text-[var(--color-text-tertiary)] flex items-center gap-1">
@@ -662,6 +665,7 @@ export default function ProfilePage() {
                           {b.title}
                         </div>
                         <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{b.author}</div>
+                        <BonusButtons book={b} onDone={fetchAll} />
                         {b.notes === TROPHY_NOTE && (
                           <button onClick={() => removeFromShelf(b)} className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] transition-colors">
                             Убрать с полки

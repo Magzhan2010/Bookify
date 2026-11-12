@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2, GraduationCap
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2, GraduationCap, Sparkles
 } from 'lucide-react'
 import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
@@ -21,7 +21,8 @@ const NAV_GROUPS = [
     title: 'Читать',
     items: [
       { href: '/library', label: 'Каталог', short: 'Книги', icon: Library },
-      { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote }
+      { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote },
+      { href: '/match', label: 'Подбор книг', short: 'Подбор', icon: Sparkles }
     ]
   },
   {

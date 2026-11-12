@@ -39,6 +39,10 @@ export async function POST(req) {
       await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Свою книгу сдай другому участнику или библиотекарю' }, { status: 403 })
     }
+    if (borrow.own_book) {
+      await client.query('ROLLBACK')
+      return NextResponse.json({ error: 'Это своя книга ученика — её не сдают в библиотеку' }, { status: 400 })
+    }
     if (borrow.status !== 'active') {
       await client.query('ROLLBACK')
       return NextResponse.json({ error: 'Уже возвращена' }, { status: 400 })

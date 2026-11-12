@@ -3,6 +3,7 @@
 import { motion, AnimatePresence } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
 import ShelfButton from '../../../../components/ShelfButton'
+import BookReaders from '../../../../components/BookReaders'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useTeamMe } from '../../../../lib/useTeamMe'
@@ -1086,6 +1087,8 @@ const Book = () => {
             </div>
           </motion.div>
         )}
+
+        {(isLibrarian || teamMe?.is_lead) && book?.id && <BookReaders bookId={book.id} />}
 
         {/* === КОММЕНТАРИИ === */}
         <motion.section

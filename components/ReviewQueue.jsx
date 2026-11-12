@@ -6,6 +6,8 @@ import { Check, X, Loader2, Award, PenLine, Coins } from 'lucide-react'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../lib/reviewRules'
 import { tierForPages } from '../lib/points'
 import ShelfRequestsQueue from './ShelfRequestsQueue'
+import OwnBookQueue from './OwnBookQueue'
+import BonusQueue from './BonusQueue'
 
 /**
  * Очередь отзывов на проверку — у библиотекаря и на командной платформе.
@@ -137,6 +139,8 @@ export default function ReviewQueue({ onChanged, meId }) {
 
   return (
     <>
+      <OwnBookQueue meId={meId} />
+      <BonusQueue meId={meId} />
       <ShelfRequestsQueue meId={meId} />
       {topup.length > 0 && (
         <div className="mb-6 bg-[var(--color-bg-card)] border border-[#ffc93c]/60 rounded-2xl p-5">
@@ -244,6 +248,7 @@ export default function ReviewQueue({ onChanged, meId }) {
                     </div>
                     <div className="text-[13px] font-medium text-[var(--color-text-primary)] truncate">
                       {r.book_title}
+                      {r.own_book && <span className="ml-1.5 px-1.5 py-0.5 rounded bg-[var(--color-brand-soft)] text-[var(--color-brand)] text-[10px] font-semibold align-middle">своя книга</span>}
                     </div>
                     <div className="text-[11px] text-[var(--color-text-tertiary)] mb-1.5">
                       {r.book_author}

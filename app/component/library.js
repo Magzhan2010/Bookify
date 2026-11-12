@@ -5,7 +5,8 @@ import TeacherPicks from '../../components/TeacherPicks'
 import { useT } from '../../lib/i18n'
 import { useEffect, useState, useRef, useMemo, useCallback } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
-import { Search, X, BookOpen, CheckCircle, Plus, ChevronDown } from 'lucide-react'
+import { Search, X, BookOpen, CheckCircle, Plus, ChevronDown, Sparkles } from 'lucide-react'
+import Link from 'next/link'
 
 import Navbar from "./NavBar"
 import Books from "./books"
@@ -321,6 +322,17 @@ export default function Library() {
             </p>
           </motion.div>
         </section>
+
+        <Link href="/match" className="group mb-6 flex items-center gap-4 p-4 sm:p-5 rounded-2xl bg-[#1f2a5c] text-white overflow-hidden relative">
+          <div className="w-12 h-12 rounded-2xl bg-[#ffc93c] text-[#1f2a5c] flex items-center justify-center shrink-0 group-hover:rotate-6 transition-transform">
+            <Sparkles size={22} />
+          </div>
+          <div className="flex-1 min-w-0">
+            <div className="text-[16px] font-bold">{t('Не знаешь, что почитать?')}</div>
+            <div className="text-[13px] text-white/70">{t('Листай книги как в ленте — и найди свою')}</div>
+          </div>
+          <span className="shrink-0 px-3.5 py-2 rounded-xl bg-white/12 text-[13px] font-semibold">{t('Подбор книг')} →</span>
+        </Link>
 
         <TeacherPicks />
 

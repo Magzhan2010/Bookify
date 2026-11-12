@@ -34,7 +34,7 @@ export async function GET(req) {
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status = 'active'
+        WHERE b.status = 'active' AND NOT b.own_book
           AND b.due_date < NOW()
         ORDER BY b.due_date ASC
         LIMIT 100
@@ -49,7 +49,7 @@ export async function GET(req) {
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status = 'active'
+        WHERE b.status = 'active' AND NOT b.own_book
           AND (LOWER(bk.title) LIKE LOWER($1) OR LOWER(u.name) LIKE LOWER($1))
         ORDER BY b.borrowed_at DESC
         LIMIT 50
@@ -65,7 +65,7 @@ export async function GET(req) {
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status = 'active'
+        WHERE b.status = 'active' AND NOT b.own_book
           AND LOWER(u.name) LIKE LOWER($1)
         ORDER BY b.borrowed_at DESC
         LIMIT 50
@@ -81,7 +81,7 @@ export async function GET(req) {
         FROM borrows b
         JOIN users u ON u.id = b.user_id
         JOIN books bk ON bk.id = b.book_id
-        WHERE b.status = $1
+        WHERE b.status = $1 AND NOT b.own_book
         ORDER BY b.borrowed_at DESC
         LIMIT 100
       `

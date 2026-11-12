@@ -270,14 +270,14 @@ export default function StudentDetailPage() {
                     </div>
                     <div className="flex-1 min-w-0">
                       <div className="text-[13px] font-semibold truncate">{h.title}</div>
-                      <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{h.author}</div>
+                      <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{h.author}{h.own_book ? ' · своя книга' : ''}</div>
                       {(h.status === 'active' || h.status === 'overdue') && h.due_date && (
                         <div className={`text-[11px] mt-0.5 ${new Date(h.due_date) < new Date() ? 'text-[var(--color-danger)] font-semibold' : 'text-[var(--color-text-tertiary)]'}`}>
                           Вернуть до {new Date(h.due_date).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short' })}
                         </div>
                       )}
                     </div>
-                    {(h.status === 'active' || h.status === 'overdue') && (
+                    {(h.status === 'active' || h.status === 'overdue') && !h.own_book && (
                       <ExtendDue
                         loan={{ ...h, student_name: student.name }}
                         onExtended={due => setHistory(hs => hs.map(x => x.id === h.id ? { ...x, due_date: due } : x))}
@@ -294,6 +294,28 @@ export default function StudentDetailPage() {
                       return (
                         <span className="flex items-center gap-1 shrink-0">
                           <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${cls}`}>{label}</span>
+                          {!trophy && ['returned', 'reviewed', 'approved'].includes(h.status) && (
+                            <button title={h.status === 'approved' ? 'Убрать с полки и отменить монеты за эту книгу' : 'Закрыть без отзыва — в профиль не попадёт'}
+                              onClick={async () => {
+                                const msg = h.status === 'approved'
+                                  ? `Убрать «${h.title}» с полки ${student.name}? Монеты за эту книгу отменятся. Причина (по желанию):`
+                                  : `Закрыть «${h.title}» без отзыва? В профиль ученика книга не попадёт. Причина (по желанию):`
+                                const note = window.prompt(msg, '')
+                                if (note === null) return
+                                const res = await fetch(`/api/librarian/borrows/${h.id}/close`, {
+                                  method: 'POST',
+                                  headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                                  body: JSON.stringify({ note })
+                                })
+                                const d = await res.json()
+                                if (!res.ok) return toast.error(d.error || 'Ошибка')
+                                toast.success(d.reverted ? `Убрано · −${d.reverted} монет` : 'Закрыто без отзыва')
+                                setHistory(hs => hs.map(x => x.id === h.id ? { ...x, status: 'cancelled' } : x))
+                              }}
+                              className="px-2 h-6 rounded-md text-[11px] font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10">
+                              {h.status === 'approved' ? 'Убрать' : 'Без отзыва'}
+                            </button>
+                          )}
                           {trophy && (
                             <button title="Убрать трофей" onClick={async () => {
                               const res = await fetch(`/api/librarian/students/${student.id}/trophy?borrowId=${h.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })

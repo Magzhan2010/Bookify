@@ -23,7 +23,7 @@ export async function GET(req) {
               u.name AS student_name, u.avatar_url AS student_avatar, u.class_name AS student_class, u.email AS student_email,
               b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
               b.pages AS book_pages,
-              br.borrowed_at, br.returned_at,
+              br.borrowed_at, br.returned_at, br.own_book,
               (SELECT COALESCE(SUM(up.points), 0) FROM user_points up
                 WHERE up.user_id = u.id AND up.spent = FALSE) AS user_points_total
        FROM book_reviews r
