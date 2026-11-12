@@ -42,7 +42,7 @@ export default function HistoryPage() {
       returned: { label: 'Возвращена', bg: '#34c759', color: '#fff', icon: ArrowDownToLine },
       reviewed: { label: 'Отзыв на проверке', bg: '#ff9500', color: '#fff', icon: ArrowDownToLine },
       approved: { label: 'Прочитана', bg: '#34c759', color: '#fff', icon: ArrowDownToLine },
-      cancelled: { label: 'Вернул без отзыва', bg: '#86868b', color: '#fff', icon: ArrowDownToLine }
+      cancelled: { label: 'Убрана (без отзыва)', bg: '#86868b', color: '#fff', icon: ArrowDownToLine }
     }
     return map[status] || { label: status, bg: '#86868b', color: '#fff', icon: RefreshCw }
   }

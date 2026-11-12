@@ -2,11 +2,11 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
 import { notify } from '../../../../../lib/notify'
-import { PAGES_MIN, PAGES_MAX, minReadDays } from '../../../../../lib/ownBooks'
+import { PAGES_MIN, PAGES_MAX } from '../../../../../lib/ownBooks'
 
 /**
  * PATCH { action: 'approve' | 'reject', note?, title?, author?, pages? }
- * approve: «видел книгу» — создаём книгу ученика (в каталоге её нет) и запускаем чтение с этой минуты.
+ * approve: книга ученика создаётся (в каталоге её нет) и сразу считается прочитанной — ученик пишет отзыв.
  * Проверяющий может поправить название, автора и страницы. Свою заявку участник команды не решает.
  */
 export async function PATCH(req, { params }) {
@@ -49,16 +49,16 @@ export async function PATCH(req, { params }) {
        VALUES ($1, $2, $3, $4, 0, 0, $5, NOW()) RETURNING id`,
       [title, author, pages, o.photo, o.user_id])
     const borrow = await client.query(
-      `INSERT INTO borrows (user_id, book_id, status, borrowed_at, due_date, issued_by, own_book, notes)
-       VALUES ($1, $2, 'active', NOW(), NULL, $3, TRUE, 'Своя книга') RETURNING id`,
+      `INSERT INTO borrows (user_id, book_id, status, borrowed_at, due_date, returned_at, issued_by, own_book, notes)
+       VALUES ($1, $2, 'returned', NOW(), NULL, NOW(), $3, TRUE, 'Своя книга') RETURNING id`,
       [o.user_id, book.rows[0].id, guard.payload.id])
     await client.query(
       `UPDATE own_book_requests SET status = 'approved', note = $2, decided_by = $3, decided_at = NOW(), book_id = $4, borrow_id = $5,
               title = $6, author = $7, pages = $8, photo = NULL WHERE id = $1`,
       [id, note, guard.payload.id, book.rows[0].id, borrow.rows[0].id, title, author, pages])
     await notify(client, o.user_id, {
-      kind: 'own_book_started', title: 'Своя книга засчитана — читай!',
-      body: `«${title}». Нажать «Дочитал» можно через ${minReadDays(pages)} дн., потом пиши отзыв.`, link: '/profile'
+      kind: 'own_book_started', title: 'Своя книга подтверждена — пиши отзыв',
+      body: `«${title}» — во вкладке «Ждут отзыва». После проверки отзыва придут монеты.`, link: '/profile'
     })
     await client.query('COMMIT')
     return NextResponse.json({ success: true, book_id: book.rows[0].id, borrow_id: borrow.rows[0].id })

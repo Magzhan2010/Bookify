@@ -3,7 +3,7 @@
 import { usePathname } from 'next/navigation'
 
 // Разделы с нижним меню на телефоне — футер поднимаем над ним
-const WITH_BOTTOM_NAV = ['/library', '/quotes', '/shop', '/leaderboard', '/game', '/profile', '/teacher', '/books', '/match']
+const WITH_BOTTOM_NAV = ['/library', '/quotes', '/shop', '/leaderboard', '/game', '/profile', '/teacher', '/books']
 
 /** Подпись разработчика внизу каждой страницы. */
 export default function DevCredit() {

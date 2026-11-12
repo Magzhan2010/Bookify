@@ -273,11 +273,11 @@ export default function StudentDetailPage() {
             ) : (
               <div className="space-y-2 max-h-96 overflow-y-auto">
                 {history.map(h => (
-                  <div key={h.id} className="flex items-center gap-3 p-2.5 rounded-xl bg-[var(--color-bg-soft)]">
+                  <div key={h.id} className="flex flex-wrap items-center gap-x-3 gap-y-2 p-2.5 rounded-xl bg-[var(--color-bg-soft)]">
                     <div className="w-9 h-12 rounded overflow-hidden shrink-0 bg-[var(--color-bg-card)]">
                       {h.cover_url && <img src={h.cover_url} className="w-full h-full object-cover" />}
                     </div>
-                    <div className="flex-1 min-w-0">
+                    <div className="flex-1 min-w-[140px]">
                       <div className="text-[13px] font-semibold truncate">{h.title}</div>
                       <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{h.author}{h.own_book ? ' · своя книга' : ''}</div>
                       {(h.status === 'active' || h.status === 'overdue') && h.due_date && (
@@ -298,17 +298,39 @@ export default function StudentDetailPage() {
                         : h.status === 'active' || h.status === 'overdue' ? ['Активна', 'bg-[var(--color-brand)]/15 text-[var(--color-brand)]']
                         : h.status === 'approved' ? ['Прочитано', 'bg-[var(--color-success)]/15 text-[var(--color-success)]']
                         : h.status === 'reviewed' ? ['Отзыв на проверке', 'bg-[var(--color-warning)]/15 text-[var(--color-warning)]']
-                        : h.status === 'cancelled' ? ['Без отзыва', 'bg-[var(--color-bg-card)] text-[var(--color-text-tertiary)]']
-                        : ['Сдана, нет отзыва', 'bg-[var(--color-danger)]/10 text-[var(--color-danger)]']
+                        : h.status === 'cancelled' ? ['Убрана', 'bg-[var(--color-bg-card)] text-[var(--color-text-tertiary)]']
+                        : ['Ждёт отзыва', 'bg-[#ffc93c]/25 text-[#9a6b00]']
                       return (
-                        <span className="flex items-center gap-1 shrink-0">
+                        <span className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
+                          {!trophy && h.status === 'approved' && [['video', 'Видео', h.has_video], ['tedx', 'TEDx', h.has_tedx]].map(([kind, name, done]) => (
+                            done ? (
+                              <span key={kind} className="px-2 h-6 inline-flex items-center rounded-md text-[11px] font-semibold text-[var(--color-success)] bg-[var(--color-success)]/10">✓ {name}</span>
+                            ) : (
+                              <button key={kind} title={`Ученик ${kind === 'video' ? 'снял видео об этой книге' : 'выступил с этой книгой на TEDx'} — начислить монеты`}
+                                onClick={async () => {
+                                  if (!window.confirm(`${name}: «${h.title}» — ${student.name}. Начислить +${kind === 'video' ? 10 : 15}?`)) return
+                                  const res = await fetch(`/api/librarian/borrows/${h.id}/bonus`, {
+                                    method: 'POST',
+                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+                                    body: JSON.stringify({ kind })
+                                  })
+                                  const d = await res.json()
+                                  if (!res.ok) return toast.error(d.error || 'Ошибка')
+                                  toast.success(`+${d.points} · ${name}`)
+                                  setHistory(hs => hs.map(x => x.id === h.id ? { ...x, [kind === 'video' ? 'has_video' : 'has_tedx']: true } : x))
+                                }}
+                                className="px-2 h-6 rounded-md text-[11px] font-semibold text-[var(--color-brand)] bg-[var(--color-brand-soft)] hover:opacity-80">
+                                + {name}
+                              </button>
+                            )
+                          ))}
                           <span className={`text-[10px] uppercase tracking-wider font-bold px-2 py-0.5 rounded ${cls}`}>{label}</span>
                           {!trophy && ['returned', 'reviewed', 'approved'].includes(h.status) && (
-                            <button title={h.status === 'approved' ? 'Убрать с полки и отменить монеты за эту книгу' : 'Закрыть без отзыва — в профиль не попадёт'}
+                            <button title={h.status === 'approved' ? 'Убрать с полки и отменить монеты за эту книгу' : 'Убрать: отзыв не нужен, в профиль не попадёт, монет нет'}
                               onClick={async () => {
                                 const msg = h.status === 'approved'
                                   ? `Убрать «${h.title}» с полки ${student.name}? Монеты за эту книгу отменятся. Причина (по желанию):`
-                                  : `Закрыть «${h.title}» без отзыва? В профиль ученика книга не попадёт. Причина (по желанию):`
+                                  : `Убрать «${h.title}»? Отзыв больше не нужен, в профиль ученика книга не попадёт. Причина (по желанию):`
                                 const note = window.prompt(msg, '')
                                 if (note === null) return
                                 const res = await fetch(`/api/librarian/borrows/${h.id}/close`, {
@@ -318,18 +340,18 @@ export default function StudentDetailPage() {
                                 })
                                 const d = await res.json()
                                 if (!res.ok) return toast.error(d.error || 'Ошибка')
-                                toast.success(d.reverted ? `Убрано · −${d.reverted} монет` : 'Закрыто без отзыва')
+                                toast.success(d.reverted ? `Убрано · −${d.reverted} монет` : 'Убрано')
                                 setHistory(hs => hs.map(x => x.id === h.id ? { ...x, status: 'cancelled' } : x))
                               }}
-                              className="px-2 h-6 rounded-md text-[11px] font-medium text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)] hover:bg-[var(--color-danger)]/10">
-                              {h.status === 'approved' ? 'Убрать' : 'Без отзыва'}
+                              className="px-2 h-6 rounded-md text-[11px] font-semibold text-[var(--color-danger)] bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/15">
+                              Убрать
                             </button>
                           )}
                           {trophy && (
                             <button title="Убрать трофей" onClick={async () => {
                               const res = await fetch(`/api/librarian/students/${student.id}/trophy?borrowId=${h.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${localStorage.getItem('token')}` } })
                               if (res.ok) setHistory(hs => hs.filter(x => x.id !== h.id)); else toast.error('Не удалось убрать')
-                            }} className="w-6 h-6 rounded-md flex items-center justify-center text-[var(--color-text-tertiary)] hover:text-[var(--color-danger)]">×</button>
+                            }} className="px-2 h-6 rounded-md text-[11px] font-semibold text-[var(--color-danger)] bg-[var(--color-danger)]/10 hover:bg-[var(--color-danger)]/15">Убрать</button>
                           )}
                         </span>
                       )

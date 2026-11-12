@@ -7,7 +7,6 @@ import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from 
 import { tierForPages } from '../lib/points'
 import ShelfRequestsQueue from './ShelfRequestsQueue'
 import OwnBookQueue from './OwnBookQueue'
-import BonusQueue from './BonusQueue'
 
 /**
  * Очередь отзывов на проверку — у библиотекаря и на командной платформе.
@@ -140,7 +139,6 @@ export default function ReviewQueue({ onChanged, meId }) {
   return (
     <>
       <OwnBookQueue meId={meId} />
-      <BonusQueue meId={meId} />
       <ShelfRequestsQueue meId={meId} />
       {topup.length > 0 && (
         <div className="mb-6 bg-[var(--color-bg-card)] border border-[#ffc93c]/60 rounded-2xl p-5">

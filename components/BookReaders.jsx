@@ -7,10 +7,10 @@ import { TROPHY_NOTE } from '../lib/trophy'
 
 const STATUS = {
   active: ['Читает', 'text-[var(--color-brand)] bg-[var(--color-brand)]/10'],
-  returned: ['Сдал, нет отзыва', 'text-[var(--color-danger)] bg-[var(--color-danger)]/10'],
+  returned: ['Ждёт отзыва', 'text-[#9a6b00] bg-[#ffc93c]/25'],
   reviewed: ['Отзыв на проверке', 'text-[var(--color-warning)] bg-[var(--color-warning)]/10'],
   approved: ['Прочитал', 'text-[var(--color-success)] bg-[var(--color-success)]/10'],
-  cancelled: ['Вернул без отзыва', 'text-[var(--color-text-tertiary)] bg-[var(--color-bg-soft)]']
+  cancelled: ['Убрана (без отзыва)', 'text-[var(--color-text-tertiary)] bg-[var(--color-bg-soft)]']
 }
 const fmt = d => d ? new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'short', year: 'numeric' }) : ''
 

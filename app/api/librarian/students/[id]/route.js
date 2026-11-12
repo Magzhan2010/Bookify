@@ -39,6 +39,8 @@ export async function GET(req, { params }) {
 
     const historyRes = await pool.query(
       `SELECT b.id, b.status, b.borrowed_at, b.due_date, b.returned_at, b.notes, b.own_book,
+              EXISTS (SELECT 1 FROM user_points p WHERE p.borrow_id = b.id AND p.reason = 'video' AND NOT p.reverted) AS has_video,
+              EXISTS (SELECT 1 FROM user_points p WHERE p.borrow_id = b.id AND p.reason = 'tedx' AND NOT p.reverted) AS has_tedx,
               bk.id AS book_id, bk.title, bk.author, bk.cover_url, bk.genre,
               lib.name AS issued_by_name
        FROM borrows b

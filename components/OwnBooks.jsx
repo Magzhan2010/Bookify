@@ -15,11 +15,9 @@ async function compress(file) {
   return c.toDataURL('image/jpeg', 0.72)
 }
 
-const fmt = d => new Date(d).toLocaleDateString('ru-RU', { day: 'numeric', month: 'long' })
-
 /**
  * «Своя книга»: читаю книгу, которой нет в библиотеке.
- * Заявка → библиотекарь/команда подтверждают, что книга есть → чтение пошло → «Дочитал» не раньше срока → отзыв.
+ * Заявка → библиотекарь/команда подтверждают → книга во «Ждут отзыва» → отзыв → монеты.
  */
 export default function OwnBooks({ onChanged }) {
   const [data, setData] = useState(null)
@@ -48,7 +46,7 @@ export default function OwnBooks({ onChanged }) {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
-      toast.success('Заявка отправлена', { description: 'Покажи книгу библиотекарю или команде — они подтвердят старт' })
+      toast.success('Заявка отправлена', { description: 'Покажи книгу библиотекарю или команде — после подтверждения пиши отзыв' })
       setOpen(false); setForm({ title: '', author: '', pages: '' }); setPhoto(null); load()
     } catch (err) { toast.error(err.message) } finally { setBusy(false) }
   }
@@ -59,7 +57,7 @@ export default function OwnBooks({ onChanged }) {
       })
       const d = await res.json()
       if (!res.ok) throw new Error(d.error || 'Ошибка')
-      toast.success('Поздравляем! Теперь напиши отзыв', { description: 'Книга во вкладке «Ждут отзыва»' })
+      toast.success('Теперь напиши отзыв', { description: 'Книга во вкладке «Ждут отзыва»' })
       load(); onChanged?.()
     } catch (err) { toast.error(err.message) }
   }
@@ -96,25 +94,20 @@ export default function OwnBooks({ onChanged }) {
       ))}
 
       {reading.map(b => {
-        const ready = Date.now() >= new Date(b.can_finish_at).getTime()
         return (
           <div key={b.borrow_id} className="flex items-center gap-3 p-3 rounded-2xl bg-[var(--color-bg-card)] border border-[var(--color-border)]">
             <div className="w-10 h-14 rounded-lg overflow-hidden bg-[var(--color-bg-soft)] shrink-0">{b.cover_url && <img src={b.cover_url} alt="" className="w-full h-full object-cover" />}</div>
             <div className="flex-1 min-w-0">
               <div className="text-[14px] font-semibold truncate">{b.title}</div>
-              <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">Своя книга · {b.pages} стр. · читаю с {fmt(b.borrowed_at)}</div>
+              <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">Своя книга · {b.pages} стр.</div>
             </div>
-            {ready ? (
-              <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => finish(b)}>Дочитал</Button>
-            ) : (
-              <span className="text-[12px] text-[var(--color-text-tertiary)] text-right shrink-0">«Дочитал»<br />с {fmt(b.can_finish_at)}</span>
-            )}
+            <Button size="sm" variant="success" icon={CheckCircle2} onClick={() => finish(b)}>К отзыву</Button>
           </div>
         )
       })}
 
       <Modal open={open} onClose={() => setOpen(false)} size="md" title="Своя книга"
-        description="Библиотекарь или команда подтвердят, что книга у тебя есть. Чтение засчитывается с этой минуты: «Дочитал» можно нажать не раньше, чем через несколько дней (зависит от толщины книги). Потом — отзыв и монеты, как за библиотечную.">
+        description="Покажи книгу библиотекарю или команде — они подтвердят. Сразу после этого книга появится во вкладке «Ждут отзыва»: пиши отзыв, после проверки придут монеты, как за библиотечную.">
         <form onSubmit={submit} className="space-y-3">
           <input required placeholder="Название книги" value={form.title} maxLength={200} onChange={e => setForm(f => ({ ...f, title: e.target.value }))} className={input} />
           <input required placeholder="Автор" value={form.author} maxLength={120} onChange={e => setForm(f => ({ ...f, author: e.target.value }))} className={input} />

@@ -203,7 +203,7 @@ export default function ReturnsPage() {
                     title="Не понравилась / не читал — вернуть без отзыва"
                     className="shrink-0 px-3.5 py-2.5 rounded-xl text-[13px] font-medium flex items-center gap-2 bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] transition-colors disabled:opacity-50"
                   >
-                    <Undo2 size={14} /> Без отзыва
+                    <Undo2 size={14} /> Принять без отзыва
                   </button>
                   <button
                     onClick={() => handleReturn(loan.id)}

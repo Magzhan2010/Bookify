@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
-import { canFinishAt } from '../../../../../lib/ownBooks'
 
 /**
- * POST { borrowId } — «Дочитал свою книгу». Можно не раньше минимального срока чтения.
+ * POST { borrowId } — «Дочитал свою книгу» (для книг, подтверждённых до того, как отзыв стал доступен сразу).
  * После этого книга ждёт отзыва, как обычная сданная.
  */
 export async function POST(req) {
@@ -18,10 +17,6 @@ export async function POST(req) {
         WHERE b.id = $1 AND b.user_id = $2 AND b.own_book AND b.status = 'active'`, [parseInt(body?.borrowId), guard.payload.id])
     const b = r.rows[0]
     if (!b) return NextResponse.json({ error: 'Книга не найдена' }, { status: 404 })
-    const at = canFinishAt(b.borrowed_at, b.pages)
-    if (Date.now() < at.getTime()) {
-      return NextResponse.json({ error: `Слишком быстро — дочитать можно с ${at.toLocaleDateString('ru-RU', { day: 'numeric', month: 'long', timeZone: 'Asia/Almaty' })}` }, { status: 400 })
-    }
     await pool.query(`UPDATE borrows SET status = 'returned', returned_at = NOW(), updated_at = NOW() WHERE id = $1 AND status = 'active'`, [b.id])
     return NextResponse.json({ success: true })
   } catch (err) {
