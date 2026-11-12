@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { sealPassword } from '../../../../../lib/passVault'
 
 /**
  * GET /api/librarian/students/[id]
@@ -132,6 +133,8 @@ export async function PATCH(req, { params }) {
       }
       fields.push(`password = $${i++}`)
       values.push(await bcrypt.hash(password, 10))
+      fields.push(`password_view = $${i++}`)
+      values.push(sealPassword(password))
       // Сброс пароля библиотекарем выкидывает ученика со всех устройств
       fields.push(`token_version = token_version + 1`)
     }

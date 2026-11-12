@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { sealPassword } from '../../../../../lib/passVault'
 import { emailBaseFromName, pickFreeEmail, nameKey } from '../../../../../lib/students'
 
 /**
@@ -112,7 +113,7 @@ export async function POST(req) {
         taken.add(email)
         if (apply) {
           const hash = await bcrypt.hash(r.password, 10)
-          await client.query(`INSERT INTO users (name, email, password, role) VALUES ($1, $2, $3, 'student')`, [name, email, hash])
+          await client.query(`INSERT INTO users (name, email, password, role, password_view) VALUES ($1, $2, $3, 'student', $4)`, [name, email, hash, sealPassword(r.password)])
         }
         result.push({ name, status: 'created', email, password: r.password }); continue
       }
@@ -122,8 +123,8 @@ export async function POST(req) {
       if (apply) {
         const hash = await bcrypt.hash(r.password, 10)
         await client.query(
-          `UPDATE users SET password = $1, email = $3, token_version = COALESCE(token_version, 0) + 1, updated_at = NOW() WHERE id = $2`,
-          [hash, u.id, newLogin || u.email])
+          `UPDATE users SET password = $1, email = $3, password_view = $4, token_version = COALESCE(token_version, 0) + 1, updated_at = NOW() WHERE id = $2`,
+          [hash, u.id, newLogin || u.email, sealPassword(r.password)])
         if (newLogin) { byEmail.delete(u.email.toLowerCase()); byEmail.set(newLogin, u); u.email = newLogin }
       }
       if (newLogin) {

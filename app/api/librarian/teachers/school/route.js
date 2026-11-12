@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { sealPassword } from '../../../../../lib/passVault'
 import { schoolGet, normalizeTabs, rowsOf, pickTeacherTab, parseTeacherRows, schoolApiConfigured } from '../../../../../lib/schoolApi'
 import { emailBaseFromName, generatePassword, pickFreeEmail, nameKey } from '../../../../../lib/students'
 
@@ -89,9 +90,9 @@ export async function POST(req) {
       taken.add(email)
       const password = generatePassword()
       await client.query(
-        `INSERT INTO users (name, email, password, role, class_name, teacher_pending, school_ref)
-         VALUES ($1, $2, $3, 'teacher', $4, FALSE, $5)`,
-        [p.name, email, await bcrypt.hash(password, 10), p.className || null, p.email || p.name])
+        `INSERT INTO users (name, email, password, role, class_name, teacher_pending, school_ref, password_view)
+         VALUES ($1, $2, $3, 'teacher', $4, FALSE, $5, $6)`,
+        [p.name, email, await bcrypt.hash(password, 10), p.className || null, p.email || p.name, sealPassword(password)])
       result.push({ name: p.name, email, password, subject: p.subject, status: 'created' })
     }
     await client.query('COMMIT')

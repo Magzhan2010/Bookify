@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
+import { sealPassword } from '../../../../../lib/passVault'
 import { emailBaseFromName, generatePassword, pickFreeEmail } from '../../../../../lib/students'
 
 /**
@@ -71,10 +72,10 @@ export async function POST(req) {
       const password = generatePassword()
       const hash = await bcrypt.hash(password, 10)
       const ins = await client.query(
-        `INSERT INTO users (name, email, password, role, class_name)
-         VALUES ($1, $2, $3, 'student', $4)
+        `INSERT INTO users (name, email, password, role, class_name, password_view)
+         VALUES ($1, $2, $3, 'student', $4, $5)
          RETURNING id, name, email, class_name`,
-        [s.name, email, hash, s.className]
+        [s.name, email, hash, s.className, sealPassword(password)]
       )
       created.push({ ...ins.rows[0], password })
     }

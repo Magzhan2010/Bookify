@@ -64,7 +64,7 @@ export async function PATCH(req) {
     const hash = await bcrypt.hash(String(newPassword), 10)
     const updated = await pool.query(
       `UPDATE users
-          SET password = $1, token_version = token_version + 1, updated_at = NOW()
+          SET password = $1, password_view = NULL, token_version = token_version + 1, updated_at = NOW()
         WHERE id = $2
         RETURNING id, name, role, token_version`,
       [hash, payload.id]

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { sealPassword } from '../../../../lib/passVault'
 
 /**
  * GET /api/librarian/students
@@ -104,10 +105,10 @@ export async function POST(req) {
     const role = 'student'
 
     const insert = await pool.query(
-      `INSERT INTO users (name, email, password, role, class_name, phone)
-       VALUES ($1, $2, $3, $4, $5, $6)
+      `INSERT INTO users (name, email, password, role, class_name, phone, password_view)
+       VALUES ($1, $2, $3, $4, $5, $6, $7)
        RETURNING id, name, email, role, class_name, phone, created_at`,
-      [name, email, hash, role, className || null, phone || null]
+      [name, email, hash, role, className || null, phone || null, sealPassword(password)]
     )
 
     return NextResponse.json({ success: true, student: insert.rows[0] })

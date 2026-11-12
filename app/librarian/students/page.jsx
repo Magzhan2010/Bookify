@@ -8,9 +8,10 @@ import { useArea } from '../../../lib/useArea'
 import { toast } from 'sonner'
 import AddStudentsModal from '../../../components/librarian/AddStudentsModal'
 import PasswordsModal from '../../../components/librarian/PasswordsModal'
+import CredentialsModal from '../../../components/librarian/CredentialsModal'
 import DeleteStudent from '../../../components/librarian/DeleteStudent'
 import { useTeamMe } from '../../../lib/useTeamMe'
-import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check, KeyRound, Trash2 } from 'lucide-react'
+import { Search, UserPlus, Mail, X, User, AlertTriangle, BookOpen, Check, KeyRound, Trash2, Eye } from 'lucide-react'
 
 export default function StudentsPage() {
   const router = useRouter()
@@ -25,6 +26,7 @@ export default function StudentsPage() {
   // Пароли списком: библиотекарь или тимлид
   const canPasswords = !team || !!teamMe?.is_lead
   const canDelete = canPasswords
+  const [showCreds, setShowCreds] = useState(false)
   const [deleting, setDeleting] = useState(null)
 
   const fetchStudents = async () => {
@@ -64,6 +66,14 @@ export default function StudentsPage() {
           <p className="text-[15px] text-[var(--color-text-secondary)]">{students.length} зарегистрировано</p>
         </div>
         <div className="flex gap-2">
+        {canPasswords && (
+          <button
+            onClick={() => setShowCreds(true)}
+            className="px-4 py-2.5 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] text-[var(--color-text-primary)] text-[13px] font-medium transition-colors flex items-center gap-2"
+          >
+            <Eye size={14} /> Логины и пароли
+          </button>
+        )}
         {canPasswords && (
           <button
             onClick={() => setShowPasswords(true)}
@@ -160,6 +170,7 @@ export default function StudentsPage() {
         onDeleted={id => { setDeleting(null); setStudents(ss => ss.filter(x => x.id !== id)) }}
       />
       <PasswordsModal open={showPasswords} onClose={() => setShowPasswords(false)} onDone={() => fetchStudents()} />
+      {canPasswords && <CredentialsModal open={showCreds} onClose={() => setShowCreds(false)} />}
       <AddStudentsModal
         open={showAddModal}
         onClose={() => setShowAddModal(false)}
