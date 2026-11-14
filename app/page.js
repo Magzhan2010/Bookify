@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useScroll, useTransform } from 'framer-motion'
+import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
@@ -9,517 +9,463 @@ import CoinCard from '../components/game/CoinCard'
 import QuoteFeature from '../components/quotes/QuoteFeature'
 import { PointsSystem, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import {
-  BookOpen, Search, Calendar, BarChart3, Users, Sparkles,
-  ArrowRight, ArrowUpRight, Library, ShieldCheck, Zap, Heart, Clock,
-  ArrowDownToLine, BookMarked, Award, ChevronDown, Star
+  ArrowRight, ArrowUpRight, BookOpen, PenLine, Coins, Undo2,
+  GraduationCap, Presentation, Library, Trophy, Video, Mic
 } from 'lucide-react'
 
-const fadeIn = {
-  hidden: { opacity: 0, y: 30 },
-  visible: { opacity: 1, y: 0, transition: { duration: 0.6, ease: [0.23, 1, 0.32, 1] } }
-}
+/* Фирменные цвета */
+const NAVY = '#1f2a5c'
+const GOLD = '#ffc93c'
+const EASE = [0.22, 1, 0.36, 1]
 
+const reveal = {
+  hidden: { opacity: 0, y: 24 },
+  visible: { opacity: 1, y: 0, transition: { duration: 0.7, ease: EASE } }
+}
 const stagger = {
-  hidden: { opacity: 0 },
-  visible: { opacity: 1, transition: { staggerChildren: 0.1, delayChildren: 0.1 } }
+  hidden: {},
+  visible: { transition: { staggerChildren: 0.08 } }
 }
 
 export default function LandingPage() {
   return (
-    <main className="min-h-screen bg-[var(--color-bg-card)] text-[var(--color-text-primary)] overflow-x-hidden">
-
-      {/* === Фон: статичный градиент. Раньше два размытых круга 600px
-           анимировались бесконечно — это грузило видеокарту и давало лаги
-           при прокрутке на слабых ноутбуках и телефонах. === */}
-      <div
-        className="fixed inset-0 -z-10 pointer-events-none"
-        style={{
-          background:
-            'radial-gradient(600px circle at 25% 0%, color-mix(in srgb, var(--color-brand) 7%, transparent), transparent 70%),' +
-            'radial-gradient(500px circle at 75% 100%, color-mix(in srgb, var(--color-success) 6%, transparent), transparent 70%)'
-        }}
-      />
-
-      {/* === NAV === */}
-      <nav className="fixed top-0 w-full z-50 bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]">
-        <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
-          <Link href="/" className="flex items-center gap-3 group">
-            <motion.div
-              whileHover={{ scale: 1.04 }}
-              transition={{ duration: 0.2 }}
-              className="shrink-0"
-            >
-              <Image
-                src="/lb_logo.png"
-                width={52}
-                height={52}
-                alt="Bookify"
-                className="w-13 h-13 object-contain"
-              />
-            </motion.div>
-            <div className="font-semibold text-[17px] tracking-tight text-[var(--color-text-primary)]">Bookify</div>
-          </Link>
-
-          <div className="flex items-center gap-2">
-            <a href="#program" className="hidden md:block px-3 py-2 text-[14px] font-semibold text-[var(--color-brand)] hover:opacity-80 transition-opacity">
-              Призы за чтение
-            </a>
-            <ThemeToggle size="md" />
-            <Link href="/login" className="hidden sm:block px-4 py-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
-              Войти
-            </Link>
-            <Link
-              href="/register"
-              className="px-4 py-3 text-[14px] font-medium rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] transition-colors shadow-sm hover:shadow-md"
-            >
-              Регистрация
-            </Link>
-          </div>
-        </div>
-      </nav>
-
-      {/* === HERO === */}
-      <HeroSection />
-
-      {/* === STATS BAND === */}
-      <StatsBand />
-
-      {/* === ПРОГРАММА: ЧИТАЙ — КОПИ — ПОЛУЧАЙ === */}
+    <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-x-hidden">
+      <Nav />
+      <Hero />
+      <LiveStats />
+      <HowItWorks />
       <ProgramSection />
-
-      {/* === ЦИТАТЫ === */}
       <QuotesSection />
-
-      {/* === FEATURES === */}
-      <FeaturesSection />
-
-      {/* === FOR LIBRARIAN === */}
-      <LibrarianSection />
-
-      {/* === CTA === */}
-      <CtaSection />
-
-      {/* === FOOTER === */}
-      <FooterSection />
+      <AudienceSection />
+      <FinalCta />
+      <LandingFooter />
     </main>
   )
 }
 
-const HeroSection = () => {
-  const ref = useRef(null)
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const heroY = useTransform(scrollYProgress, [0, 1], [0, 200])
-  const heroOpacity = useTransform(scrollYProgress, [0, 1], [1, 0])
-
+/* ------------------------------------------------------------------ */
+/* Навигация                                                           */
+/* ------------------------------------------------------------------ */
+function Nav() {
   return (
-    <section ref={ref} className="relative pt-32 md:pt-48 pb-20 md:pb-32 px-6">
-      <motion.div style={{ y: heroY, opacity: heroOpacity }} className="max-w-[1100px] mx-auto text-center relative">
+    <nav className="fixed top-0 inset-x-0 z-50 bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-3">
+        <Link href="/" className="flex items-center gap-2.5 shrink-0">
+          <Image src="/lb_logo.png" width={40} height={40} alt="" className="w-10 h-10 object-contain" priority />
+          <span className="font-semibold text-[17px] tracking-tight">Bookify</span>
+        </Link>
 
-        {/* Floating badge */}
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="inline-flex items-center gap-2 mb-7 px-4 py-1.5 bg-[var(--color-brand)]/10 border border-[var(--color-brand)]/20 rounded-full text-[12px] font-medium text-[var(--color-brand)] backdrop-blur-sm"
-        >
-          <motion.span
-            animate={{ rotate: [0, 15, 0] }}
-            transition={{ duration: 2, repeat: Infinity }}
-          >
-            <Sparkles size={12} />
-          </motion.span>
-          Цифровая библиотека DLS
-        </motion.div>
+        <div className="hidden md:flex items-center gap-1 text-[14px] font-medium text-[var(--color-text-secondary)]">
+          <a href="#how" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Как это работает</a>
+          <a href="#program" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Монеты и призы</a>
+          <a href="#for-whom" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Для кого</a>
+        </div>
 
-        {/* Title with gradient */}
-        <motion.h1
-          initial={{ opacity: 0, y: 24 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.1 }}
-          className="text-5xl sm:text-7xl md:text-8xl font-semibold tracking-[-0.035em] leading-[0.95] mb-6 text-[var(--color-text-primary)]"
-        >
-          Возьми книгу.
-          <br />
-          <span className="bg-gradient-to-r from-[var(--color-brand)] via-[#3b82f6] to-[var(--color-brand)] bg-clip-text text-transparent">
-            Онлайн.
-          </span>
-        </motion.h1>
-
-        <motion.p
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.2 }}
-          className="text-[19px] md:text-[21px] text-[var(--color-text-secondary)] mb-10 max-w-2xl mx-auto leading-[1.5]"
-        >
-          Платформа библиотеки Divergents Leadership School.
-          <span className="text-[var(--color-text-primary)] font-semibold"> 1000+ книг</span> в каталоге,
-          <span className="text-[var(--color-text-primary)] font-semibold"> мгновенный поиск</span>,
-          <span className="text-[var(--color-text-primary)] font-semibold"> статистика чтения</span>.
-        </motion.p>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.6, delay: 0.3 }}
-          className="flex flex-col sm:flex-row gap-3 justify-center mb-20"
-        >
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <ThemeToggle size="md" />
+          <Link href="/login" className="hidden sm:block px-3.5 py-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
+            Войти
+          </Link>
           <Link
             href="/register"
-            className="group px-7 py-3 rounded-xl bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[16px] font-medium flex items-center justify-center gap-2 transition-all shadow-[0_8px_24px_rgba(26,86,219,0.25)] hover:shadow-[0_12px_32px_rgba(26,86,219,0.35)] hover:-translate-y-0.5"
+            className="px-4 py-2.5 text-[14px] font-semibold rounded-full bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] transition-colors"
           >
-            Начать бесплатно <ArrowRight size={16} className="group-hover:translate-x-0.5 transition-transform" />
+            Регистрация
           </Link>
-          <Link
-            href="/library"
-            className="px-7 py-3 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)] text-[16px] font-medium hover:bg-[var(--color-bg-soft)] transition-all flex items-center justify-center gap-2"
+        </div>
+      </div>
+    </nav>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Первый экран                                                        */
+/* ------------------------------------------------------------------ */
+function Hero() {
+  return (
+    <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 px-5 sm:px-6">
+      {/* мягкое синее свечение сверху — статичное, без анимации */}
+      <div
+        aria-hidden
+        className="absolute inset-x-0 top-0 h-[620px] -z-10 pointer-events-none"
+        style={{ background: 'radial-gradient(700px 380px at 50% 0%, color-mix(in srgb, var(--color-brand) 12%, transparent), transparent 70%)' }}
+      />
+
+      <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-10 items-center">
+        <motion.div initial="hidden" animate="visible" variants={stagger} className="text-center lg:text-left">
+          <motion.div
+            variants={reveal}
+            className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[13px] font-medium text-[var(--color-text-secondary)]"
           >
-            <Library size={16} /> Открыть каталог
-          </Link>
+            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
+            Библиотека Divergents Leadership School
+          </motion.div>
+
+          <motion.h1
+            variants={reveal}
+            className="text-[44px] sm:text-[64px] lg:text-[76px] font-semibold tracking-[-0.04em] leading-[0.98] mb-6"
+          >
+            Читай книги.
+            <br />
+            Копи{' '}
+            <span className="relative inline-block">
+              <span className="relative z-10">монеты.</span>
+              <motion.span
+                aria-hidden
+                initial={{ scaleX: 0 }}
+                animate={{ scaleX: 1 }}
+                transition={{ delay: 0.7, duration: 0.6, ease: EASE }}
+                className="absolute left-0 right-0 bottom-[0.08em] h-[0.32em] origin-left rounded-sm -z-0"
+                style={{ background: GOLD, opacity: 0.85 }}
+              />
+            </span>
+            <br />
+            <span className="text-[var(--color-brand)]">Забирай призы.</span>
+          </motion.h1>
+
+          <motion.p
+            variants={reveal}
+            className="text-[18px] md:text-[20px] text-[var(--color-text-secondary)] leading-[1.5] max-w-[540px] mx-auto lg:mx-0 mb-9"
+          >
+            Bookify — школьная библиотека в телефоне: каталог, твои книги, отзывы и
+            программа <span className="text-[var(--color-text-primary)] font-medium">Read. Think. Speak. Create. Lead.</span>
+          </motion.p>
+
+          <motion.div variants={reveal} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
+            <Link
+              href="/register"
+              className="group px-7 py-3.5 rounded-full bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[16px] font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(26,86,219,0.28)] hover:-translate-y-0.5"
+            >
+              Создать аккаунт
+              <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
+            </Link>
+            <Link
+              href="/login"
+              className="px-7 py-3.5 rounded-full border border-[var(--color-border-strong)] text-[16px] font-semibold hover:bg-[var(--color-bg-soft)] transition-colors inline-flex items-center justify-center"
+            >
+              У меня есть логин
+            </Link>
+          </motion.div>
         </motion.div>
 
-        {/* Browser mockup */}
-        <BrowserMockup />
-
-        {/* Scroll hint */}
-        <motion.div
-          animate={{ y: [0, 8, 0] }}
-          transition={{ duration: 2, repeat: Infinity }}
-          className="absolute bottom-4 left-1/2 -translate-x-1/2 text-[var(--color-text-tertiary)]"
-        >
-          <ChevronDown size={20} />
-        </motion.div>
-      </motion.div>
+        <HeroVisual />
+      </div>
     </section>
   )
 }
 
-const BrowserMockup = () => (
-  <motion.div
-    initial={{ opacity: 0, y: 40 }}
-    animate={{ opacity: 1, y: 0 }}
-    transition={{ duration: 0.8, delay: 0.45 }}
-    className="relative max-w-[820px] mx-auto"
-  >
-    <div className="absolute -inset-x-12 -inset-y-6 bg-gradient-to-br from-[var(--color-brand)]/10 to-transparent rounded-[40px] blur-2xl" />
-    <div className="relative bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[28px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden backdrop-blur-sm">
-      {/* Traffic lights + URL */}
-      <div className="flex items-center gap-1.5 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-soft)]">
-        <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-        <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-        <div className="ml-auto text-[11px] text-[var(--color-text-tertiary)] font-mono">bookify.dls/library</div>
-      </div>
+/** Тёмно-синяя панель: плавающие монеты и книга, проходящая путь до «Прочитано». */
+function HeroVisual() {
+  const still = useReducedMotion()
+  const float = (d, delay) =>
+    still ? {} : { animate: { y: [0, -d, 0] }, transition: { duration: 5, repeat: Infinity, ease: 'easeInOut', delay } }
 
-      <div className="p-6 sm:p-8">
-        <div className="grid grid-cols-3 gap-3 mb-5">
-          {[
-            { label: 'Книг', value: '1000+', color: 'var(--color-brand)' },
-            { label: 'На руках', value: '38', color: 'var(--color-warning)' },
-            { label: 'Читателей', value: '142', color: 'var(--color-success)' }
-          ].map((s, i) => (
-            <div key={i} className="bg-[var(--color-bg-soft)] rounded-2xl p-4 text-left">
-              <div className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-1">{s.label}</div>
-              <div className="text-2xl font-semibold" style={{ color: s.color }}>{s.value}</div>
-            </div>
-          ))}
-        </div>
-
-        <div className="space-y-2">
-          {[
-            { name: 'Adamov M.', book: 'Преступление и наказ.', status: 'Выдана' },
-            { name: 'Baimukhan A.', book: '1984', status: 'Возвращена' },
-            { name: 'Kabdolla M.', book: 'Мастер и Маргарита', status: 'Просрочка' }
-          ].map((row, i) => (
-            <motion.div
-              key={i}
-              initial={{ opacity: 0, x: -10 }}
-              animate={{ opacity: 1, x: 0 }}
-              transition={{ delay: 0.6 + i * 0.1 }}
-              className="flex items-center gap-3 p-3 bg-[var(--color-bg-soft)] rounded-xl"
-            >
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[var(--color-brand)] to-[#3b82f6] flex items-center justify-center text-xs font-semibold text-[var(--color-text-on-brand)]">
-                {row.name.charAt(0)}
-              </div>
-              <div className="flex-1 min-w-0">
-                <div className="text-[13px] font-medium truncate">{row.name}</div>
-                <div className="text-[11px] text-[var(--color-text-tertiary)] truncate">{row.book}</div>
-              </div>
-              <div className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${
-                row.status === 'Выдана' ? 'bg-[var(--color-brand)]/10 text-[var(--color-brand)]' :
-                row.status === 'Возвращена' ? 'bg-[var(--color-success)]/10 text-[var(--color-success)]' :
-                'bg-[var(--color-danger)]/10 text-[var(--color-danger)]'
-              }`}>
-                {row.status}
-              </div>
-            </motion.div>
-          ))}
-        </div>
-      </div>
-    </div>
-  </motion.div>
-)
-
-const StatsBand = () => (
-  <section className="py-16 px-6 border-y border-[var(--color-border)] bg-[var(--color-bg-soft)]">
+  return (
     <motion.div
-      initial="hidden"
-      whileInView="visible"
-      viewport={{ once: true }}
-      variants={stagger}
-      className="max-w-[1100px] mx-auto grid grid-cols-2 md:grid-cols-4 gap-6 text-center"
+      initial={{ opacity: 0, y: 30, scale: 0.98 }}
+      animate={{ opacity: 1, y: 0, scale: 1 }}
+      transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
+      className="relative mx-auto w-full max-w-[520px]"
     >
-      {[
-        { num: '1000+', label: 'Книг в каталоге' },
-        { num: '99', label: 'Учеников' },
-        { num: '24/7', label: 'Доступ' },
-        { num: '1 клик', label: 'Чтобы взять' }
-      ].map((s, i) => (
-        <motion.div key={i} variants={fadeIn} className="text-[var(--color-text-primary)]">
-          <div className="text-4xl md:text-5xl font-semibold tracking-tight mb-1">{s.num}</div>
-          <div className="text-[12px] md:text-[13px] text-[var(--color-text-tertiary)] font-medium">{s.label}</div>
-        </motion.div>
-      ))}
-    </motion.div>
-  </section>
-)
-
-const FeaturesSection = () => (
-  <section className="py-24 md:py-32 px-6">
-    <div className="max-w-[1100px] mx-auto">
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={stagger}
-        className="text-center mb-16"
+      <div
+        className="relative rounded-[36px] overflow-hidden px-6 pt-8 pb-6 sm:px-8 sm:pt-10 shadow-[0_30px_80px_rgba(31,42,92,0.35)]"
+        style={{ background: `linear-gradient(160deg, ${NAVY} 0%, #17204a 100%)` }}
       >
-        <motion.div variants={fadeIn} className="inline-block mb-4 text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em]">
-          Для учеников
-        </motion.div>
-        <motion.h2 variants={fadeIn} className="text-4xl md:text-6xl font-semibold tracking-[-0.025em] mb-4 text-[var(--color-text-primary)]">
-          Три шага до книги
-        </motion.h2>
-        <motion.p variants={fadeIn} className="text-[19px] text-[var(--color-text-secondary)] max-w-xl mx-auto">
-          Больше никаких бумажных журналов. Всё в телефоне.
-        </motion.p>
-      </motion.div>
+        {/* тонкая сетка */}
+        <div
+          aria-hidden
+          className="absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
+            backgroundSize: '32px 32px'
+          }}
+        />
+        <div aria-hidden className="absolute -top-24 -right-16 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ background: GOLD }} />
 
-      <motion.div
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        variants={stagger}
-        className="grid md:grid-cols-3 gap-5"
-      >
-        {[
-          { icon: Search, title: 'Найди', desc: 'Вбил название или жанр — нашёл за пару секунд. Фильтры, превью, описания.', color: 'var(--color-brand)' },
-          { icon: BookMarked, title: 'Возьми', desc: 'Бронируешь онлайн. Приходишь в удобный час — библиотекарь выдаёт. Никакой бюрократии.', color: 'var(--color-success)' },
-          { icon: BarChart3, title: 'Читай', desc: 'В профиле виден прогресс: сколько прочитал, какие жанры, цель на год, рекомендации.', color: 'var(--color-warning)' }
-        ].map((step, i) => {
-          const Icon = step.icon
-          return (
-            <motion.div
-              key={i}
-              variants={fadeIn}
-              whileHover={{ y: -6, transition: { duration: 0.2 } }}
-              className="group bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] p-8 hover:border-[var(--color-brand)]/30 hover:shadow-[0_8px_30px_rgba(0,0,0,0.06)] transition-all relative overflow-hidden"
-            >
-              <div
-                className="absolute -top-10 -right-10 w-40 h-40 rounded-full blur-3xl opacity-0 group-hover:opacity-100 transition-opacity duration-500"
-                style={{ background: step.color }}
-              />
-              <div
-                className="w-12 h-12 rounded-2xl flex items-center justify-center mb-6"
-                style={{ background: step.color + '15', color: step.color }}
-              >
-                <Icon size={22} />
-              </div>
-              <div className="text-[12px] text-[var(--color-text-tertiary)] font-medium mb-1">0{i + 1}</div>
-              <h3 className="text-[24px] font-semibold mb-2 tracking-tight text-[var(--color-text-primary)]">{step.title}</h3>
-              <p className="text-[15px] text-[var(--color-text-secondary)] leading-[1.5]">{step.desc}</p>
-            </motion.div>
-          )
-        })}
-      </motion.div>
-    </div>
-  </section>
-)
+        <div className="relative h-[200px] sm:h-[230px]">
+          <motion.div className="absolute left-0 top-2 -rotate-6" {...float(10, 0)}>
+            <CoinCard value={25} size="md" />
+          </motion.div>
+          <motion.div className="absolute right-0 top-14 rotate-[7deg]" {...float(12, 0.8)}>
+            <CoinCard value={15} size="md" />
+          </motion.div>
+          <motion.div className="absolute left-[22%] bottom-0 -rotate-2" {...float(8, 1.6)}>
+            <CoinCard value={10} size="sm" />
+          </motion.div>
+        </div>
 
-const LibrarianSection = () => (
-  <section className="py-24 md:py-32 px-6 bg-[var(--color-bg-soft)] border-y border-[var(--color-border)]">
-    <div className="max-w-[1200px] mx-auto">
-      <div className="grid lg:grid-cols-2 gap-12 lg:gap-16 items-center">
-        <motion.div
-          initial={{ opacity: 0, x: -30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-        >
-          <div className="inline-block mb-4 text-[12px] font-medium text-[var(--color-brand)] uppercase tracking-[0.15em]">
-            Для библиотекаря
-          </div>
-          <h2 className="text-4xl md:text-5xl font-semibold tracking-[-0.025em] mb-6 leading-[1.05] text-[var(--color-text-primary)]">
-            Прощайте, тетрадки<br />
-            <span className="text-[var(--color-text-secondary)]">и Google Sheets</span>
-          </h2>
-          <p className="text-[19px] text-[var(--color-text-secondary)] mb-10 leading-[1.5]">
-            Раньше нужно было записывать ручкой, кто какую книгу взял. Искать по журналу, считать на калькуляторе.
-            <span className="text-[var(--color-text-primary)] font-medium"> Теперь всё в одном экране.</span>
-          </p>
-
-          <div className="space-y-4">
-            {[
-              { icon: BookMarked, label: 'Выдать книгу — 30 секунд', color: '#1a56db' },
-              { icon: ArrowDownToLine, label: 'Принять возврат — 1 клик', color: '#34c759' },
-              { icon: Search, label: 'Найти "у кого книга" — мгновенно', color: '#ff9500' },
-              { icon: BarChart3, label: 'Аналитика: топ читатели, графики, должники', color: '#ff2d55' }
-            ].map((item, i) => {
-              const Icon = item.icon
-              return (
-                <motion.div
-                  key={i}
-                  initial={{ opacity: 0, x: -16 }}
-                  whileInView={{ opacity: 1, x: 0 }}
-                  viewport={{ once: true }}
-                  transition={{ delay: i * 0.08 }}
-                  className="flex items-center gap-3 group"
-                >
-                  <motion.div
-                    whileHover={{ scale: 1.1, rotate: 5 }}
-                    className="w-10 h-10 rounded-xl flex items-center justify-center shrink-0 shadow-sm"
-                    style={{ background: item.color + '15', color: item.color }}
-                  >
-                    <Icon size={17} />
-                  </motion.div>
-                  <span className="text-[16px] text-[var(--color-text-primary)] font-medium">{item.label}</span>
-                </motion.div>
-              )
-            })}
-          </div>
-        </motion.div>
-
-        <motion.div
-          initial={{ opacity: 0, x: 30 }}
-          whileInView={{ opacity: 1, x: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.7 }}
-          className="relative"
-        >
-          <div className="absolute -inset-4 bg-gradient-to-br from-[var(--color-brand)]/10 to-transparent rounded-[40px] blur-2xl" />
-          <div className="relative bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-[24px] shadow-[0_20px_60px_rgba(0,0,0,0.08)] overflow-hidden backdrop-blur-sm">
-            <div className="flex items-center gap-1.5 px-5 py-3 border-b border-[var(--color-border)] bg-[var(--color-bg-soft)]">
-              <div className="w-2.5 h-2.5 rounded-full bg-[#ff5f57]" />
-              <div className="w-2.5 h-2.5 rounded-full bg-[#febc2e]" />
-              <div className="w-2.5 h-2.5 rounded-full bg-[#28c840]" />
-            </div>
-
-            <div className="p-6">
-              <div className="flex items-center justify-between mb-5">
-                <div className="font-semibold text-[15px]">Выдать книгу</div>
-                <div className="text-[11px] text-[var(--color-text-tertiary)]">шаг 2 из 3</div>
-              </div>
-
-              <div className="space-y-2">
-                {[
-                  { name: 'Adamov M.', cls: '7' },
-                  { name: 'Kabdolla M.', cls: '8' },
-                  { name: 'Mamedali M.', cls: '10' }
-                ].map((s, i) => (
-                  <div key={i} className={`p-3 rounded-xl flex items-center gap-3 ${
-                    i === 0 ? 'bg-[var(--color-brand-soft)] border border-[var(--color-brand)]/30' : 'bg-[var(--color-bg-soft)]'
-                  }`}>
-                    <div className={`w-9 h-9 rounded-full flex items-center justify-center font-semibold text-[13px] ${
-                      i === 0 ? 'bg-[var(--color-brand)] text-[var(--color-text-on-brand)]' : 'bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[var(--color-text-primary)]'
-                    }`}>
-                      {s.name.charAt(0)}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="text-[14px] font-medium truncate">{s.name}</div>
-                      <div className="text-[11px] text-[var(--color-text-tertiary)]">{s.cls} класс</div>
-                    </div>
-                    {i === 0 && <div className="text-[11px] text-[var(--color-brand)] font-medium">Выбрано</div>}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-        </motion.div>
+        <BookJourney />
       </div>
-    </div>
-  </section>
-)
+    </motion.div>
+  )
+}
 
-const PROGRAM_STEPS = [
-  { n: 1, title: 'Читай', text: 'Бери книги в библиотеке через Bookify. Каждая прочитанная книга приносит монеты.' },
-  { n: 2, title: 'Понимай', text: 'Напиши отзыв своими словами — он показывает, что ты разобрался в книге.' },
-  { n: 3, title: 'Делись', text: 'Сними видео о книге или выступи на TEDx — это самые большие бонусы.' }
+const JOURNEY = [
+  { label: 'Выдана', hint: 'Книга у тебя', color: '#5b8def' },
+  { label: 'Ждёт отзыва', hint: 'Вернул в библиотеку', color: '#ff9f0a' },
+  { label: 'Отзыв на проверке', hint: '186 слов · 5 критериев', color: '#bf8cff' },
+  { label: 'Прочитано', hint: '+5 за отзыв · +20 за объём', color: '#32d74b', coins: 25 }
 ]
 
-const ProgramSection = () => (
-  <section id="program" className="py-24 md:py-32 px-6 scroll-mt-16">
-    <div className="max-w-[1100px] mx-auto">
-      <motion.div
-        initial={{ opacity: 0, y: 20 }}
-        whileInView={{ opacity: 1, y: 0 }}
-        viewport={{ once: true, margin: '-80px' }}
-        transition={{ duration: 0.5 }}
-        className="relative rounded-[32px] bg-[var(--color-bg-soft)] border border-[var(--color-border)] p-7 md:p-12 overflow-hidden mb-10"
-      >
-        <div className="text-[13px] font-bold uppercase tracking-[0.2em] text-[var(--color-brand)] mb-4">
-          Новая программа чтения для всех учеников
-        </div>
-        <h2 className="text-[40px] md:text-[68px] font-extrabold leading-[0.95] tracking-tight text-[#1f2a5c] dark:text-white">
-          READ<span className="text-[var(--color-brand)]">.</span> THINK<span className="text-[var(--color-brand)]">.</span> SPEAK<span className="text-[var(--color-brand)]">.</span>
-          <br />
-          CREATE<span className="text-[var(--color-brand)]">.</span>{' '}
-          <span className="inline-block px-4 py-1 rounded-2xl bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
-        </h2>
-        <p className="mt-6 text-[17px] md:text-[20px] text-[var(--color-text-secondary)] max-w-xl">
-          Читай книги — получай баллы-карточки и обменивай их на призы.
-        </p>
-        <div className="hidden lg:block absolute right-10 top-10 rotate-6 space-y-3">
-          <CoinCard value={25} size="lg" />
-          <CoinCard value={15} size="md" className="-ml-12" />
-          <CoinCard value={5} size="sm" className="ml-24" />
-        </div>
-      </motion.div>
+function BookJourney() {
+  const still = useReducedMotion()
+  const [step, setStep] = useState(0)
+  useEffect(() => {
+    if (still) { setStep(JOURNEY.length - 1); return }
+    const t = setInterval(() => setStep(s => (s + 1) % JOURNEY.length), 2200)
+    return () => clearInterval(t)
+  }, [still])
+  const cur = JOURNEY[step]
 
-      <div className="grid md:grid-cols-3 gap-4 mb-14">
-        {PROGRAM_STEPS.map(s => (
-          <div key={s.n} className="apple-card card-lift p-6">
-            <div className="w-10 h-10 rounded-full bg-[#1f2a5c] text-[#ffc93c] text-[18px] font-extrabold flex items-center justify-center mb-4">{s.n}</div>
-            <div className="text-[20px] font-extrabold text-[var(--color-text-primary)] mb-1.5">{s.title}</div>
-            <p className="text-[15px] text-[var(--color-text-secondary)] leading-relaxed">{s.text}</p>
+  return (
+    <div className="relative mt-6 rounded-[22px] bg-white/[0.08] border border-white/10 backdrop-blur-md p-4 sm:p-5 text-white">
+      <div className="flex items-center gap-3.5">
+        <div className="w-11 h-14 rounded-md shrink-0 flex items-center justify-center" style={{ background: GOLD, color: NAVY }}>
+          <BookOpen size={20} strokeWidth={2.2} />
+        </div>
+        <div className="flex-1 min-w-0">
+          <div className="text-[15px] font-semibold truncate">Мастер и Маргарита</div>
+          <div className="text-[12px] text-white/55">480 страниц</div>
+        </div>
+        <AnimatePresence mode="wait">
+          {cur.coins ? (
+            <motion.div
+              key="coins"
+              initial={{ opacity: 0, scale: 0.6 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.8 }}
+              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
+              className="px-2.5 py-1 rounded-full text-[13px] font-bold tabular-nums"
+              style={{ background: GOLD, color: NAVY }}
+            >
+              +{cur.coins}
+            </motion.div>
+          ) : null}
+        </AnimatePresence>
+      </div>
+
+      <div className="mt-4 flex gap-1.5" aria-hidden>
+        {JOURNEY.map((s, i) => (
+          <div key={s.label} className="h-1 flex-1 rounded-full bg-white/15 overflow-hidden">
+            <motion.div
+              className="h-full rounded-full"
+              style={{ background: s.color }}
+              initial={false}
+              animate={{ width: i <= step ? '100%' : '0%' }}
+              transition={{ duration: 0.5, ease: EASE }}
+            />
           </div>
         ))}
       </div>
 
-      <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Система баллов</h3>
-      <div className="mb-14">
-        <PointsSystem />
-      </div>
-
-      <h3 className="text-[28px] md:text-[34px] font-extrabold tracking-tight text-[var(--color-text-primary)] mb-5">Призы</h3>
-      <div className="mb-8">
-        <PrizesPreview />
-      </div>
-
-      <AiWarning />
-
-      <div className="mt-10 flex flex-wrap gap-3 justify-center">
-        <Link href="/register" className="px-7 py-3.5 rounded-xl bg-[var(--color-brand)] text-white text-[15px] font-semibold hover:bg-[var(--color-brand-hover)] transition-colors inline-flex items-center gap-2">
-          Начать копить монеты <ArrowRight size={16} />
-        </Link>
-        <Link href="/login" className="px-7 py-3.5 rounded-xl bg-[var(--color-bg-soft)] text-[var(--color-text-primary)] text-[15px] font-semibold border border-[var(--color-border)] hover:bg-[var(--color-bg-card)] transition-colors">
-          У меня уже есть аккаунт
-        </Link>
+      <div className="mt-3 h-[22px] relative overflow-hidden">
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={cur.label}
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.3 }}
+            className="flex items-center justify-between gap-2 text-[13px]"
+          >
+            <span className="font-semibold" style={{ color: cur.color }}>{cur.label}</span>
+            <span className="text-white/55 truncate">{cur.hint}</span>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </div>
-  </section>
-)
+  )
+}
 
-/** Цитаты из книг — показываем, только если библиотекарь уже добавил их. */
-const QuotesSection = () => {
+/* ------------------------------------------------------------------ */
+/* Живые цифры                                                         */
+/* ------------------------------------------------------------------ */
+function LiveStats() {
+  const [stats, setStats] = useState(null)
+  useEffect(() => {
+    fetch('/api/public/stats')
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => setStats(d && typeof d.books === 'number' ? d : null))
+      .catch(() => {})
+  }, [])
+
+  const items = stats
+    ? [
+        { value: stats.books, label: 'книг в каталоге' },
+        { value: stats.readers, label: 'читателей — ученики и учителя' },
+        { value: stats.read, label: 'книг прочитано в игре' },
+        { value: stats.coins, label: 'монет заработано' }
+      ]
+    : null
+
+  return (
+    <section className="px-5 sm:px-6">
+      <div className="max-w-[1200px] mx-auto border-y border-[var(--color-border)] py-10 md:py-12 min-h-[140px]">
+        {items && (
+          <motion.div
+            initial="hidden"
+            whileInView="visible"
+            viewport={{ once: true }}
+            variants={stagger}
+            className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6"
+          >
+            {items.map(s => (
+              <motion.div key={s.label} variants={reveal} className="text-center md:text-left">
+                <div className="text-[40px] md:text-[52px] font-semibold tracking-[-0.03em] leading-none tabular-nums">
+                  <CountUp value={s.value} />
+                </div>
+                <div className="mt-2 text-[13px] md:text-[14px] text-[var(--color-text-tertiary)] font-medium">{s.label}</div>
+              </motion.div>
+            ))}
+          </motion.div>
+        )}
+      </div>
+    </section>
+  )
+}
+
+function CountUp({ value }) {
+  const ref = useRef(null)
+  const inView = useInView(ref, { once: true })
+  const still = useReducedMotion()
+  const [shown, setShown] = useState(0)
+  useEffect(() => {
+    if (!inView) return
+    if (still) { setShown(value); return }
+    let raf
+    const start = performance.now()
+    const tick = now => {
+      const t = Math.min(1, (now - start) / 1200)
+      setShown(Math.round(value * (1 - Math.pow(1 - t, 3))))
+      if (t < 1) raf = requestAnimationFrame(tick)
+    }
+    raf = requestAnimationFrame(tick)
+    return () => cancelAnimationFrame(raf)
+  }, [inView, value, still])
+  return <span ref={ref}>{shown.toLocaleString('ru-RU')}</span>
+}
+
+/* ------------------------------------------------------------------ */
+/* Как это работает                                                    */
+/* ------------------------------------------------------------------ */
+const STEPS = [
+  { icon: BookOpen, title: 'Возьми книгу', text: 'В школьной библиотеке или забронируй в каталоге Bookify.' },
+  { icon: Undo2, title: 'Прочитай и верни', text: 'Библиотекарь отмечает возврат — книга ждёт твоего отзыва.' },
+  { icon: PenLine, title: 'Напиши отзыв', text: '150–300 слов: о чём книга, главная идея, твоё мнение с примерами и выводы.' },
+  { icon: Coins, title: 'Получи монеты', text: '+5 за отзыв и от 5 до 25 за объём книги — после проверки.' }
+]
+
+function HowItWorks() {
+  return (
+    <section id="how" className="py-24 md:py-32 px-5 sm:px-6 scroll-mt-16">
+      <div className="max-w-[1200px] mx-auto">
+        <SectionHead
+          kicker="Как это работает"
+          title={<>Путь одной книги —<br className="hidden sm:block" /> четыре шага.</>}
+        />
+
+        <motion.ol
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={stagger}
+          className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
+        >
+          {/* линия, которая прорисовывается между шагами */}
+          <motion.div
+            aria-hidden
+            variants={{ hidden: { scaleX: 0 }, visible: { scaleX: 1, transition: { duration: 1.2, ease: EASE } } }}
+            className="hidden lg:block absolute top-[46px] left-[12%] right-[12%] h-px origin-left bg-[var(--color-border-strong)]"
+          />
+          {STEPS.map((s, i) => {
+            const Icon = s.icon
+            return (
+              <motion.li
+                key={s.title}
+                variants={reveal}
+                className="relative apple-card card-lift p-6 pt-7"
+              >
+                <div className="flex items-center gap-3 mb-5">
+                  <div className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: NAVY, color: GOLD }}>
+                    <Icon size={21} strokeWidth={2.2} />
+                  </div>
+                  <span className="text-[13px] font-semibold text-[var(--color-text-tertiary)] tabular-nums">0{i + 1}</span>
+                </div>
+                <h3 className="text-[20px] font-semibold tracking-tight mb-2">{s.title}</h3>
+                <p className="text-[15px] text-[var(--color-text-secondary)] leading-[1.55]">{s.text}</p>
+              </motion.li>
+            )
+          })}
+        </motion.ol>
+
+        <motion.div
+          initial={{ opacity: 0, y: 16 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.6, ease: EASE }}
+          className="mt-4 rounded-[22px] border border-dashed border-[var(--color-border-strong)] p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8"
+        >
+          <div className="text-[15px] font-semibold">Хочешь больше?</div>
+          <div className="flex flex-wrap gap-x-8 gap-y-3 text-[15px] text-[var(--color-text-secondary)]">
+            <span className="inline-flex items-center gap-2"><Video size={17} className="text-[var(--color-brand)]" /> Видео о книге <b className="text-[var(--color-text-primary)]">+10</b></span>
+            <span className="inline-flex items-center gap-2"><Mic size={17} className="text-[var(--color-brand)]" /> Выступление на TEDx <b className="text-[var(--color-text-primary)]">+15</b></span>
+          </div>
+        </motion.div>
+      </div>
+    </section>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Программа, баллы, призы                                             */
+/* ------------------------------------------------------------------ */
+function ProgramSection() {
+  return (
+    <section id="program" className="py-24 md:py-32 px-5 sm:px-6 bg-[var(--color-bg-soft)] border-y border-[var(--color-border)] scroll-mt-16">
+      <div className="max-w-[1200px] mx-auto">
+        <motion.div
+          initial={{ opacity: 0, y: 24 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true, margin: '-80px' }}
+          transition={{ duration: 0.8, ease: EASE }}
+          className="mb-16 md:mb-20"
+        >
+          <div className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)] mb-5">
+            Программа чтения DLS
+          </div>
+          <h2 className="text-[40px] sm:text-[64px] md:text-[88px] font-extrabold leading-[0.92] tracking-[-0.03em] text-[#1f2a5c] dark:text-white">
+            READ<Dot /> THINK<Dot /> SPEAK<Dot />
+            <br />
+            CREATE<Dot />{' '}
+            <span className="inline-block px-4 md:px-5 py-0.5 rounded-[18px] bg-[#1f2a5c] text-[#ffc93c] dark:bg-[#ffc93c] dark:text-[#1f2a5c]">LEAD</span>
+          </h2>
+        </motion.div>
+
+        <h3 className="text-[30px] md:text-[40px] font-semibold tracking-[-0.02em] mb-6">Система баллов</h3>
+        <div className="mb-20">
+          <PointsSystem />
+        </div>
+
+        <div className="flex items-end justify-between gap-4 mb-6">
+          <h3 className="text-[30px] md:text-[40px] font-semibold tracking-[-0.02em]">Призы</h3>
+          <span className="text-[14px] text-[var(--color-text-tertiary)] pb-2">Обмен — в магазине Bookify</span>
+        </div>
+        <div className="mb-8">
+          <PrizesPreview />
+        </div>
+
+        <AiWarning />
+      </div>
+    </section>
+  )
+}
+
+const Dot = () => <span className="text-[var(--color-brand)]">.</span>
+
+/* ------------------------------------------------------------------ */
+/* Цитаты — только если библиотекарь их добавил                        */
+/* ------------------------------------------------------------------ */
+function QuotesSection() {
   const [quotes, setQuotes] = useState([])
   useEffect(() => {
     fetch('/api/quotes?limit=12')
@@ -529,18 +475,15 @@ const QuotesSection = () => {
   }, [])
   if (!quotes.length) return null
   return (
-    <section className="py-20 md:py-28 px-6">
-      <div className="max-w-[1100px] mx-auto">
+    <section className="py-24 md:py-32 px-5 sm:px-6">
+      <div className="max-w-[1200px] mx-auto">
+        <SectionHead kicker="Цитаты из книг" title={<>Мысли, которые<br />стоит запомнить.</>} />
         <motion.div
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.8, ease: [0.2, 0.8, 0.2, 1] }}
+          transition={{ duration: 0.8, ease: EASE }}
         >
-          <div className="text-[13px] font-semibold text-[var(--color-brand)] mb-2">Цитаты из книг</div>
-          <h2 className="text-[36px] md:text-[52px] font-semibold tracking-tight leading-[1.05] mb-10 text-[var(--color-text-primary)]">
-            Мысли, которые<br />стоит запомнить.
-          </h2>
           <QuoteFeature quotes={quotes} />
         </motion.div>
       </div>
@@ -548,70 +491,156 @@ const QuotesSection = () => {
   )
 }
 
-const CtaSection = () => (
-  <section className="py-24 md:py-32 px-6">
-    <motion.div
-      initial={{ opacity: 0, scale: 0.97 }}
-      whileInView={{ opacity: 1, scale: 1 }}
-      viewport={{ once: true }}
-      transition={{ duration: 0.5 }}
-      className="max-w-[800px] mx-auto bg-[var(--color-brand)] p-12 md:p-20 rounded-[32px] text-center relative overflow-hidden"
-    >
-      <div className="absolute -top-20 -right-20 w-64 h-64 rounded-full bg-white/20 blur-3xl" />
-      <div className="absolute -bottom-20 -left-20 w-64 h-64 rounded-full bg-white/10 blur-3xl" />
+/* ------------------------------------------------------------------ */
+/* Для кого                                                            */
+/* ------------------------------------------------------------------ */
+const AUDIENCE = [
+  {
+    icon: GraduationCap,
+    title: 'Ученикам',
+    points: ['Каталог и бронь книг', 'Монеты, уровни и достижения', 'Рейтинг месяца и лучший класс', 'Своя полка прочитанного']
+  },
+  {
+    icon: Presentation,
+    title: 'Учителям',
+    points: ['Читают и получают монеты наравне со всеми', 'Видят чтение своего класса', 'Советуют книги ученикам']
+  },
+  {
+    icon: Library,
+    title: 'Библиотеке и команде',
+    points: ['Выдача и возврат в пару касаний', 'Проверка отзывов по критериям школы', 'Аналитика, призы, экран в холле']
+  }
+]
 
-      <div className="relative z-10 inline-block mb-6 text-6xl">
-        📚
+function AudienceSection() {
+  return (
+    <section id="for-whom" className="py-24 md:py-32 px-5 sm:px-6 scroll-mt-16">
+      <div className="max-w-[1200px] mx-auto">
+        <SectionHead kicker="Для кого" title={<>Одна платформа<br className="hidden sm:block" /> для всей школы.</>} />
+        <motion.div
+          initial="hidden"
+          whileInView="visible"
+          viewport={{ once: true, margin: '-80px' }}
+          variants={stagger}
+          className="grid md:grid-cols-3 gap-4"
+        >
+          {AUDIENCE.map(a => {
+            const Icon = a.icon
+            return (
+              <motion.div key={a.title} variants={reveal} className="apple-card card-lift p-7">
+                <div className="w-12 h-12 rounded-2xl bg-[var(--color-brand-soft)] text-[var(--color-brand)] flex items-center justify-center mb-6">
+                  <Icon size={22} />
+                </div>
+                <h3 className="text-[22px] font-semibold tracking-tight mb-4">{a.title}</h3>
+                <ul className="space-y-2.5">
+                  {a.points.map(p => (
+                    <li key={p} className="flex gap-2.5 text-[15px] text-[var(--color-text-secondary)] leading-[1.45]">
+                      <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[var(--color-brand)] shrink-0" />
+                      {p}
+                    </li>
+                  ))}
+                </ul>
+              </motion.div>
+            )
+          })}
+        </motion.div>
       </div>
+    </section>
+  )
+}
 
-      <h2 className="relative z-10 text-3xl md:text-5xl font-semibold tracking-[-0.025em] mb-4 text-white">
-        Готов начать читать?
-      </h2>
-      <p className="relative z-10 text-white/80 mb-10 max-w-md mx-auto text-[17px]">
-        Регистрация занимает 30 секунд. Первая книга — бесплатно.
-      </p>
-
-      <Link
-        href="/register"
-        className="relative z-10 inline-flex items-center gap-2 px-9 py-3.5 bg-white text-[#1a56db] text-[16px] font-medium hover:bg-white/90 transition-colors rounded-xl"
+/* ------------------------------------------------------------------ */
+/* Финальный призыв                                                    */
+/* ------------------------------------------------------------------ */
+function FinalCta() {
+  return (
+    <section className="pb-24 md:pb-32 px-5 sm:px-6">
+      <motion.div
+        initial={{ opacity: 0, y: 30 }}
+        whileInView={{ opacity: 1, y: 0 }}
+        viewport={{ once: true, margin: '-60px' }}
+        transition={{ duration: 0.8, ease: EASE }}
+        className="relative max-w-[1200px] mx-auto rounded-[36px] overflow-hidden px-7 py-14 md:px-16 md:py-20"
+        style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a56db 140%)` }}
       >
-        Создать аккаунт <ArrowRight size={16} />
-      </Link>
-    </motion.div>
-  </section>
-)
+        <div aria-hidden className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full blur-3xl opacity-25" style={{ background: GOLD }} />
+        <div className="relative grid md:grid-cols-[1.3fr_1fr] gap-10 items-center">
+          <div>
+            <div className="inline-flex items-center gap-2 mb-5 text-[13px] font-semibold text-white/70">
+              <Trophy size={15} style={{ color: GOLD }} /> Рейтинг месяца и лучший класс
+            </div>
+            <h2 className="text-[36px] md:text-[56px] font-semibold tracking-[-0.03em] leading-[1.02] text-white mb-5">
+              Следующая книга —<br />
+              <span style={{ color: GOLD }}>твоя первая монета.</span>
+            </h2>
+            <p className="text-[17px] text-white/70 max-w-md mb-9 leading-[1.55]">
+              Логин и пароль выдаёт школа. Если логина ещё нет — зарегистрируйся за минуту.
+            </p>
+            <div className="flex flex-col sm:flex-row gap-3">
+              <Link
+                href="/login"
+                className="px-7 py-3.5 rounded-full bg-white text-[#1f2a5c] text-[16px] font-semibold hover:bg-white/90 transition-colors inline-flex items-center justify-center gap-2"
+              >
+                Войти <ArrowRight size={17} />
+              </Link>
+              <Link
+                href="/register"
+                className="px-7 py-3.5 rounded-full border border-white/30 text-white text-[16px] font-semibold hover:bg-white/10 transition-colors inline-flex items-center justify-center"
+              >
+                Регистрация
+              </Link>
+            </div>
+          </div>
+          <div className="hidden md:flex flex-col items-center gap-3 rotate-[-4deg]">
+            <CoinCard value={20} size="lg" />
+            <CoinCard value={5} size="md" className="ml-24" />
+          </div>
+        </div>
+      </motion.div>
+    </section>
+  )
+}
 
-const FooterSection = () => (
-  <footer className="border-t border-[var(--color-border)] bg-[var(--color-bg-soft)] py-10">
-    <div className="max-w-[1200px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
-      <div className="flex items-center gap-3">
-        <Image src="/lb_logo.png" width={28} height={28} alt="DLS" className="opacity-70" />
-        <div className="text-[13px] text-[var(--color-text-secondary)]">
+/* ------------------------------------------------------------------ */
+/* Подвал главной (подпись разработчика — общий DevCredit ниже)         */
+/* ------------------------------------------------------------------ */
+function LandingFooter() {
+  return (
+    <div className="border-t border-[var(--color-border)]">
+      <div className="max-w-[1200px] mx-auto px-5 sm:px-6 py-8 flex flex-col sm:flex-row items-center justify-between gap-4">
+        <div className="flex items-center gap-2.5 text-[13px] text-[var(--color-text-secondary)]">
+          <Image src="/lb_logo.png" width={26} height={26} alt="" className="opacity-80" />
           © 2026 <span className="text-[var(--color-text-primary)] font-medium">Bookify</span> · Divergents Leadership School
         </div>
-      </div>
-
-      {/* Ссылки на сайт школы */}
-      <div className="flex items-center gap-4">
         <a
           href="https://dls.edu.kz"
           target="_blank"
           rel="noopener noreferrer"
-          className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl bg-[var(--color-bg-card)] border border-[var(--color-border)] text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] hover:border-[var(--color-brand)]/40 transition-colors"
+          className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-brand)] transition-colors"
         >
-          Сайт школы
-          <ArrowUpRight size={14} />
+          Сайт школы <ArrowUpRight size={14} />
         </a>
       </div>
-
-      <div className="flex flex-col items-center sm:items-end gap-1">
-        <div className="text-[12px] text-[var(--color-text-tertiary)]">
-          Разработано: <span className="text-[var(--color-brand)] font-semibold">Zhenis Magzhan</span>
-        </div>
-        <div className="text-[13px] text-[var(--color-text-tertiary)]">
-          Сделано <Heart className="inline w-3 h-3 text-[#ff2d55]" /> для настоящих читателей
-        </div>
-      </div>
     </div>
-  </footer>
-)
+  )
+}
+
+/* ------------------------------------------------------------------ */
+function SectionHead({ kicker, title }) {
+  return (
+    <motion.div
+      initial="hidden"
+      whileInView="visible"
+      viewport={{ once: true, margin: '-80px' }}
+      variants={stagger}
+      className="mb-12 md:mb-16"
+    >
+      <motion.div variants={reveal} className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--color-brand)] mb-4">
+        {kicker}
+      </motion.div>
+      <motion.h2 variants={reveal} className="text-[36px] sm:text-[48px] md:text-[60px] font-semibold tracking-[-0.03em] leading-[1.02]">
+        {title}
+      </motion.h2>
+    </motion.div>
+  )
+}
