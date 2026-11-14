@@ -5,12 +5,11 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
-import CoinCard from '../components/game/CoinCard'
 import QuoteFeature from '../components/quotes/QuoteFeature'
-import { PointsSystem, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
+import { PagesLadder, BonusCards, PointsCalculator, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import {
   ArrowRight, ArrowUpRight, BookOpen, PenLine, Coins, Undo2,
-  GraduationCap, Presentation, Library, Trophy, Video, Mic
+  GraduationCap, Presentation, Library, Trophy, Video, Mic, Flame, Award
 } from 'lucide-react'
 
 /* Фирменные цвета */
@@ -154,7 +153,7 @@ function Hero() {
   )
 }
 
-/** Тёмно-синяя панель: плавающие монеты и книга, проходящая путь до «Прочитано». */
+/** Тёмно-синяя панель: книжная полка, значки достижений и книга, проходящая путь до «Прочитано». */
 function HeroVisual() {
   const still = useReducedMotion()
   const float = (d, delay) =>
@@ -183,20 +182,63 @@ function HeroVisual() {
         <div aria-hidden className="absolute -top-24 -right-16 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ background: GOLD }} />
 
         <div className="relative h-[200px] sm:h-[230px]">
-          <motion.div className="absolute left-0 top-2 -rotate-6" {...float(10, 0)}>
-            <CoinCard value={25} size="md" />
+          <Bookshelf />
+          <motion.div
+            className="absolute right-0 top-1 flex items-center gap-2 px-3 py-2 rounded-full bg-white text-[#1f2a5c] text-[12px] font-semibold shadow-lg"
+            {...float(6, 0)}
+          >
+            <Flame size={14} className="text-[#ff6b2c]" /> Серия 3 недели
           </motion.div>
-          <motion.div className="absolute right-0 top-14 rotate-[7deg]" {...float(12, 0.8)}>
-            <CoinCard value={15} size="md" />
-          </motion.div>
-          <motion.div className="absolute left-[22%] bottom-0 -rotate-2" {...float(8, 1.6)}>
-            <CoinCard value={10} size="sm" />
+          <motion.div
+            className="absolute left-0 top-12 flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 border border-white/15 text-white text-[12px] font-semibold backdrop-blur-md"
+            {...float(7, 1.2)}
+          >
+            <Award size={14} style={{ color: GOLD }} /> Уровень «Книголюб»
           </motion.div>
         </div>
 
         <BookJourney />
       </div>
     </motion.div>
+  )
+}
+
+/** Полка из корешков разной высоты и цвета; одна книга время от времени выдвигается. */
+const SPINES = [
+  { h: 78, w: 22, c: '#5b8def' }, { h: 92, w: 28, c: '#ffc93c' }, { h: 70, w: 18, c: '#f4f1ea' },
+  { h: 86, w: 26, c: '#ff8a65' }, { h: 96, w: 30, c: '#3a4a8f' }, { h: 74, w: 20, c: '#7dc9a9' },
+  { h: 88, w: 24, c: '#d9bfdc' }, { h: 80, w: 22, c: '#1a56db' }, { h: 94, w: 28, c: '#f4f1ea' }
+]
+
+function Bookshelf() {
+  const still = useReducedMotion()
+  return (
+    <div className="absolute inset-x-0 bottom-0" aria-hidden>
+      <div className="flex items-end justify-center gap-[5px] px-2">
+        {SPINES.map((b, i) => (
+          <motion.div
+            key={i}
+            className="relative rounded-t-[4px] rounded-b-[2px] shrink-0"
+            style={{ height: b.h, width: b.w, background: b.c, transformOrigin: 'bottom center' }}
+            initial={{ y: 40, opacity: 0 }}
+            animate={
+              !still && i === 4
+                ? { y: [0, 0, -26, -26, 0], opacity: 1 }
+                : { y: 0, opacity: 1 }
+            }
+            transition={
+              !still && i === 4
+                ? { y: { duration: 8.8, repeat: Infinity, times: [0, 0.05, 0.12, 0.9, 1], ease: EASE, delay: 1 }, opacity: { delay: 0.3 + i * 0.05 } }
+                : { delay: 0.3 + i * 0.05, duration: 0.6, ease: EASE }
+            }
+          >
+            <span className="absolute left-1/2 -translate-x-1/2 top-3 w-[55%] h-[2px] rounded-full bg-black/15" />
+            <span className="absolute left-1/2 -translate-x-1/2 bottom-3 w-[55%] h-[2px] rounded-full bg-black/15" />
+          </motion.div>
+        ))}
+      </div>
+      <div className="h-[6px] rounded-full bg-white/20 mx-0" />
+    </div>
   )
 }
 
@@ -443,7 +485,13 @@ function ProgramSection() {
 
         <h3 className="text-[30px] md:text-[40px] font-semibold tracking-[-0.02em] mb-6">Система баллов</h3>
         <div className="mb-20">
-          <PointsSystem />
+          <div className="space-y-5">
+            <div className="grid lg:grid-cols-5 gap-5">
+              <div className="lg:col-span-3"><PagesLadder /></div>
+              <div className="lg:col-span-2"><BonusCards /></div>
+            </div>
+            <PointsCalculator />
+          </div>
         </div>
 
         <div className="flex items-end justify-between gap-4 mb-6">
@@ -591,13 +639,39 @@ function FinalCta() {
               </Link>
             </div>
           </div>
-          <div className="hidden md:flex flex-col items-center gap-3 rotate-[-4deg]">
-            <CoinCard value={20} size="lg" />
-            <CoinCard value={5} size="md" className="ml-24" />
-          </div>
+          <PrizeStack />
         </div>
       </motion.div>
     </section>
+  )
+}
+
+/** Три фото призов веером — вместо монет. */
+const STACK = [
+  { src: '/prizes/photo/notebook-1.webp', title: 'Блокнот', rot: -9, x: -70, y: 18 },
+  { src: '/prizes/photo/mug-1.webp', title: 'Термокружка', rot: 7, x: 70, y: 26 },
+  { src: '/prizes/photo/wishbook-1.webp', title: 'Книга из Wish List', rot: -1, x: 0, y: 0 }
+]
+
+function PrizeStack() {
+  return (
+    <div className="hidden md:block relative h-[300px]" aria-hidden>
+      {STACK.map((p, i) => (
+        <motion.div
+          key={p.src}
+          initial={{ opacity: 0, y: 30, rotate: 0 }}
+          whileInView={{ opacity: 1, y: p.y, rotate: p.rot }}
+          viewport={{ once: true }}
+          transition={{ delay: 0.2 + i * 0.12, duration: 0.8, ease: EASE }}
+          whileHover={{ y: p.y - 10, rotate: 0, zIndex: 10 }}
+          className="absolute left-1/2 top-4 w-[180px] -ml-[90px] rounded-[22px] bg-white p-2.5 shadow-[0_20px_50px_rgba(0,0,0,0.35)]"
+          style={{ x: p.x, zIndex: i }}
+        >
+          <img src={p.src} alt="" loading="lazy" className="w-full aspect-square object-cover rounded-[16px] bg-[#e3e3e1]" />
+          <div className="px-1 pt-2 pb-0.5 text-[13px] font-semibold text-[#1f2a5c] truncate">{p.title}</div>
+        </motion.div>
+      ))}
+    </div>
   )
 }
 
