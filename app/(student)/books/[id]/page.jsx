@@ -4,6 +4,8 @@ import { motion, AnimatePresence } from 'framer-motion'
 import UserAvatar from '../../../../components/UserAvatar'
 import ShelfButton from '../../../../components/ShelfButton'
 import BookReaders from '../../../../components/BookReaders'
+import PageCoefFields from '../../../../components/PageCoefFields'
+import { scoredPages } from '../../../../lib/points'
 import Image from 'next/image'
 import { useParams, useRouter } from 'next/navigation'
 import { useTeamMe } from '../../../../lib/useTeamMe'
@@ -53,6 +55,27 @@ const Field = ({ label, children, type }) => (
     {children}
   </div>
 )
+
+// === ОПИСАНИЕ КНИГИ: длинное — сворачиваем, абзацы сохраняем ===
+function BookDescription({ text }) {
+  const [open, setOpen] = useState(false)
+  const long = text.length > 420
+  return (
+    <div className="mt-6 pt-6 border-t border-[var(--color-border)]">
+      <h3 className="text-[11px] uppercase tracking-wider text-[var(--color-text-tertiary)] font-medium mb-2">О книге</h3>
+      <div className="relative">
+        <p className={`text-[15px] leading-relaxed text-[var(--color-text-secondary)] whitespace-pre-line ${long && !open ? 'line-clamp-6' : ''}`}>
+          {text.trim()}
+        </p>
+      </div>
+      {long && (
+        <button onClick={() => setOpen(o => !o)} className="mt-2 text-[13px] font-medium text-[var(--color-brand)] hover:underline">
+          {open ? 'Свернуть' : 'Читать полностью'}
+        </button>
+      )}
+    </div>
+  )
+}
 
 // === ФОРМА РЕДАКТИРОВАНИЯ (для библиотекаря) ===
 const EditBookForm = ({ form, setForm, onSave, onCancel, saving }) => {
@@ -133,33 +156,25 @@ const EditBookForm = ({ form, setForm, onSave, onCancel, saving }) => {
           </Field>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <Field label="Экземпляров всего">
-            <input
-              type="number"
-              min="1"
-              value={form.total_copies}
-              onChange={e => update('total_copies', parseInt(e.target.value) || 1)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-          <Field label="Страниц">
-            <input
-              type="number"
-              min="0"
-              value={form.pages || ''}
-              onChange={e => update('pages', e.target.value)}
-              className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
-            />
-          </Field>
-        </div>
+        <Field label="Экземпляров всего">
+          <input
+            type="number"
+            min="1"
+            value={form.total_copies}
+            onChange={e => update('total_copies', parseInt(e.target.value) || 1)}
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors"
+          />
+        </Field>
+
+        <PageCoefFields value={form} onChange={patch => setForm({ ...form, ...patch })} />
 
         <Field label="Описание">
           <textarea
-            rows={3}
+            rows={6}
             value={form.description || ''}
             onChange={e => update('description', e.target.value)}
-            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-none"
+            placeholder="О чём книга, чем полезна, кому подойдёт…"
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] leading-relaxed text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-y"
           />
         </Field>
 
@@ -420,6 +435,8 @@ const Book = () => {
           total_copies: bookData.total_copies || 1,
           isbn: bookData.isbn || '',
           pages: bookData.pages || '',
+          words_per_page: bookData.words_per_page || '',
+          page_coef: bookData.page_coef != null ? Number(bookData.page_coef) : '',
           language: parsedTags.language,
           difficulty: parsedTags.difficulty,
           tags: parsedTags.rest.join(', ')
@@ -555,6 +572,8 @@ const Book = () => {
         total_copies: Math.max(1, parseInt(editForm.total_copies) || 1),
         isbn: editForm.isbn.trim(),
         pages: editForm.pages === '' ? '' : parseInt(editForm.pages) || 0,
+        words_per_page: editForm.words_per_page === '' ? '' : parseInt(editForm.words_per_page) || '',
+        page_coef: editForm.page_coef,
         tags: tagParts.join(', ')
       }
 
@@ -1004,7 +1023,7 @@ const Book = () => {
                 {[
                   { label: 'Год', value: book.year || '—' },
                   { label: 'Доступно', value: `${book.available_copies ?? '?'}/${book.total_copies ?? '?'}`, color: (book.available_copies ?? 0) > 0 ? 'var(--color-success)' : 'var(--color-danger)' },
-                  { label: 'Жанр', value: book.genre || '—' },
+                  { label: 'Страниц', value: book.pages ? (book.page_coef && Number(book.page_coef) !== 1 ? `${book.pages} · засчит. ${scoredPages(book.pages, book.page_coef)}` : book.pages) : '—' },
                   { label: 'Статус', value: myBorrow ? 'У тебя' : (isUnavailable ? 'Нет в наличии' : 'Доступна'), color: myBorrow ? 'var(--color-brand)' : (isUnavailable ? 'var(--color-danger)' : 'var(--color-success)') }
                 ].map((s, i) => (
                   <div key={i}>
@@ -1013,6 +1032,8 @@ const Book = () => {
                   </div>
                 ))}
               </div>
+
+              {book.description?.trim() && <BookDescription text={book.description} />}
 
               {/* === ОЦЕНКА КНИГИ === */}
                 <div className="mt-6 pt-6 border-t border-[var(--color-border)]">

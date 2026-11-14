@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import pool, { ensureSchema } from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
 import { appendBookToSheet } from '../../../lib/google-sheets'
+import { cleanCoef, coefForWords } from '../../../lib/points'
 
 export async function GET(req) {
   const { searchParams } = new URL(req.url)
@@ -136,8 +137,10 @@ export async function POST(req) {
   const {
     title, author, genre, year, description,
     cover_url, file_url, total_copies, isbn, pages, tags,
-    language, difficulty
+    language, difficulty, page_coef, words_per_page
   } = await req.json()
+  const coef = cleanCoef(page_coef) ?? coefForWords(words_per_page)
+  const words = parseInt(words_per_page) || null
 
   if (!title || !author) {
     return NextResponse.json(
@@ -147,6 +150,7 @@ export async function POST(req) {
   }
 
   const copies = parseInt(total_copies) || 1
+  await ensureSchema()
 
   // Собираем теги (жанр + язык + сложность)
   const tagParts = []
@@ -159,15 +163,15 @@ export async function POST(req) {
     const result = await pool.query(
       `INSERT INTO books
         (title, author, genre, year, description, cover_url, file_url,
-         total_copies, available_copies, isbn, pages, tags)
-       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $10, $11)
+         total_copies, available_copies, isbn, pages, tags, page_coef, words_per_page)
+       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $8, $9, $10, $11, $12, $13)
        RETURNING *`,
       [
         title, author, genre || 'Без раздела',
         year || null, description || null,
         cover_url || null, file_url || null,
         copies, isbn || null,
-        pages ? parseInt(pages) : null, tagsStr
+        pages ? parseInt(pages) : null, tagsStr, coef, words
       ]
     )
 

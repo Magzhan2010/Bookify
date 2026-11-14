@@ -3,6 +3,7 @@
 import { motion } from 'framer-motion'
 import { useRouter } from 'next/navigation'
 import { useArea } from '../../../../lib/useArea'
+import PageCoefFields from '../../../../components/PageCoefFields'
 import { useState } from 'react'
 import { toast } from 'sonner'
 import {
@@ -25,12 +26,15 @@ export default function AddBookPage() {
     total_copies: 1,
     language: '',
     difficulty: '',
-    tags: ''
+    tags: '',
+    pages: '',
+    words_per_page: '',
+    page_coef: ''
   })
   const EMPTY_FORM = {
     title: '', author: '', genre: '', year: '', description: '',
     cover_url: '', file_url: '', total_copies: 1, language: '',
-    difficulty: '', tags: ''
+    difficulty: '', tags: '', pages: '', words_per_page: '', page_coef: ''
   }
   const [submitting, setSubmitting] = useState(false)
   const [result, setResult] = useState(null)
@@ -165,13 +169,15 @@ export default function AddBookPage() {
           </Field>
         </div>
 
+        <PageCoefFields value={form} onChange={patch => setForm(f => ({ ...f, ...patch }))} />
+
         <Field label="Описание">
           <textarea
-            rows={3}
+            rows={5}
             value={form.description}
             onChange={e => setForm({...form, description: e.target.value})}
-            placeholder="Краткое описание сюжета..."
-            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-none"
+            placeholder="О чём книга, чем полезна, кому подойдёт…"
+            className="w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] leading-relaxed text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors resize-y"
           />
         </Field>
 

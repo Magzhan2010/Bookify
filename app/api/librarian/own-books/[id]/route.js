@@ -3,9 +3,11 @@ import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
 import { notify } from '../../../../../lib/notify'
 import { PAGES_MIN, PAGES_MAX } from '../../../../../lib/ownBooks'
+import { cleanCoef, coefForWords } from '../../../../../lib/points'
 
 /**
- * PATCH { action: 'approve' | 'reject', note?, title?, author?, pages? }
+ * PATCH { action: 'approve' | 'reject', note?, title?, author?, pages?, page_coef? }
+ * Коэффициент страницы: выбранный проверяющим, иначе по числу слов на странице из заявки (нет — 1).
  * approve: книга ученика создаётся (в каталоге её нет) и сразу считается прочитанной — ученик пишет отзыв.
  * Проверяющий может поправить название, автора и страницы. Свою заявку участник команды не решает.
  */
@@ -45,9 +47,9 @@ export async function PATCH(req, { params }) {
     }
     // Книга ученика: в архиве (в каталоге и выдаче её нет), с владельцем
     const book = await client.query(
-      `INSERT INTO books (title, author, pages, cover_url, total_copies, available_copies, owner_id, archived_at)
-       VALUES ($1, $2, $3, $4, 0, 0, $5, NOW()) RETURNING id`,
-      [title, author, pages, o.photo, o.user_id])
+      `INSERT INTO books (title, author, pages, cover_url, total_copies, available_copies, owner_id, archived_at, page_coef, words_per_page)
+       VALUES ($1, $2, $3, $4, 0, 0, $5, NOW(), $6, $7) RETURNING id`,
+      [title, author, pages, o.photo, o.user_id, cleanCoef(body.page_coef) ?? coefForWords(o.words_per_page), o.words_per_page || null])
     const borrow = await client.query(
       `INSERT INTO borrows (user_id, book_id, status, borrowed_at, due_date, returned_at, issued_by, own_book, notes)
        VALUES ($1, $2, 'returned', NOW(), NULL, NOW(), $3, TRUE, 'Своя книга') RETURNING id`,

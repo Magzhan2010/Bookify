@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import pool from '../../../../lib/db'
+import pool, { ensureSchema } from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 
 /** GET — заявки «читаю свою книгу», ждут подтверждения. */
@@ -7,8 +7,9 @@ export async function GET(req) {
   const guard = await requireAuth(req, ['librarian', 'team'])
   if (!guard.ok) return guard.response
   try {
+    await ensureSchema()
     const r = await pool.query(`
-      SELECT o.id, o.user_id, o.title, o.author, o.pages, o.photo, o.created_at,
+      SELECT o.id, o.user_id, o.title, o.author, o.pages, o.words_per_page, o.photo, o.created_at,
              u.name AS student_name, u.class_name AS student_class, u.role AS student_role,
              (SELECT b.id FROM books b WHERE b.owner_id IS NULL AND b.archived_at IS NULL
                AND LOWER(b.title) = LOWER(o.title) LIMIT 1) AS library_book_id

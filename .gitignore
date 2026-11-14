@@ -54,3 +54,6 @@ books-data.json
 /scripts/find-pdf.js
 /scripts/patch-*.js
 /scripts/read-pdf.js
+
+.vercel
+.env*

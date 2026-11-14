@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import pool, { ensureSchema } from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
+import { cleanCoef, coefForWords } from '../../../../lib/points'
 
 export async function GET(req, { params }) {
   const { id } = await params
@@ -24,13 +25,18 @@ export async function PATCH(req, { params }) {
   const { id } = await params
   const data = await req.json()
   await ensureSchema()
+  // Коэффициент страницы: явно выбранный, иначе — по числу слов на странице
+  if (data.page_coef !== undefined || data.words_per_page !== undefined) {
+    data.page_coef = cleanCoef(data.page_coef) ?? coefForWords(data.words_per_page)
+  }
 
   // Разрешённые поля для обновления.
   // ВАЖНО: 'language' и 'difficulty' НЕ включаем — таких колонок в books нет,
   // они хранятся внутри tags (см. app/api/books/route.js POST).
   const allowed = [
     'title', 'author', 'genre', 'year', 'description',
-    'cover_url', 'file_url', 'total_copies', 'isbn', 'pages', 'tags'
+    'cover_url', 'file_url', 'total_copies', 'isbn', 'pages', 'tags',
+    'page_coef', 'words_per_page'
   ]
 
   const fields = []
@@ -41,7 +47,9 @@ export async function PATCH(req, { params }) {
     if (data[key] !== undefined) {
       fields.push(`${key} = $${i++}`)
       // Конвертируем числа (NaN → null, чтобы не сломать INT-колонку)
-      if (['total_copies', 'pages'].includes(key)) {
+      if (key === 'page_coef') {
+        values.push(data[key])
+      } else if (['total_copies', 'pages', 'words_per_page'].includes(key)) {
         const num = parseInt(data[key])
         values.push(Number.isNaN(num) ? null : num)
       } else {

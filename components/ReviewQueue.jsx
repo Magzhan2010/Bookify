@@ -4,7 +4,7 @@ import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { Check, X, Loader2, Award, PenLine, Coins } from 'lucide-react'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../lib/reviewRules'
-import { tierForPages } from '../lib/points'
+import { tierForBook } from '../lib/points'
 import ShelfRequestsQueue from './ShelfRequestsQueue'
 import OwnBookQueue from './OwnBookQueue'
 
@@ -160,7 +160,7 @@ export default function ReviewQueue({ onChanged, meId }) {
               const own = meId && row.user_id === meId
               const key = `t${row.borrow_id}`
               const n = parseInt(pages[key]) || parseInt(row.book_pages) || 0
-              const tier = tierForPages(n)
+              const tier = tierForBook(n, row.book_coef)
               return (
                 <div key={row.borrow_id} className="flex flex-wrap items-center gap-2 py-2.5 text-[13px]">
                   <div className="flex-1 min-w-[180px]">
@@ -250,7 +250,7 @@ export default function ReviewQueue({ onChanged, meId }) {
                     </div>
                     <div className="text-[11px] text-[var(--color-text-tertiary)] mb-1.5">
                       {r.book_author}
-                      {r.book_pages ? ` · ${r.book_pages} стр.` : ''}
+                      {r.book_pages ? ` · ${r.book_pages} стр.${r.book_coef && Number(r.book_coef) !== 1 ? ` × ${Number(r.book_coef)}` : ''}` : ''}
                     </div>
                     <div className="flex items-center gap-2">
                       <span className="text-[13px] text-[#ff9500]">
@@ -294,7 +294,7 @@ export default function ReviewQueue({ onChanged, meId }) {
                     <input inputMode="numeric" placeholder="стр." value={pages[r.id] || ''}
                       onChange={e => setPages(p => ({ ...p, [r.id]: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
                       className="w-20 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-[13px] outline-none" />
-                    {parseInt(pages[r.id]) > 0 && <span className="font-semibold">{tierForPages(pages[r.id]) ? `+${tierForPages(pages[r.id]).points} за объём` : 'меньше 100 стр. — +0'}</span>}
+                    {parseInt(pages[r.id]) > 0 && <span className="font-semibold">{tierForBook(pages[r.id], r.book_coef) ? `+${tierForBook(pages[r.id], r.book_coef).points} за объём` : 'меньше 100 засчитанных стр. — +0'}</span>}
                   </div>
                 )}
 

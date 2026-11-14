@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
 import { notify } from '../../../../../lib/notify'
-import { BONUSES, tierForPages } from '../../../../../lib/points'
+import { BONUSES, tierForBook } from '../../../../../lib/points'
 
 /**
  * PATCH /api/librarian/reviews/[id]
@@ -31,7 +31,7 @@ export async function PATCH(req, { params }) {
     await client.query('BEGIN')
 
     const reviewRes = await client.query(
-      `SELECT r.*, b.pages AS book_pages, u.name AS student_name
+      `SELECT r.*, b.pages AS book_pages, b.page_coef AS book_coef, u.name AS student_name
        FROM book_reviews r
        JOIN books b ON b.id = r.book_id
        JOIN users u ON u.id = r.user_id
@@ -120,7 +120,7 @@ export async function PATCH(req, { params }) {
 
     // За объём книги (страницы из карточки книги или указанные проверяющим).
     // Одну и ту же книгу за объём засчитываем один раз — перечитал = без повторных монет.
-    const tier = tierForPages(bookPages || pagesGiven)
+    const tier = tierForBook(bookPages || pagesGiven, review.book_coef)
     const already = await client.query(
       `SELECT 1 FROM user_points WHERE user_id = $1 AND book_id = $2 AND reason LIKE 'pages%' LIMIT 1`,
       [review.user_id, review.book_id])

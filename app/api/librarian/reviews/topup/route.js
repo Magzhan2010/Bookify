@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
 import { notify } from '../../../../../lib/notify'
-import { tierForPages } from '../../../../../lib/points'
+import { tierForBook } from '../../../../../lib/points'
 
 /**
  * Доначисление за объём книги по уже одобренным отзывам.
@@ -15,12 +15,12 @@ import { tierForPages } from '../../../../../lib/points'
 const MISSING = `
   SELECT r.id AS review_id, r.borrow_id, r.user_id, r.book_id, r.reviewed_at,
          u.name AS student_name, u.class_name AS student_class,
-         b.title AS book_title, b.author AS book_author, b.pages AS book_pages
+         b.title AS book_title, b.author AS book_author, b.pages AS book_pages, b.page_coef AS book_coef
     FROM book_reviews r
     JOIN users u ON u.id = r.user_id
     JOIN books b ON b.id = r.book_id
    WHERE r.status = 'approved'
-     AND (b.pages IS NULL OR b.pages = 0 OR b.pages >= 100)
+     AND (b.pages IS NULL OR b.pages = 0 OR ROUND(b.pages * COALESCE(b.page_coef, 1)) >= 100)
      AND NOT EXISTS (SELECT 1 FROM user_points p
                       WHERE p.user_id = r.user_id AND p.book_id = r.book_id AND p.reason LIKE 'pages%')`
 
@@ -60,7 +60,7 @@ export async function POST(req) {
     if (!parseInt(row.book_pages)) {
       await client.query('UPDATE books SET pages = $1, updated_at = NOW() WHERE id = $2', [total, row.book_id])
     }
-    const tier = tierForPages(total)
+    const tier = tierForBook(total, row.book_coef)
     if (tier) {
       await client.query(
         `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)

@@ -65,8 +65,8 @@ export default function BookPagesImport() {
   return (
     <>
       <Button variant="secondary" size="sm" icon={BookOpenCheck} onClick={() => setOpen(true)}>Страницы списком</Button>
-      <Modal open={open} onClose={() => { setOpen(false); reset() }} size="lg" title="Число страниц у книг"
-        description="1) Скачай таблицу и открой в Google Sheets. 2) Впиши страницы в колонку «Страниц». 3) Выдели всю таблицу, скопируй и вставь сюда (или загрузи CSV)."
+      <Modal open={open} onClose={() => { setOpen(false); reset() }} size="lg" title="Страницы и коэффициент у книг"
+        description="1) Скачай таблицу и открой в Google Sheets. 2) Впиши страницы, слова на одной странице и коэффициент (0.5 / 0.75 / 1 / 1.25). 3) Выдели всю таблицу, скопируй и вставь сюда (или загрузи CSV). Подходит и таблица команды «Кітаптың атауы … Коэффициент»."
         footer={report?.applied ? (
           <Button onClick={() => { setOpen(false); reset() }}>Готово</Button>
         ) : report ? (
@@ -108,8 +108,14 @@ export default function BookPagesImport() {
             <div className="max-h-[45vh] overflow-y-auto rounded-xl border border-[var(--color-border)] divide-y divide-[var(--color-border)]">
               {report.result.filter(r => r.status !== 'same' && r.status !== 'empty').map((r, i) => (
                 <div key={i} className="flex items-center gap-3 px-3.5 py-2 text-[13px]">
-                  <span className="flex-1 min-w-0 truncate">{r.title}</span>
-                  <span className="tabular-nums text-[var(--color-text-secondary)]">{r.old ? <><s>{r.old}</s> → </> : null}{r.pages}</span>
+                  <span className="flex-1 min-w-0">
+                    <span className="block truncate">{r.title}</span>
+                    {r.asked && <span className="block truncate text-[11px] text-[#c97a00]">в таблице: «{r.asked}» — проверь, та ли книга</span>}
+                  </span>
+                  <span className="tabular-nums text-[var(--color-text-secondary)] text-right">
+                    {r.old && r.old !== r.pages ? <><s>{r.old}</s> → </> : null}{r.pages}
+                    {r.coef != null && <span className="block text-[11px] text-[var(--color-text-tertiary)]">× {r.coef} = {r.scored} засчитано</span>}
+                  </span>
                   <span className={`w-28 text-right shrink-0 text-[12px] font-semibold ${STATUS[r.status]?.cls}`}>{STATUS[r.status]?.label}</span>
                 </div>
               ))}

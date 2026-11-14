@@ -3,6 +3,7 @@
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'sonner'
 import { BookPlus, Check, X } from 'lucide-react'
+import { PAGE_COEFS, coefForWords, scoredPages } from '../lib/points'
 
 /**
  * Заявки «читаю свою книгу»: подтвердить, что книга у ученика есть.
@@ -68,6 +69,15 @@ export default function OwnBookQueue({ meId }) {
                   <input aria-label="Название" className={`${inp} flex-1 min-w-[140px]`} value={e.title ?? it.title} onChange={ev => set(it.id, 'title', ev.target.value)} />
                   <input aria-label="Автор" className={`${inp} w-32`} value={e.author ?? it.author} onChange={ev => set(it.id, 'author', ev.target.value)} />
                   <input aria-label="Страниц" inputMode="numeric" className={`${inp} w-16`} value={e.pages ?? it.pages} onChange={ev => set(it.id, 'pages', ev.target.value.replace(/\D/g, '').slice(0, 4))} />
+                  <select aria-label="Коэффициент страницы" className={`${inp} w-20`}
+                    value={e.page_coef ?? (coefForWords(it.words_per_page) || 1)}
+                    onChange={ev => set(it.id, 'page_coef', Number(ev.target.value))}>
+                    {PAGE_COEFS.map(c => <option key={c.value} value={c.value}>× {c.label}</option>)}
+                  </select>
+                </div>
+                <div className="text-[11px] text-[var(--color-text-tertiary)]">
+                  {it.words_per_page ? `${it.words_per_page} слов на странице · ` : 'Слов на странице не указано — проверь по книге · '}
+                  засчитаем {scoredPages(e.pages ?? it.pages, e.page_coef ?? (coefForWords(it.words_per_page) || 1))} стр.
                 </div>
                 {it.library_book_id && <div className="text-[11px] text-[#c97a00]">Такая книга есть в библиотеке — проверь, что у ученика свой экземпляр</div>}
               </div>

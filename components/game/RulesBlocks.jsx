@@ -5,7 +5,7 @@ import { motion, AnimatePresence, useInView } from 'framer-motion'
 import { BookOpen, MessageSquare, Video, Mic, ShieldAlert } from 'lucide-react'
 import CoinCard from './CoinCard'
 import PrizeVisual, { ColorSwatches } from './PrizeVisual'
-import { PAGE_TIERS, BONUSES, PRIZES_PREVIEW, LEVELS, tierForPages, HIGHLIGHTER_COLORS } from '../../lib/points'
+import { PAGE_TIERS, BONUSES, PRIZES_PREVIEW, LEVELS, tierForBook, scoredPages, PAGE_COEFS, HIGHLIGHTER_COLORS } from '../../lib/points'
 
 /**
  * Блоки правил программы — для страницы «Как это работает» и лендинга.
@@ -84,6 +84,10 @@ export function PagesLadder() {
           )
         })}
       </div>
+      <p className="mt-5 text-[12px] leading-relaxed text-[var(--color-text-tertiary)]">
+        Считаются <b className="text-[var(--color-text-secondary)]">засчитанные страницы</b> = страниц × коэффициент страницы.
+        Где на странице мало слов (крупный шрифт) — × 0.5 или × 0.75, обычная страница — × 1, плотный текст — × 1.25.
+      </p>
     </motion.div>
   )
 }
@@ -136,8 +140,9 @@ export function BonusCards() {
 /** Калькулятор монет. */
 export function PointsCalculator() {
   const [pages, setPages] = useState(280)
+  const [coef, setCoef] = useState(1)
   const [bonus, setBonus] = useState({ review: true, video: false, tedx: false })
-  const tier = tierForPages(pages)
+  const tier = tierForBook(pages, coef)
 
   const cards = [
     ...(tier ? [{ key: `p${tier.points}`, value: tier.points, label: 'за книгу' }] : []),
@@ -175,7 +180,22 @@ export function PointsCalculator() {
             <span>50</span><span>800</span>
           </div>
           <div className="h-5 mt-1">
-            {!tier && <p className="text-[12px] text-[var(--color-text-tertiary)]">Книги короче 100 страниц монет за объём не дают</p>}
+            {tier || pages * coef >= 100
+              ? coef !== 1 && <p className="text-[12px] text-[var(--color-text-tertiary)] tabular-nums">Засчитано: {pages} × {coef} = {scoredPages(pages, coef)} стр.</p>
+              : <p className="text-[12px] text-[var(--color-text-tertiary)]">Меньше 100 засчитанных страниц — монет за объём нет</p>}
+          </div>
+
+          <div className="mt-3">
+            <div className="text-[13px] text-[var(--color-text-secondary)] mb-2">Коэффициент страницы</div>
+            <div className="grid grid-cols-4 gap-1 p-1 rounded-full bg-[var(--color-bg-soft)]">
+              {PAGE_COEFS.map(c => (
+                <button key={c.value} onClick={() => setCoef(c.value)} title={c.hint}
+                  className={`apple-press py-1.5 rounded-full text-[13px] font-medium tabular-nums transition-colors ${
+                    coef === c.value ? 'bg-[var(--color-bg-card)] text-[var(--color-text-primary)] shadow-sm' : 'text-[var(--color-text-secondary)]'}`}>
+                  × {c.label}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="mt-4 flex flex-wrap gap-2">
