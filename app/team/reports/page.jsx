@@ -25,7 +25,7 @@ export default function ReportsPage() {
         api('/api/team/people'),
         api('/api/team/tasks?assignee=me')
       ])
-      setReports(r); setPeople(p); setMyTasks(t.filter(x => x.status !== 'done'))
+      setReports(r); setPeople(p); setMyTasks(t.filter(x => !['done', 'failed'].includes(x.status)))
     } catch (e) {
       toast.error(e.message); setReports([])
     }

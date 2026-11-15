@@ -292,3 +292,34 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   from { opacity: 0; transform: scale(0.96); }
   to { opacity: 1; transform: scale(1); }
 }
+
+/* === Значки достижений (components/game/AchievementBadge.jsx) === */
+.ach-badge {
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--ach) 7%, #ffffff),
+    color-mix(in srgb, var(--ach) 15%, #ffffff));
+  border: 1px solid color-mix(in srgb, var(--ach) 32%, transparent);
+  box-shadow:
+    0 8px 18px -6px color-mix(in srgb, var(--ach) 45%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1), box-shadow 0.25s ease;
+}
+.ach-badge:hover {
+  transform: translateY(-2px);
+  box-shadow:
+    0 12px 24px -8px color-mix(in srgb, var(--ach) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.7);
+}
+.dark .ach-badge {
+  color: color-mix(in srgb, var(--ach) 78%, #ffffff) !important;
+  background: linear-gradient(160deg,
+    color-mix(in srgb, var(--ach) 26%, #121212),
+    color-mix(in srgb, var(--ach) 14%, #0a0a0a));
+  border-color: color-mix(in srgb, var(--ach) 45%, transparent);
+  box-shadow:
+    0 8px 22px -6px color-mix(in srgb, var(--ach) 55%, transparent),
+    inset 0 1px 0 rgba(255, 255, 255, 0.06);
+}
+@media (prefers-reduced-motion: reduce) {
+  .ach-badge, .ach-badge:hover { transition: none; transform: none; }
+}

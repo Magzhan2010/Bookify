@@ -18,7 +18,7 @@ export async function GET(req) {
              COALESCE((SELECT json_agg(json_build_object('id', t.id, 'name', t.name, 'color', t.color) ORDER BY t.name)
                          FROM team_memberships m JOIN teams t ON t.id = m.team_id
                         WHERE m.user_id = u.id), '[]') AS teams,
-             (SELECT COUNT(*) FROM team_tasks x WHERE x.assignee_id = u.id AND x.status <> 'done')::int AS open_tasks,
+             (SELECT COUNT(*) FROM team_tasks x WHERE x.assignee_id = u.id AND x.status NOT IN ('done', 'failed'))::int AS open_tasks,
              (SELECT COUNT(*) FROM team_tasks x WHERE x.assignee_id = u.id AND x.status = 'done')::int AS done_tasks,
              (SELECT COUNT(*) FROM task_reports r WHERE r.user_id = u.id)::int AS reports,
              (SELECT MAX(r.created_at) FROM task_reports r WHERE r.user_id = u.id) AS last_report_at

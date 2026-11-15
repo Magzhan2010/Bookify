@@ -20,11 +20,13 @@ export async function GET(req) {
         SELECT COUNT(*) FILTER (WHERE status = 'todo')::int AS todo,
                COUNT(*) FILTER (WHERE status = 'in_progress')::int AS in_progress,
                COUNT(*) FILTER (WHERE status = 'review')::int AS review,
+               COUNT(*) FILTER (WHERE status = 'rejected')::int AS rejected,
                COUNT(*) FILTER (WHERE status = 'done')::int AS done,
-               COUNT(*) FILTER (WHERE status <> 'done' AND due_date < CURRENT_DATE)::int AS overdue
+               COUNT(*) FILTER (WHERE status = 'failed')::int AS failed,
+               COUNT(*) FILTER (WHERE status NOT IN ('done', 'failed') AND due_date < CURRENT_DATE)::int AS overdue
           FROM team_tasks`),
       pool.query(`${TASK_SELECT}
-        WHERE x.status <> 'done' AND (x.assignee_id = $1 OR (x.assignee_id IS NULL AND x.team_id IN
+        WHERE x.status NOT IN ('done', 'failed') AND (x.assignee_id = $1 OR (x.assignee_id IS NULL AND x.team_id IN
               (SELECT team_id FROM team_memberships WHERE user_id = $1)))
         ORDER BY x.due_date ASC NULLS LAST, x.created_at DESC LIMIT 8`, [me]),
       pool.query(`${REPORT_SELECT} ORDER BY r.created_at DESC LIMIT 6`),

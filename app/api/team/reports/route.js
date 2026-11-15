@@ -1,7 +1,8 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
-import { REPORT_SELECT, canWorkOnTask, canAssign } from '../../../../lib/teamQueries'
+import { REPORT_SELECT, canWorkOnTask, canAssign, canDecideTask } from '../../../../lib/teamQueries'
+import { isClosed } from '../../../../lib/team'
 
 /**
  * GET /api/team/reports?user=&team=&limit= — лента отчётов (видят все участники).
@@ -65,13 +66,19 @@ export async function POST(req) {
         return NextResponse.json({ error: 'Отчёт можно писать только по своей задаче' }, { status: 403 })
       }
       const status = ['in_progress', 'review', 'done'].includes(body?.status) ? body.status : null
-      // Участник может отправить на проверку; закрыть сам — только тимлид
-      const allowed = status === 'done' && !canAssign(me) ? 'review' : status
+      // Участник может отправить на проверку; закрыть — тимлид или библиотекарь, и не свою задачу
+      const allowed = status === 'done' && !canDecideTask(t.rows[0], me) ? 'review' : status
+      if (allowed && isClosed(t.rows[0].status) && !canAssign(me)) {
+        await client.query('ROLLBACK')
+        return NextResponse.json({ error: 'Задача уже закрыта' }, { status: 400 })
+      }
       if (allowed) {
         await client.query(
           `UPDATE team_tasks SET status = $1, updated_at = NOW(),
+                  decided_by = CASE WHEN $1 = 'done' THEN $3::int ELSE decided_by END,
+                  decided_at = CASE WHEN $1 = 'done' THEN NOW() ELSE decided_at END,
                   done_at = CASE WHEN $1 = 'done' THEN COALESCE(done_at, NOW()) ELSE NULL END
-            WHERE id = $2`, [allowed, taskId])
+            WHERE id = $2`, [allowed, taskId, me.id])
       }
     }
     const r = await client.query(

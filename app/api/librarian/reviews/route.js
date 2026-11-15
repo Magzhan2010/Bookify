@@ -14,6 +14,21 @@ export async function GET(req) {
   const { searchParams } = new URL(req.url)
   const status = searchParams.get('status') || 'pending'
 
+  // ?counts=1 — сколько отзывов в каждой вкладке истории
+  if (searchParams.get('counts')) {
+    try {
+      const c = await pool.query(
+        `SELECT COUNT(*) FILTER (WHERE status = 'approved')::int AS approved,
+                COUNT(*) FILTER (WHERE status = 'pending')::int AS pending,
+                COUNT(*) FILTER (WHERE status = 'rejected')::int AS rejected
+           FROM book_reviews`)
+      return NextResponse.json(c.rows[0])
+    } catch (err) {
+      console.error('Reviews counts error:', err)
+      return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+    }
+  }
+
   try {
     const where = status === 'all' ? '' : 'WHERE r.status = $1'
     const params = status === 'all' ? [] : [status]
@@ -24,15 +39,17 @@ export async function GET(req) {
               b.title AS book_title, b.author AS book_author, b.cover_url AS book_cover,
               b.pages AS book_pages, b.page_coef AS book_coef,
               br.borrowed_at, br.returned_at, br.own_book,
+              rv.name AS reviewer_name,
               (SELECT COALESCE(SUM(up.points), 0) FROM user_points up
                 WHERE up.user_id = u.id AND up.spent = FALSE) AS user_points_total
        FROM book_reviews r
        JOIN users u ON u.id = r.user_id
        JOIN books b ON b.id = r.book_id
        JOIN borrows br ON br.id = r.borrow_id
+       LEFT JOIN users rv ON rv.id = r.reviewed_by
        ${where}
-       ORDER BY r.created_at DESC
-       LIMIT 100`,
+       ORDER BY ${status === 'pending' ? 'r.created_at' : 'COALESCE(r.reviewed_at, r.created_at)'} DESC
+       LIMIT ${status === 'pending' ? 100 : 400}`,
       params
     )
 

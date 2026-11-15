@@ -3,6 +3,8 @@ import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { notifyMany, fmtDate } from '../../../../lib/notify'
 import { TASK_SELECT } from '../../../../lib/teamQueries'
+import { TASK_STATUS_KEYS } from '../../../../lib/team'
+import { randomUUID } from 'crypto'
 
 
 /**
@@ -25,7 +27,7 @@ export async function GET(req) {
                  (SELECT team_id FROM team_memberships WHERE user_id = $${params.length})))`)
   }
   const status = sp.get('status')
-  if (['todo', 'in_progress', 'review', 'done'].includes(status)) {
+  if (TASK_STATUS_KEYS.includes(status)) {
     params.push(status); where.push(`x.status = $${params.length}`)
   }
 
@@ -34,7 +36,7 @@ export async function GET(req) {
       `${TASK_SELECT} ${where.length ? 'WHERE ' + where.join(' AND ') : ''}
        ORDER BY CASE x.priority WHEN 'high' THEN 0 WHEN 'normal' THEN 1 ELSE 2 END,
                 x.due_date ASC NULLS LAST, x.created_at DESC
-       LIMIT 500`,
+       LIMIT 1000`,
       params
     )
     return NextResponse.json(res.rows)
@@ -76,11 +78,13 @@ export async function POST(req) {
       if (ok.rows[0].n !== ids.length) return NextResponse.json({ error: 'Исполнитель не участник платформы' }, { status: 400 })
     }
     const created = []
+    // Все копии одной задачи — одна группа: на доске это одна карточка со статусом каждого
+    const batchId = randomUUID()
     for (const assigneeId of (ids.length ? ids : [null])) {
       const res = await pool.query(
-        `INSERT INTO team_tasks (title, description, team_id, assignee_id, priority, due_date, created_by)
-         VALUES ($1, $2, $3, $4, $5, $6, $7) RETURNING id`,
-        [title, description, teamId, assigneeId, priority, dueDate, guard.payload.id]
+        `INSERT INTO team_tasks (title, description, team_id, assignee_id, priority, due_date, created_by, batch_id)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8) RETURNING id`,
+        [title, description, teamId, assigneeId, priority, dueDate, guard.payload.id, batchId]
       )
       created.push(res.rows[0].id)
     }
@@ -94,7 +98,7 @@ export async function POST(req) {
       kind: 'task', title: `Новая задача: ${title}`,
       body: dueDate ? `Срок: ${fmtDate(dueDate)}` : null, link: '/team/tasks'
     })
-    return NextResponse.json({ success: true, id: created[0], ids: created })
+    return NextResponse.json({ success: true, id: created[0], ids: created, batch_id: batchId })
   } catch (err) {
     console.error('[team/tasks POST]', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })

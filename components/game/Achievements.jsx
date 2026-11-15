@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react'
 import { motion } from 'framer-motion'
 import { Flame } from 'lucide-react'
 import { useT } from '../../lib/i18n'
+import AchievementBadge from './AchievementBadge'
 
 /**
  * Достижения ученика и серия чтения (недели подряд с прочитанной книгой или отзывом).
@@ -59,7 +60,7 @@ export default function Achievements({ userId, compact = false }) {
         </div>
       </div>
 
-      <div className={`grid gap-3 ${compact ? 'grid-cols-3 sm:grid-cols-5' : 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-9'}`}>
+      <div className={`grid gap-x-3 gap-y-5 ${compact ? 'grid-cols-3 sm:grid-cols-5' : 'grid-cols-3 sm:grid-cols-5 lg:grid-cols-9'}`}>
         {data.achievements.map((a, i) => (
           <motion.div
             key={a.code}
@@ -69,14 +70,8 @@ export default function Achievements({ userId, compact = false }) {
             title={`${t(a.title)} — ${t(a.hint)}`}
             className="flex flex-col items-center text-center"
           >
-            <div className={`relative w-14 h-14 rounded-2xl flex items-center justify-center text-[26px] transition-all ${
-              a.earned
-                ? 'bg-gradient-to-br from-[#fff4d6] to-[#ffe0a8] shadow-[0_6px_16px_rgba(201,138,18,0.25)]'
-                : 'bg-[var(--color-bg-soft)] grayscale opacity-40'
-            }`}>
-              {a.icon}
-            </div>
-            <div className={`text-[11px] font-semibold mt-1.5 leading-tight ${a.earned ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-tertiary)]'}`}>
+            <AchievementBadge code={a.code} earned={a.earned} size={60} />
+            <div className={`text-[12px] font-semibold mt-2 leading-tight ${a.earned ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-tertiary)]'}`}>
               {t(a.title)}
             </div>
             {!a.earned && a.target > 1 && (
