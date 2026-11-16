@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { usePathname, useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
-  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2, GraduationCap
+  Library, UserRound, ShoppingBag, Trophy, Gamepad2, LogOut, BookMarked, ArrowUpRight, Quote, Users2, GraduationCap, Timer
 } from 'lucide-react'
 import { ThemeToggle } from '../ThemeContext'
 import { GameProvider, useGame } from './GameContext'
@@ -21,6 +21,7 @@ const NAV_GROUPS = [
     title: 'Читать',
     items: [
       { href: '/library', label: 'Каталог', short: 'Книги', icon: Library },
+      { href: '/focus', label: 'Фокус', short: 'Фокус', icon: Timer },
       { href: '/quotes', label: 'Цитаты', short: 'Цитаты', icon: Quote }
     ]
   },
@@ -47,8 +48,8 @@ const TEACHER_GROUPS = [
 
 // Нижняя панель на телефоне — плоский список в привычном порядке
 const NAV = [
-  NAV_GROUPS[0].items[0], NAV_GROUPS[2].items[0], NAV_GROUPS[1].items[0],
-  NAV_GROUPS[1].items[1], NAV_GROUPS[0].items[1], NAV_GROUPS[1].items[2]
+  NAV_GROUPS[0].items[0], NAV_GROUPS[0].items[1], NAV_GROUPS[2].items[0], NAV_GROUPS[1].items[0],
+  NAV_GROUPS[1].items[1], NAV_GROUPS[0].items[2], NAV_GROUPS[1].items[2]
 ]
 
 /**
@@ -273,13 +274,13 @@ function BottomNav({ isStudent, isTeacher }) {
   const teamMe = useTeamMe()
   // Участникам платформы вместо «Правил» показываем вход в командную платформу
   const items = isTeacher
-    ? [...NAV.slice(0, 5), TEACHER_GROUPS[2].items[0]]
+    ? [...NAV.slice(0, 6), TEACHER_GROUPS[2].items[0]]
     : teamMe
-    ? [...NAV.slice(0, 5), { href: '/team', label: 'Команда', short: 'Команда', icon: Users2 }]
+    ? [...NAV.slice(0, 6), { href: '/team', label: 'Команда', short: 'Команда', icon: Users2 }]
     : NAV
   return (
     <nav className="lg:hidden fixed bottom-0 inset-x-0 z-40 bg-[var(--color-bg-card)]/95 backdrop-blur border-t border-[var(--color-border)] pb-[env(safe-area-inset-bottom)]">
-      <div className={`grid ${items.length === 5 ? 'grid-cols-5' : 'grid-cols-6'}`}>
+      <div className="grid" style={{ gridTemplateColumns: `repeat(${items.length}, minmax(0, 1fr))` }}>
         {items.map(item => {
           const Icon = item.icon
           const active = isActive(item.href)

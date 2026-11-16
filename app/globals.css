@@ -323,3 +323,79 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
 @media (prefers-reduced-motion: reduce) {
   .ach-badge, .ach-badge:hover { transition: none; transform: none; }
 }
+
+/* === Фокус: перекидное табло (components/focus/Timers.jsx) === */
+.flip-card {
+  position: relative;
+  width: var(--w);
+  height: calc(var(--w) * 1.42);
+  perspective: calc(var(--w) * 6);
+  font-size: calc(var(--w) * 1.1);
+  font-weight: 700;
+  color: #f5f5f7;
+  font-variant-numeric: tabular-nums;
+}
+.flip-half {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 50%;
+  overflow: hidden;
+  backface-visibility: hidden;
+}
+.flip-half.top {
+  top: 0;
+  border-radius: calc(var(--w) * 0.12) calc(var(--w) * 0.12) 0 0;
+  background: linear-gradient(180deg, #34343a, #26262b);
+}
+.flip-half.bottom {
+  bottom: 0;
+  border-radius: 0 0 calc(var(--w) * 0.12) calc(var(--w) * 0.12);
+  background: linear-gradient(180deg, #202024, #2b2b30);
+}
+.flip-half > span {
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 200%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+.flip-half.top > span { top: 0; }
+.flip-half.bottom > span { bottom: 0; }
+.flip-card::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  margin-top: -1px;
+  background: rgba(0, 0, 0, 0.6);
+  z-index: 4;
+}
+.flip-flap { z-index: 3; }
+.flip-flap.top {
+  transform-origin: 50% 100%;
+  animation: flip-top 0.26s cubic-bezier(0.55, 0, 0.8, 0.6) forwards;
+}
+.flip-flap.bottom {
+  transform-origin: 50% 0;
+  transform: rotateX(90deg);
+  animation: flip-bottom 0.26s cubic-bezier(0.2, 0.4, 0.45, 1) 0.26s forwards;
+}
+@keyframes flip-top { to { transform: rotateX(-90deg); } }
+@keyframes flip-bottom { to { transform: rotateX(0deg); } }
+.flip-ring {
+  position: absolute;
+  top: calc(var(--w) * -0.16);
+  width: calc(var(--w) * 0.12);
+  height: calc(var(--w) * 0.34);
+  margin-left: calc(var(--w) * -0.06);
+  border-radius: 999px;
+  background: linear-gradient(90deg, #7c7c84, #ececf0 45%, #8a8a92);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+  z-index: 5;
+}
