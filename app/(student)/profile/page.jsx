@@ -19,6 +19,8 @@ import { useGame } from '../../../components/game/GameContext'
 import Link from 'next/link'
 import AvatarPicker from '../../../components/AvatarPicker'
 import Achievements from '../../../components/game/Achievements'
+import PrizeGoal from '../../../components/game/PrizeGoal'
+import Challenges from '../../../components/game/Challenges'
 import { LangSwitch } from '../../../lib/i18n'
 import { REVIEW_CRITERIA, REVIEW_MIN_WORDS, REVIEW_MAX_WORDS, countWords } from '../../../lib/reviewRules'
 import { TROPHY_NOTE } from '../../../lib/trophy'
@@ -328,9 +330,11 @@ export default function ProfilePage() {
         </motion.div>
 
         {/* === БАЛЛЫ И КАРТОЧКИ === */}
+        {(userData.role === 'student' || userData.role === 'teacher') && <PrizeGoal />}
         {(userData.role === 'student' || userData.role === 'teacher') && (
           <PointsPanel points={points} history={pointsHistory} />
         )}
+        {userData.role === 'student' && <Challenges />}
         {(userData.role === 'student' || userData.role === 'teacher') && <Achievements />}
 
         <motion.div

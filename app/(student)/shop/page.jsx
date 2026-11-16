@@ -3,7 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { toast } from 'sonner'
-import { ShoppingBag, Lock, Check, Clock, X, Gift, Info } from 'lucide-react'
+import { ShoppingBag, Lock, Check, Clock, X, Gift, Info, Target } from 'lucide-react'
 import { Button, Modal, Input } from '../../../components/ui'
 import { useGame } from '../../../components/game/GameContext'
 import CoinCard from '../../../components/game/CoinCard'
@@ -55,6 +55,24 @@ export default function ShopPage() {
   }, [])
 
   const available = data?.balance?.available ?? summary?.balance?.available ?? 0
+
+  // Цель-копилка: к какому призу копим (видно в профиле)
+  const toggleGoal = async p => {
+    const next = data?.goal_prize_id === p.id ? null : p.id
+    setData(d => ({ ...d, goal_prize_id: next }))
+    try {
+      const res = await fetch('/api/shop/goal', {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prizeId: next })
+      })
+      if (!res.ok) throw new Error((await res.json()).error || 'Ошибка')
+      toast.success(next ? t('Цель: {x} — прогресс виден в профиле', { x: p.title }) : t('Цель снята'))
+    } catch (err) {
+      toast.error(err.message)
+      load()
+    }
+  }
   const isStudent = role === 'student' || role === 'teacher'
 
   const order = async () => {
@@ -160,6 +178,19 @@ export default function ShopPage() {
                     <span className="absolute top-3 left-3 px-2.5 py-1 rounded-full bg-white/90 backdrop-blur text-[11px] font-semibold text-[#1d1d1f] shadow-sm">
                       {t('Доступно')}
                     </span>
+                  )}
+                  {isStudent && (
+                    <button
+                      onClick={() => toggleGoal(p)}
+                      title={t(data?.goal_prize_id === p.id ? 'Это твоя цель — нажми, чтобы снять' : 'Сделать целью-копилкой')}
+                      aria-label={t('Сделать целью-копилкой')}
+                      className={`apple-press absolute top-3 right-3 h-8 rounded-full inline-flex items-center gap-1 px-2.5 text-[11px] font-semibold shadow-sm backdrop-blur transition-colors ${
+                        data?.goal_prize_id === p.id ? 'bg-[#1f2a5c] text-[#ffc93c]' : 'bg-white/90 text-[#1d1d1f] hover:bg-white'
+                      }`}
+                    >
+                      <Target size={14} />
+                      <span className={data?.goal_prize_id === p.id ? '' : 'hidden sm:inline'}>{t(data?.goal_prize_id === p.id ? 'Моя цель' : 'Цель')}</span>
+                    </button>
                   )}
                 </div>
                 <div className="px-1 pt-4 flex-1 flex flex-col">

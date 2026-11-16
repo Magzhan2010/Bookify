@@ -14,7 +14,7 @@ export async function GET(req) {
   const userId = guard.payload.id
 
   try {
-    const [prizes, balance, orders] = await Promise.all([
+    const [prizes, balance, orders, goal] = await Promise.all([
       pool.query(
         `SELECT id, code, title, description, price, image, needs_note, stock, updated_at
            FROM prizes WHERE active AND (stock IS NULL OR stock > 0) ORDER BY sort ASC, price ASC`
@@ -29,11 +29,13 @@ export async function GET(req) {
           ORDER BY o.created_at DESC
           LIMIT 50`,
         [userId]
-      )
+      ),
+      pool.query('SELECT goal_prize_id FROM users WHERE id = $1', [userId])
     ])
     return NextResponse.json({
       prizes: prizes.rows.map(publicPrize),
       balance,
+      goal_prize_id: goal.rows[0]?.goal_prize_id || null,
       orders: orders.rows.map(o => ({ ...o, image: undefined, custom_image: customImage(o.prize_id, o.image, o.updated_at) }))
     })
   } catch (err) {

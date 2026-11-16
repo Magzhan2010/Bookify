@@ -13,7 +13,7 @@ import { useT } from '../lib/i18n'
 const ICONS = {
   review_approved: '✅', review_rejected: '✏️', prize_issued: '🎁', prize_cancelled: '↩️',
   book_issued: '📖', request_approved: '📬', request_rejected: '📭', due_soon: '⏰', overdue: '⚠️',
-  bonus: '🪙', task: '📝', achievement: '🏅', extended: '📅', teacher: '🧑‍🏫', recommendation: '💡'
+  bonus: '🪙', task: '📝', achievement: '🏅', extended: '📅', teacher: '🧑‍🏫', recommendation: '💡', challenge: '⚔️', goal: '🎯'
 }
 
 function ago(d, t, locale) {

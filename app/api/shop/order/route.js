@@ -74,6 +74,8 @@ export async function POST(req) {
     if (prize.stock !== null) {
       await client.query('UPDATE prizes SET stock = stock - 1 WHERE id = $1', [prize.id])
     }
+    // Цель-копилка достигнута — снимаем её
+    await client.query('UPDATE users SET goal_prize_id = NULL WHERE id = $1 AND goal_prize_id = $2', [userId, prize.id])
     await client.query('COMMIT')
 
     return NextResponse.json({
