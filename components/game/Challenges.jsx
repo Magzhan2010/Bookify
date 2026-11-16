@@ -18,7 +18,7 @@ const authed = (url, opts = {}) =>
   })
 
 const STAGES = {
-  none: { label: 'Ещё не взял книгу', color: '#8e8e93' },
+  none: { label: 'Ещё не взял книгу', color: '#9aa0b4' },
   reading: { label: 'Читает', color: '#5b8def' },
   returned: { label: 'Вернул, пишет отзыв', color: '#ff9f0a' },
   review: { label: 'Отзыв на проверке', color: '#bf8cff' },
@@ -31,6 +31,7 @@ const initials = n => String(n || '?').split(' ').map(x => x[0]).slice(0, 2).joi
 export default function Challenges() {
   const [data, setData] = useState(null)
   const [creating, setCreating] = useState(false)
+  const [accepting, setAccepting] = useState(null)
   const [rules, setRules] = useState(false)
 
   const load = useCallback(() => {
@@ -38,9 +39,11 @@ export default function Challenges() {
   }, [])
   useEffect(() => { load() }, [load])
 
-  const act = async (id, action) => {
+  const act = async (id, action, extra = {}) => {
+    if (action === 'accept' && !extra.bookId) { setAccepting(list.find(c => c.id === id)); return }
     try {
-      await authed(`/api/challenges/${id}`, { method: 'PATCH', body: { action } })
+      await authed(`/api/challenges/${id}`, { method: 'PATCH', body: { action, ...extra } })
+      if (action === 'accept') setAccepting(null)
       toast.success(action === 'accept' ? 'Вызов принят — старт!' : action === 'decline' ? 'Вызов отклонён' : 'Вызов отменён')
       load()
     } catch (e) { toast.error(e.message) }
@@ -69,17 +72,16 @@ export default function Challenges() {
       </div>
 
       <button onClick={() => setRules(!rules)} className="inline-flex items-center gap-1.5 text-[13px] font-medium text-[var(--color-brand)] mb-3">
-        <Info size={14} /> Как это честно, если книги разные? <ChevronDown size={14} className={`transition-transform ${rules ? 'rotate-180' : ''}`} />
+        <Info size={14} /> Правила вызова <ChevronDown size={14} className={`transition-transform ${rules ? 'rotate-180' : ''}`} />
       </button>
       <AnimatePresence initial={false}>
         {rules && (
           <motion.ul initial={{ height: 0, opacity: 0 }} animate={{ height: 'auto', opacity: 1 }} exit={{ height: 0, opacity: 0 }}
             className="overflow-hidden mb-4 space-y-1.5 text-[13px] text-[var(--color-text-secondary)] leading-relaxed">
-            <li>• Старт у обоих одновременно — в момент, когда соперник принял вызов. На всё 30 дней.</li>
-            <li>• Читаете книгу вызова или любую книгу похожего объёма: от 75% до 125% её страниц. Страницы считаются с коэффициентом, как для монет.</li>
-            <li>• Засчитывается только книга, которую выдали после старта — никто не начнёт читать раньше другого.</li>
-            <li>• Финиш — отправленный отзыв, который потом одобрили.</li>
-            <li>• Побеждает тот, у кого выше скорость: страниц в день. Если книга одна и та же — это просто «кто первым дочитал».</li>
+            <li>• У каждого своя книга, но страниц почти одинаково — разница не больше 10%. Страницы считаются с коэффициентом, как для монет.</li>
+            <li>• Ты выбираешь свою книгу, друг при принятии вызова — свою книгу такого же объёма.</li>
+            <li>• Старт у обоих одновременно — когда друг принял вызов. Засчитывается только книга, выданная после старта. На всё 30 дней.</li>
+            <li>• Финиш — отправленный отзыв, который потом одобрили. Кто первым отправил — тот победил.</li>
           </motion.ul>
         )}
       </AnimatePresence>
@@ -105,6 +107,7 @@ export default function Challenges() {
       )}
 
       <CreateChallenge open={creating} onClose={() => setCreating(false)} onDone={() => { setCreating(false); load() }} />
+      <AcceptChallenge c={accepting} onClose={() => setAccepting(null)} onPick={b => act(accepting.id, 'accept', { bookId: b.id })} />
     </motion.section>
   )
 }
@@ -123,7 +126,9 @@ function ChallengeCard({ c, onAct }) {
             <div className="text-[14px] font-semibold">
               {incoming ? <>{other.name} бросает тебе вызов</> : <>Ждём ответа от {other.name}</>}
             </div>
-            <div className="text-[13px] text-[var(--color-text-secondary)] truncate">«{c.book.title}» · {c.target_pages} стр.</div>
+            <div className="text-[13px] text-[var(--color-text-secondary)] truncate">
+              {incoming ? <>У соперника «{c.book.title}» · {c.target_pages} стр. Тебе нужна книга на {c.pages_range[0]}–{c.pages_range[1]} стр.</> : <>Твоя книга «{c.book.title}» · {c.target_pages} стр.</>}
+            </div>
             {c.message && <div className="text-[13px] mt-1 italic text-[var(--color-text-secondary)]">«{c.message}»</div>}
           </div>
         </div>
@@ -131,7 +136,7 @@ function ChallengeCard({ c, onAct }) {
           {incoming ? (
             <>
               <Button variant="ghost" icon={X} onClick={() => onAct(c.id, 'decline')}>Отклонить</Button>
-              <Button icon={Check} onClick={() => onAct(c.id, 'accept')}>Принять вызов</Button>
+              <Button icon={Check} onClick={() => onAct(c.id, 'accept')}>Принять и выбрать книгу</Button>
             </>
           ) : (
             <Button variant="ghost" onClick={() => onAct(c.id, 'cancel')}>Отменить</Button>
@@ -156,7 +161,7 @@ function ChallengeCard({ c, onAct }) {
         <Side s={other} label={other.name} right />
       </div>
       <div className="relative mt-4 pt-3 border-t border-white/10 flex flex-wrap items-center gap-x-4 gap-y-1 text-[12px] text-white/65">
-        <span className="inline-flex items-center gap-1.5"><BookOpen size={13} /> «{c.book.title}» или книга {c.pages_range[0]}–{c.pages_range[1]} стр.</span>
+        <span className="inline-flex items-center gap-1.5"><BookOpen size={13} /> книги по ~{c.target_pages} стр. · кто первым сдаст отзыв, тот победил</span>
         <span className="inline-flex items-center gap-1.5"><Clock size={13} /> осталось {left} дн.</span>
       </div>
       <div className="relative mt-2 h-1 rounded-full bg-white/10 overflow-hidden">
@@ -181,7 +186,7 @@ function Side({ s, label, right }) {
         style={{ background: `${stage.color}22`, color: stage.color }}>
         <span className="w-1.5 h-1.5 rounded-full" style={{ background: stage.color }} />{stage.label}
       </span>
-      {s.linked && (
+      {s.title && (
         <span className="mt-1.5 text-[12px] text-white/60 truncate max-w-full">{s.title} · {s.pages} стр.</span>
       )}
     </div>
@@ -196,8 +201,8 @@ function PastRow({ c }) {
     : c.status === 'declined' ? `${c.mine === 'challenger' ? other.name + ' отклонил' : 'Ты отклонил'} вызов`
     : c.status === 'cancelled' ? 'Вызов отменён'
     : c.accepted_at ? 'Никто не дочитал за 30 дней' : 'Приглашение истекло'
-  const mySpeed = c.result?.[c.mine]?.speed
-  const otherSpeed = c.result?.[c.mine === 'challenger' ? 'opponent' : 'challenger']?.speed
+  const myDays = c.result?.[c.mine]?.days
+  const otherDays = c.result?.[c.mine === 'challenger' ? 'opponent' : 'challenger']?.days
   return (
     <li className="flex items-center gap-3 px-4 py-3">
       <span className={`w-8 h-8 rounded-full flex items-center justify-center shrink-0 ${won ? 'bg-[#ffc93c] text-[#1f2a5c]' : 'bg-[var(--color-bg-soft)] text-[var(--color-text-tertiary)]'}`}>
@@ -206,7 +211,7 @@ function PastRow({ c }) {
       <div className="flex-1 min-w-0">
         <div className="text-[14px] font-medium truncate">{text}</div>
         <div className="text-[12px] text-[var(--color-text-tertiary)] truncate">
-          «{c.book.title}»{(mySpeed || otherSpeed) ? ` · ты ${mySpeed ?? '—'} / соперник ${otherSpeed ?? '—'} стр. в день` : ''}
+          ~{c.target_pages} стр.{(myDays || otherDays) ? ` · ты ${myDays != null ? myDays + ' дн.' : 'не дочитал'} / соперник ${otherDays != null ? otherDays + ' дн.' : 'не дочитал'}` : ''}
         </div>
       </div>
     </li>
@@ -256,7 +261,7 @@ function CreateChallenge({ open, onClose, onDone }) {
   const goStep = s => { setStep(s); setQ('') }
 
   return (
-    <Modal open={open} onClose={onClose} title={['Кого вызываем?', 'Какую книгу читаем?', 'Всё готово'][step]} size="lg">
+    <Modal open={open} onClose={onClose} title={['Кого вызываем?', 'Твоя книга', 'Всё готово'][step]} size="lg">
       <div className="flex gap-1.5 mb-4">
         {[0, 1, 2].map(i => <span key={i} className={`h-1 flex-1 rounded-full ${i <= step ? 'bg-[var(--color-brand)]' : 'bg-[var(--color-bg-soft)]'}`} />)}
       </div>
@@ -288,7 +293,7 @@ function CreateChallenge({ open, onClose, onDone }) {
 
       {step === 1 && (
         <>
-          <p className="text-[12px] text-[var(--color-text-tertiary)] mb-2">Книга задаёт объём. Соперник может читать её же или книгу похожего объёма (±25%).</p>
+          <p className="text-[12px] text-[var(--color-text-tertiary)] mb-2">Твоя книга задаёт число страниц. Другу нужно будет выбрать свою книгу такого же объёма (±10%).</p>
           <ul className="max-h-[360px] overflow-y-auto -mx-1">
             {books.map(b => (
               <li key={b.id}>
@@ -319,9 +324,9 @@ function CreateChallenge({ open, onClose, onDone }) {
           <div className="rounded-2xl p-4 text-white flex items-center gap-4" style={{ background: 'linear-gradient(135deg,#1f2a5c,#1a56db)' }}>
             <BookCover book={book} size={64} />
             <div className="min-w-0">
-              <div className="text-[13px] text-white/70">Ты vs {opponent.name}</div>
+              <div className="text-[13px] text-white/70">Ты vs {opponent.name} · твоя книга</div>
               <div className="text-[17px] font-semibold truncate">{book.title}</div>
-              <div className="text-[13px] text-white/70">{book.counted_pages} стр. · подойдёт {Math.floor(book.counted_pages * 0.75)}–{Math.ceil(book.counted_pages * 1.25)} стр.</div>
+              <div className="text-[13px] text-white/70">{book.counted_pages} стр. · {opponent.name} выберет книгу на {Math.floor(book.counted_pages * 0.9)}–{Math.ceil(book.counted_pages * 1.1)} стр.</div>
             </div>
           </div>
           <label className="block">
@@ -329,12 +334,74 @@ function CreateChallenge({ open, onClose, onDone }) {
             <input value={message} onChange={e => setMessage(e.target.value)} maxLength={200} placeholder="Спорим, я быстрее?"
               className="mt-1 w-full px-4 py-2.5 rounded-xl bg-[var(--color-bg-soft)] outline-none text-[14px] border border-transparent focus:border-[var(--color-brand)]/40" />
           </label>
-          <p className="text-[12px] text-[var(--color-text-tertiary)]">Старт — когда {opponent.name} примет вызов. Книгу берите в библиотеке после старта — взятая раньше не засчитается.</p>
+          <p className="text-[12px] text-[var(--color-text-tertiary)]">Старт — когда {opponent.name} примет вызов и выберет книгу. Книги берите в библиотеке после старта — взятая раньше не засчитается. Кто первым сдаст отзыв, тот победил.</p>
           <div className="flex justify-between gap-2">
             <Button variant="ghost" onClick={() => goStep(1)}>← Другая книга</Button>
             <Button icon={Swords} loading={saving} onClick={send}>Бросить вызов</Button>
           </div>
         </div>
+      )}
+    </Modal>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/* Принять вызов: выбрать свою книгу с тем же числом страниц            */
+/* ------------------------------------------------------------------ */
+function AcceptChallenge({ c, onClose, onPick }) {
+  const [q, setQ] = useState('')
+  const [books, setBooks] = useState(null)
+  const [saving, setSaving] = useState(null)
+
+  useEffect(() => { if (c) { setQ(''); setBooks(null); setSaving(null) } }, [c])
+  useEffect(() => {
+    if (!c) return
+    const id = setTimeout(() => {
+      authed(`/api/challenges?books=1&target=${c.target_pages}&q=${encodeURIComponent(q)}`).then(setBooks).catch(() => setBooks([]))
+    }, 250)
+    return () => clearTimeout(id)
+  }, [q, c])
+
+  return (
+    <Modal open={!!c} onClose={onClose} title="Выбери свою книгу" size="lg">
+      {c && (
+        <>
+          <p className="text-[13px] text-[var(--color-text-secondary)] mb-3">
+            У {c.challenger.name} «{c.book.title}» — {c.target_pages} стр. Подходят книги на <b className="text-[var(--color-text-primary)]">{c.pages_range[0]}–{c.pages_range[1]} стр.</b> Сначала те, что есть в наличии.
+          </p>
+          <div className="relative mb-3">
+            <Search size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
+            <input autoFocus value={q} onChange={e => setQ(e.target.value)} placeholder="Название или автор"
+              className="w-full pl-10 pr-4 py-2.5 rounded-xl bg-[var(--color-bg-soft)] outline-none text-[14px] border border-transparent focus:border-[var(--color-brand)]/40" />
+          </div>
+          {!books ? (
+            <div className="h-40 rounded-2xl bg-[var(--color-bg-soft)] animate-pulse" />
+          ) : (
+            <ul className="max-h-[380px] overflow-y-auto -mx-1">
+              {books.filter(b => b.id !== c.book.id).map(b => (
+                <li key={b.id}>
+                  <button disabled={!!saving} onClick={async () => { setSaving(b.id); await onPick(b); setSaving(null) }}
+                    className="w-full flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-[var(--color-bg-soft)] text-left disabled:opacity-60">
+                    <BookCover book={b} size={48} />
+                    <span className="flex-1 min-w-0">
+                      <span className="block text-[14px] font-semibold truncate">{b.title}</span>
+                      <span className="block text-[12px] text-[var(--color-text-tertiary)] truncate">{b.author}</span>
+                    </span>
+                    <span className="text-right shrink-0">
+                      <span className="block text-[13px] font-semibold tabular-nums">{b.counted_pages} стр.</span>
+                      <span className={`block text-[11px] ${b.available_copies > 0 ? 'text-[var(--color-success)]' : 'text-[var(--color-text-tertiary)]'}`}>
+                        {saving === b.id ? 'Принимаем…' : b.available_copies > 0 ? 'в наличии' : 'сейчас выдана'}
+                      </span>
+                    </span>
+                  </button>
+                </li>
+              ))}
+              {books.filter(b => b.id !== c.book.id).length === 0 && (
+                <li className="py-8 text-center text-[13px] text-[var(--color-text-tertiary)]">Книг такого объёма не нашли — попробуй другой запрос</li>
+              )}
+            </ul>
+          )}
+        </>
       )}
     </Modal>
   )

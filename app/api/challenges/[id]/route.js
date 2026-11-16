@@ -2,10 +2,11 @@ import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { notify } from '../../../../lib/notify'
-import { CHALLENGE_DAYS, MAX_OPEN } from '../../../../lib/challenges'
+import { CHALLENGE_DAYS, MAX_OPEN, pagesRange } from '../../../../lib/challenges'
 
 /**
- * PATCH /api/challenges/[id] — { action: 'accept' | 'decline' | 'cancel' }
+ * PATCH /api/challenges/[id] — { action: 'accept' | 'decline' | 'cancel', bookId? }
+ * accept — соперник выбирает свою книгу (bookId) с тем же числом страниц (±10%).
  * accept/decline — соперник, пока вызов ждёт ответа; cancel — автор, пока не приняли.
  * После принятия стартуют оба одновременно, на вызов CHALLENGE_DAYS дней.
  */
@@ -37,14 +38,23 @@ export async function PATCH(req, { params }) {
         if (open.rows[0].n >= MAX_OPEN) {
           return NextResponse.json({ error: `Одновременно можно вести не больше ${MAX_OPEN} вызовов` }, { status: 400 })
         }
+        const bookId = parseInt(body?.bookId)
+        if (!bookId) return NextResponse.json({ error: 'Выбери свою книгу' }, { status: 400 })
+        const b = await pool.query(
+          `SELECT ROUND(COALESCE(pages, 0) * COALESCE(page_coef, 1))::int AS counted
+             FROM books WHERE id = $1 AND archived_at IS NULL`, [bookId])
+        const [lo, hi] = pagesRange(c.target_pages)
+        if (!b.rows[0] || b.rows[0].counted < lo || b.rows[0].counted > hi) {
+          return NextResponse.json({ error: `Нужна книга на ${lo}–${hi} страниц` }, { status: 400 })
+        }
         await pool.query(
-          `UPDATE challenges SET status = 'active', accepted_at = NOW(),
+          `UPDATE challenges SET status = 'active', accepted_at = NOW(), opponent_book_id = $3,
                   deadline_at = NOW() + make_interval(days => $2)
-            WHERE id = $1 AND status = 'pending'`, [id, CHALLENGE_DAYS])
+            WHERE id = $1 AND status = 'pending'`, [id, CHALLENGE_DAYS, bookId])
         await notify(pool, c.challenger_id, {
           kind: 'challenge',
           title: `${c.me_name} принял вызов — старт!`,
-          body: `Теперь возьми «${c.book_title}» или книгу похожего объёма в библиотеке. Время пошло.`,
+          body: `Теперь возьми «${c.book_title}» в библиотеке. Кто первым дочитает и сдаст отзыв — тот победил.`,
           link: '/profile#challenges'
         })
       } else {

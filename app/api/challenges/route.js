@@ -3,13 +3,13 @@ import pool from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
 import { notify } from '../../../lib/notify'
 import {
-  resolveForUser, sideState, MAX_OPEN, MIN_PAGES, MIN_SHARE, MAX_SHARE, CHALLENGE_DAYS
+  resolveForUser, sideState, pagesRange, MAX_OPEN, MIN_PAGES, CHALLENGE_DAYS
 } from '../../../lib/challenges'
 
 /**
  * GET /api/challenges — мои вызовы (с пересчётом победителя).
  *   ?people=1&q=  — кого можно вызвать (ученики, сначала мой класс)
- *   ?books=1&q=   — книги для вызова (из каталога, с числом страниц)
+ *   ?books=1&q=&target=N — книги для вызова; с target — только с похожим числом страниц (±10%)
  */
 export async function GET(req) {
   const guard = await requireAuth(req, ['student'])
@@ -32,15 +32,17 @@ export async function GET(req) {
     }
 
     if (sp.get('books')) {
+      const target = parseInt(sp.get('target')) || 0
+      const [lo, hi] = target ? pagesRange(target) : [MIN_PAGES, 100000]
       const r = await pool.query(
         `SELECT id, title, author, cover_url, available_copies,
                 ROUND(COALESCE(pages, 0) * COALESCE(page_coef, 1))::int AS counted_pages, pages
            FROM books
           WHERE archived_at IS NULL AND COALESCE(pages, 0) > 0
-            AND ROUND(COALESCE(pages, 0) * COALESCE(page_coef, 1)) >= $2
+            AND ROUND(COALESCE(pages, 0) * COALESCE(page_coef, 1)) BETWEEN $2 AND $3
             AND ($1 = '' OR title ILIKE '%' || $1 || '%' OR author ILIKE '%' || $1 || '%')
-          ORDER BY (available_copies > 0) DESC, title ASC
-          LIMIT 30`, [q, MIN_PAGES])
+          ORDER BY (available_copies > 0) DESC, ${target ? 'ABS(ROUND(COALESCE(pages, 0) * COALESCE(page_coef, 1)) - $4)' : 'title'} ASC, title ASC
+          LIMIT 40`, target ? [q, lo, hi, target] : [q, lo, hi])
       return NextResponse.json(r.rows)
     }
 
@@ -62,7 +64,7 @@ export async function GET(req) {
     const list = []
     for (const c of r.rows) {
       const sides = c.status === 'active' || c.status === 'finished' || c.status === 'expired'
-        ? { challenger: await sideState(pool, c.challenger_borrow_id), opponent: await sideState(pool, c.opponent_borrow_id) }
+        ? { challenger: await sideState(pool, c.book_id, c.challenger_borrow_id), opponent: await sideState(pool, c.opponent_book_id, c.opponent_borrow_id) }
         : null
       list.push({
         id: c.id,
@@ -71,7 +73,7 @@ export async function GET(req) {
         message: c.message,
         book: { id: c.book_id, title: c.book_title, author: c.book_author, cover_url: c.book_cover },
         target_pages: c.target_pages,
-        pages_range: [Math.floor(c.target_pages * MIN_SHARE), Math.ceil(c.target_pages * MAX_SHARE)],
+        pages_range: pagesRange(c.target_pages),
         challenger: { id: c.challenger_id, name: c.challenger_name, class_name: c.challenger_class, ...(sides?.challenger || {}) },
         opponent: { id: c.opponent_id, name: c.opponent_name, class_name: c.opponent_class, ...(sides?.opponent || {}) },
         winner_id: c.winner_id,
@@ -92,7 +94,7 @@ export async function GET(req) {
 
 /**
  * POST /api/challenges — бросить вызов.
- * Body: { opponentId, bookId, message? }
+ * Body: { opponentId, bookId, message? } — bookId: книга автора вызова, задаёт число страниц
  */
 export async function POST(req) {
   const guard = await requireAuth(req, ['student'])
@@ -136,7 +138,7 @@ export async function POST(req) {
     await notify(pool, opponentId, {
       kind: 'challenge',
       title: `${meName.rows[0]?.name || 'Одноклассник'} бросает тебе вызов`,
-      body: `Кто быстрее прочитает «${book.rows[0].title}»? У тебя ${CHALLENGE_DAYS} дней после старта.`,
+      body: `Кто первым дочитает? У соперника «${book.rows[0].title}» (${book.rows[0].counted} стр.) — выбери свою книгу такого же объёма. ${CHALLENGE_DAYS} дней после старта.`,
       link: '/profile#challenges'
     })
     return NextResponse.json({ success: true, id: r.rows[0].id })
