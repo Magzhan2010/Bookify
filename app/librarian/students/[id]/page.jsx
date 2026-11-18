@@ -9,7 +9,7 @@ import { TROPHY_NOTE } from '../../../../lib/trophy'
 import Achievements from '../../../../components/game/Achievements'
 import StudentCoins from '../../../../components/librarian/StudentCoins'
 import StudentCredentials from '../../../../components/librarian/StudentCredentials'
-import VideoGallery from '../../../../components/VideoGallery'
+import VideoGallery, { videoBooks } from '../../../../components/VideoGallery'
 import { useTeamMe } from '../../../../lib/useTeamMe'
 import { parseJwt } from '../../../../lib/jwt'
 import { useEffect, useState } from 'react'
@@ -262,7 +262,7 @@ export default function StudentDetailPage() {
             studentId={student.id}
             manage
             studentName={student.name}
-            books={history.filter(h => h.status === 'approved' && h.notes !== TROPHY_NOTE)}
+            books={videoBooks(history)}
             addFor={videoFor}
             onAddForDone={() => setVideoFor(null)}
             onAdded={res => setHistory(hs => hs.map(x => x.id === res.borrowId ? { ...x, [res.kind === 'video' ? 'has_video' : 'has_tedx']: true } : x))}
@@ -313,7 +313,7 @@ export default function StudentDetailPage() {
                         : ['Ждёт отзыва', 'bg-[#ffc93c]/25 text-[#9a6b00]']
                       return (
                         <span className="flex flex-wrap items-center justify-end gap-1.5 shrink-0">
-                          {!trophy && h.status === 'approved' && [['video', 'Видео', h.has_video], ['tedx', 'TEDx', h.has_tedx]].map(([kind, name, done]) => (
+                          {!trophy && ['returned', 'reviewed', 'approved'].includes(h.status) && [['video', 'Видео', h.has_video], ['tedx', 'TEDx', h.has_tedx]].map(([kind, name, done]) => (
                             done ? (
                               <span key={kind} className="px-2 h-6 inline-flex items-center rounded-md text-[11px] font-semibold text-[var(--color-success)] bg-[var(--color-success)]/10">✓ {name}</span>
                             ) : (

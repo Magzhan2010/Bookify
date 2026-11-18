@@ -6,6 +6,7 @@ import { toast } from 'sonner'
 import { Clapperboard, Play, ExternalLink, Trash2, Plus, Link2, Mic, X } from 'lucide-react'
 import { Button, Modal } from './ui'
 import { parseVideo, PLATFORMS } from '../lib/videoLinks'
+import { TROPHY_NOTE } from '../lib/trophy'
 
 const authed = (url, opts = {}) =>
   fetch(url, {
@@ -76,7 +77,7 @@ export default function VideoGallery({ studentId, manage = false, books = [], st
 
       <Player v={playing} onClose={() => setPlaying(null)} />
       {manage && (
-        <AddVideo
+        <AddVideoModal
           state={adding}
           books={books}
           studentName={studentName}
@@ -220,15 +221,31 @@ function EmptyStudent() {
   )
 }
 
+/** Прочитанные книги ученика, к которым можно добавить видео */
+export const videoBooks = history => (history || []).filter(h =>
+  ['returned', 'reviewed', 'approved'].includes(h.status) && h.notes !== TROPHY_NOTE && !h.own_book_pending)
+
 /* ------------------------------------------------------------------ */
-/* Добавить видео (команда, библиотекарь)                               */
+/* Добавить видео (команда, библиотекарь) — единственный путь:          */
+/* книга + ссылка → видео в профиле ученика и монеты сразу.             */
+/* state: { borrowId?, kind?, studentId?, studentName? }                */
+/* Без books окно само загрузит прочитанные книги ученика по studentId. */
 /* ------------------------------------------------------------------ */
-function AddVideo({ state, books, studentName, onClose, onDone }) {
+export function AddVideoModal({ state, books: givenBooks, studentName, onClose, onDone }) {
+  const [loaded, setLoaded] = useState(null)
+  const books = givenBooks || loaded || []
+  const name = studentName || state?.studentName
   const [borrowId, setBorrowId] = useState('')
   const [kind, setKind] = useState('video')
   const [url, setUrl] = useState('')
   const [title, setTitle] = useState('')
   const [saving, setSaving] = useState(false)
+
+  useEffect(() => {
+    if (!state || givenBooks || !state.studentId) return
+    setLoaded(null)
+    authed(`/api/librarian/students/${state.studentId}`).then(d => setLoaded(videoBooks(d.history))).catch(() => setLoaded([]))
+  }, [state, givenBooks])
 
   useEffect(() => {
     if (!state) return
@@ -244,7 +261,8 @@ function AddVideo({ state, books, studentName, onClose, onDone }) {
   const save = async e => {
     e.preventDefault()
     if (!borrowId) return toast.error('Выбери книгу')
-    if (!meta) return toast.error('Вставь ссылку на видео')
+    if (url && !meta) return toast.error('Это не похоже на ссылку')
+    if (kind === 'video' && !meta) return toast.error('Вставь ссылку на видео')
     setSaving(true)
     try {
       const d = await authed(`/api/librarian/borrows/${borrowId}/bonus`, { method: 'POST', body: { kind, url, title } })
@@ -254,7 +272,7 @@ function AddVideo({ state, books, studentName, onClose, onDone }) {
   }
 
   return (
-    <Modal open={!!state} onClose={onClose} title={`Видео${studentName ? ` · ${studentName}` : ''}`} size="lg">
+    <Modal open={!!state} onClose={onClose} title={`${kind === 'tedx' ? 'TEDx' : 'Видео'}${name ? ` · ${name}` : ''}`} size="lg">
       <form onSubmit={save} className="space-y-4">
         <label className="block">
           <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">О какой книге</span>
@@ -263,7 +281,8 @@ function AddVideo({ state, books, studentName, onClose, onDone }) {
             <option value="">Выбери прочитанную книгу</option>
             {books.map(b => <option key={b.id} value={b.id}>{b.title}</option>)}
           </select>
-          {books.length === 0 && <span className="block mt-1 text-[12px] text-[var(--color-text-tertiary)]">Видео добавляют к книге с одобренным отзывом — у ученика таких пока нет.</span>}
+          {state?.studentId && !givenBooks && !loaded && <span className="block mt-1 text-[12px] text-[var(--color-text-tertiary)]">Загружаем книги ученика…</span>}
+          {(givenBooks || loaded) && books.length === 0 && <span className="block mt-1 text-[12px] text-[var(--color-text-tertiary)]">У ученика пока нет прочитанных книг — видео добавляют к книге, которую он вернул.</span>}
         </label>
 
         <div className="flex gap-2">
@@ -280,7 +299,7 @@ function AddVideo({ state, books, studentName, onClose, onDone }) {
         </div>
 
         <label className="block">
-          <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">Ссылка на видео</span>
+          <span className="text-[12px] font-medium text-[var(--color-text-secondary)]">Ссылка на {kind === 'tedx' ? 'запись выступления — по желанию' : 'видео'}</span>
           <div className="mt-1 relative">
             <Link2 size={16} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-[var(--color-text-tertiary)]" />
             <input value={url} onChange={e => setUrl(e.target.value)} placeholder="YouTube, Instagram, TikTok или Google Диск"
@@ -301,12 +320,12 @@ function AddVideo({ state, books, studentName, onClose, onDone }) {
 
         {book && (
           <p className="text-[13px] text-[var(--color-text-secondary)]">
-            {already ? 'Монеты за это уже начислены — добавим только видео.' : `Ученик получит +${kind === 'video' ? 10 : 15} монет, видео появится у него в профиле.`}
+            {already ? 'Монеты за это уже начислены — добавим только видео.' : `Ученик сразу получит +${kind === 'video' ? 10 : 15} монет${meta ? ', видео появится у него в профиле' : ''}.`}
           </p>
         )}
         <div className="flex justify-end gap-2">
           <Button type="button" variant="ghost" onClick={onClose}>Отмена</Button>
-          <Button type="submit" loading={saving} icon={Plus}>Добавить</Button>
+          <Button type="submit" loading={saving} icon={Plus}>{already ? 'Добавить видео' : `Добавить и начислить +${kind === 'video' ? 10 : 15}`}</Button>
         </div>
       </form>
     </Modal>

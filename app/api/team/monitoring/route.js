@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server'
 import pool from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
-import { notify } from '../../../../lib/notify'
-import { BONUSES } from '../../../../lib/points'
 import { getGameStart } from '../../../../lib/game'
 
 /**
@@ -102,47 +100,6 @@ export async function GET(req) {
     return NextResponse.json({ summary, game_start: start, classes: classes.rows.map(r => r.class_name), students: rows })
   } catch (err) {
     console.error('[team/monitoring]', err)
-    return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
-  }
-}
-
-/**
- * POST /api/team/monitoring — отметить выступление на TEDx или видео ученика
- * (начисляет баллы по правилам). Body: { userId, kind: 'tedx'|'video', note? }
- */
-export async function POST(req) {
-  const guard = await requireAuth(req, ['team'])
-  if (!guard.ok) return guard.response
-
-  let body
-  try { body = await req.json() } catch { return NextResponse.json({ error: 'Неверный запрос' }, { status: 400 }) }
-  const userId = parseInt(body?.userId)
-  const bonus = body?.kind === 'tedx' ? BONUSES.tedx : body?.kind === 'video' ? BONUSES.video : null
-  if (!userId || !bonus) return NextResponse.json({ error: 'Неверные данные' }, { status: 400 })
-  const note = String(body?.note || '').trim().slice(0, 200)
-
-  try {
-    if (userId === Number(guard.payload.id)) {
-      return NextResponse.json({ error: 'Себе бонус отмечает другой участник или библиотекарь' }, { status: 403 })
-    }
-    const u = await pool.query(`SELECT id FROM users WHERE id = $1 AND role IN ('student', 'teacher')`, [userId])
-    if (!u.rows[0]) return NextResponse.json({ error: 'Ученик не найден' }, { status: 404 })
-    // Двойной клик / два участника одновременно — один и тот же бонус за минуту не дублируем
-    const recent = await pool.query(
-      `SELECT 1 FROM user_points WHERE user_id = $1 AND reason = $2 AND created_at > NOW() - INTERVAL '2 minutes' LIMIT 1`,
-      [userId, bonus.code])
-    if (recent.rows[0]) return NextResponse.json({ error: 'Этот бонус уже отмечен только что' }, { status: 409 })
-    await pool.query(
-      `INSERT INTO user_points (user_id, points, reason, description, created_by) VALUES ($1, $2, $3, $4, $5)`,
-      [userId, bonus.points, bonus.code, note ? `${bonus.title}: ${note}` : bonus.title, guard.payload.id]
-    )
-    await notify(pool, userId, {
-      kind: 'bonus', title: `+${bonus.points} монет: ${bonus.short}`,
-      body: note ? `${bonus.title}: ${note}` : bonus.title, link: '/profile'
-    })
-    return NextResponse.json({ success: true, points: bonus.points })
-  } catch (err) {
-    console.error('[team/monitoring POST]', err)
     return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
   }
 }

@@ -36,8 +36,8 @@ export async function POST(req, { params }) {
     if (Number(b.user_id) === Number(guard.payload.id) && guard.payload.role !== 'librarian') {
       await client.query('ROLLBACK'); return NextResponse.json({ error: 'Себе отмечает другой участник или библиотекарь' }, { status: 403 })
     }
-    if (b.status !== 'approved') {
-      await client.query('ROLLBACK'); return NextResponse.json({ error: 'Сначала нужен одобренный отзыв об этой книге' }, { status: 400 })
+    if (!['returned', 'reviewed', 'approved'].includes(b.status)) {
+      await client.query('ROLLBACK'); return NextResponse.json({ error: 'Видео добавляют к книге, которую ученик уже вернул' }, { status: 400 })
     }
     const addVideo = async () => {
       if (!video) return

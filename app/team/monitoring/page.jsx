@@ -1,6 +1,7 @@
 'use client'
 
 import Link from 'next/link'
+import { AddVideoModal } from '../../../components/VideoGallery'
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -8,8 +9,8 @@ import { toast } from 'sonner'
 import {
   Search, BookOpenCheck, MessageSquareOff, MessageSquareText, Mic, Video, Coins, Users, ChevronDown, Plus, Flag
 } from 'lucide-react'
-import { Button, Modal, Skeleton, EmptyState } from '../../../components/ui'
-import { PageHeader, Segmented, Stat, Avatar, Field, inputCls, timeAgo, api } from '../../../components/team/ui'
+import { Skeleton, EmptyState } from '../../../components/ui'
+import { PageHeader, Segmented, Stat, Avatar, inputCls, timeAgo, api } from '../../../components/team/ui'
 import { useTeam } from '../../../components/team/TeamContext'
 import GameStart from '../../../components/GameStart'
 
@@ -108,7 +109,11 @@ function Monitoring() {
         </>
       )}
 
-      <AwardModal award={award} onClose={() => setAward(null)} onDone={() => { setAward(null); load() }} />
+      <AddVideoModal
+        state={award ? { kind: award.kind, studentId: award.student.id, studentName: award.student.name } : null}
+        onClose={() => setAward(null)}
+        onDone={() => { setAward(null); load() }}
+      />
     </div>
   )
 }
@@ -188,39 +193,3 @@ function Cell({ label, value, sub, good }) {
   )
 }
 
-function AwardModal({ award, onClose, onDone }) {
-  const [note, setNote] = useState('')
-  const [saving, setSaving] = useState(false)
-  useEffect(() => { if (award) setNote('') }, [award])
-
-  const isTedx = award?.kind === 'tedx'
-  const submit = async e => {
-    e.preventDefault()
-    setSaving(true)
-    try {
-      const res = await api('/api/team/monitoring', { method: 'POST', body: { userId: award.student.id, kind: award.kind, note } })
-      toast.success(`${award.student.name}: +${res.points} монет`)
-      onDone()
-    } catch (err) { toast.error(err.message) } finally { setSaving(false) }
-  }
-
-  return (
-    <Modal
-      open={!!award}
-      onClose={onClose}
-      title={isTedx ? 'Выступление на TEDx' : 'Видео о книге'}
-      description={award ? `${award.student.name} получит ${isTedx ? 15 : 10} монет по правилам программы.` : ''}
-      size="sm"
-    >
-      <form onSubmit={submit} className="space-y-4">
-        <Field label={isTedx ? 'Тема или дата выступления' : 'О какой книге / ссылка'} hint="Необязательно">
-          <input value={note} onChange={e => setNote(e.target.value)} className={inputCls} />
-        </Field>
-        <div className="flex justify-end gap-2">
-          <Button type="button" variant="ghost" onClick={onClose}>Отмена</Button>
-          <Button type="submit" loading={saving}>Отметить</Button>
-        </div>
-      </form>
-    </Modal>
-  )
-}
