@@ -49,7 +49,7 @@ export async function PATCH(req, { params }) {
     const book = await client.query(
       `INSERT INTO books (title, author, pages, cover_url, total_copies, available_copies, owner_id, archived_at, page_coef, words_per_page)
        VALUES ($1, $2, $3, $4, 0, 0, $5, NOW(), $6, $7) RETURNING id`,
-      [title, author, pages, o.photo, o.user_id, cleanCoef(body.page_coef) ?? coefForWords(o.words_per_page), o.words_per_page || null])
+      [title, author, pages, o.photo, o.user_id, coefForWords(o.words_per_page) ?? cleanCoef(body.page_coef), o.words_per_page || null])
     const borrow = await client.query(
       `INSERT INTO borrows (user_id, book_id, status, borrowed_at, due_date, returned_at, issued_by, own_book, notes)
        VALUES ($1, $2, 'returned', NOW(), NULL, NOW(), $3, TRUE, 'Своя книга') RETURNING id`,

@@ -9,6 +9,7 @@ import { TROPHY_NOTE } from '../../../../lib/trophy'
 import Achievements from '../../../../components/game/Achievements'
 import StudentCoins from '../../../../components/librarian/StudentCoins'
 import StudentCredentials from '../../../../components/librarian/StudentCredentials'
+import VideoGallery from '../../../../components/VideoGallery'
 import { useTeamMe } from '../../../../lib/useTeamMe'
 import { parseJwt } from '../../../../lib/jwt'
 import { useEffect, useState } from 'react'
@@ -34,6 +35,7 @@ export default function StudentDetailPage() {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [history, setHistory] = useState([])
+  const [videoFor, setVideoFor] = useState(null)
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [favorites, setFavorites] = useState([])
   const [stats, setStats] = useState(null)
@@ -256,6 +258,15 @@ export default function StudentDetailPage() {
           {canSeeCreds && <StudentCredentials student={student} />}
           <StudentCoins studentId={student.id} />
           {student.role !== 'teacher' && <Achievements userId={student.id} compact />}
+          <VideoGallery
+            studentId={student.id}
+            manage
+            studentName={student.name}
+            books={history.filter(h => h.status === 'approved' && h.notes !== TROPHY_NOTE)}
+            addFor={videoFor}
+            onAddForDone={() => setVideoFor(null)}
+            onAdded={res => setHistory(hs => hs.map(x => x.id === res.borrowId ? { ...x, [res.kind === 'video' ? 'has_video' : 'has_tedx']: true } : x))}
+          />
 
           {/* История книг */}
           <motion.div
@@ -306,19 +317,8 @@ export default function StudentDetailPage() {
                             done ? (
                               <span key={kind} className="px-2 h-6 inline-flex items-center rounded-md text-[11px] font-semibold text-[var(--color-success)] bg-[var(--color-success)]/10">✓ {name}</span>
                             ) : (
-                              <button key={kind} title={`Ученик ${kind === 'video' ? 'снял видео об этой книге' : 'выступил с этой книгой на TEDx'} — начислить монеты`}
-                                onClick={async () => {
-                                  if (!window.confirm(`${name}: «${h.title}» — ${student.name}. Начислить +${kind === 'video' ? 10 : 15}?`)) return
-                                  const res = await fetch(`/api/librarian/borrows/${h.id}/bonus`, {
-                                    method: 'POST',
-                                    headers: { Authorization: `Bearer ${localStorage.getItem('token')}`, 'Content-Type': 'application/json' },
-                                    body: JSON.stringify({ kind })
-                                  })
-                                  const d = await res.json()
-                                  if (!res.ok) return toast.error(d.error || 'Ошибка')
-                                  toast.success(`+${d.points} · ${name}`)
-                                  setHistory(hs => hs.map(x => x.id === h.id ? { ...x, [kind === 'video' ? 'has_video' : 'has_tedx']: true } : x))
-                                }}
+                              <button key={kind} title={`Ученик ${kind === 'video' ? 'снял видео об этой книге' : 'выступил с этой книгой на TEDx'} — добавить ссылку и начислить монеты`}
+                                onClick={() => setVideoFor({ borrowId: h.id, kind })}
                                 className="px-2 h-6 rounded-md text-[11px] font-semibold text-[var(--color-brand)] bg-[var(--color-brand-soft)] hover:opacity-80">
                                 + {name}
                               </button>

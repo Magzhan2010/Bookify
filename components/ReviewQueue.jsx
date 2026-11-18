@@ -64,10 +64,6 @@ export default function ReviewQueue({ onChanged, meId }) {
       }
       reviewNote = 'Доработай: ' + miss.map(c => c.ru.toLowerCase()).join('; ')
     }
-    if (action === 'approve' && r && !parseInt(r.book_pages) && !parseInt(pages[reviewId])) {
-      toast.error('Впиши, сколько страниц в книге — иначе за объём начислится 0')
-      return
-    }
     setReviewAction(reviewId)
     try {
       const res = await fetch(`/api/librarian/reviews/${reviewId}`, {
@@ -153,7 +149,7 @@ export default function ReviewQueue({ onChanged, meId }) {
             )}
           </div>
           <p className="text-[12px] text-[var(--color-text-tertiary)] mb-3">
-            Отзыв одобрен, но у книги не было числа страниц — монеты за объём не пришли. Впиши страницы и начисли.
+            Отзыв одобрен, а у книги ещё нет числа страниц. Монеты за объём придут сами, как только страницы появятся, — или впиши их здесь.
           </p>
           <div className="divide-y divide-[var(--color-border)] max-h-[320px] overflow-y-auto">
             {topup.map(row => {
@@ -290,7 +286,7 @@ export default function ReviewQueue({ onChanged, meId }) {
 
                 {!parseInt(r.book_pages) && !(meId && r.user_id === meId) && (
                   <div className="mb-3 flex flex-wrap items-center gap-2 p-2.5 rounded-xl bg-[#ffc93c]/15 text-[12px] text-[var(--color-text-secondary)]">
-                    <span>У книги не указан объём — сколько в ней страниц?</span>
+                    <span>Страниц нет — можно вписать сейчас или одобрить так: монеты за объём придут сами, когда страницы появятся</span>
                     <input inputMode="numeric" placeholder="стр." value={pages[r.id] || ''}
                       onChange={e => setPages(p => ({ ...p, [r.id]: e.target.value.replace(/\D/g, '').slice(0, 4) }))}
                       className="w-20 bg-[var(--color-bg-card)] border border-[var(--color-border)] rounded-lg px-2.5 py-1.5 text-[13px] outline-none" />

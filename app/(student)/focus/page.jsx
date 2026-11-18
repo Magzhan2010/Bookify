@@ -30,10 +30,11 @@ const PHASES = [
   { key: 'short', label: 'Перерыв' },
   { key: 'long', label: 'Длинный перерыв' }
 ]
+/* Мягкие цветные пятна поверх карточки — цвет этапа */
 const BG = {
-  focus: ['#1f2a5c', '#0b1030', '#ffc93c', '#1a56db'],
-  short: ['#0f3d3a', '#06201f', '#5eead4', '#22c55e'],
-  long: ['#24215c', '#0d0b2c', '#93c5fd', '#a78bfa']
+  focus: ['#1a56db', '#5b8def'],
+  short: ['#22a55b', '#5eead4'],
+  long: ['#8b5cf6', '#c4b5fd']
 }
 
 const loadSaved = () => {
@@ -275,30 +276,29 @@ export default function FocusPage() {
       {/* ================= Главная сцена ================= */}
       <section
         ref={heroRef}
-        className={`relative overflow-hidden text-white isolate ${fs ? 'w-screen h-screen rounded-none flex flex-col' : 'rounded-[32px] sm:rounded-[40px] min-h-[640px] flex flex-col'}`}
-        style={{ background: `radial-gradient(120% 90% at 50% 0%, ${bg[0]} 0%, ${bg[1]} 70%)`, transition: 'background 1.2s ease' }}
+        className={`relative overflow-hidden isolate bg-[var(--color-bg-card)] text-[var(--color-text-primary)] ${fs ? 'w-screen h-screen rounded-none flex flex-col' : 'rounded-[32px] sm:rounded-[40px] min-h-[640px] flex flex-col border border-[var(--color-border)] shadow-[0_1px_2px_rgba(0,0,0,0.04)]'}`}
       >
         {/* живые пятна света */}
         <motion.div
           aria-hidden
-          className="absolute -z-10 w-[520px] h-[520px] rounded-full blur-[110px] opacity-40"
-          style={{ background: bg[2], top: '-18%', left: '-10%' }}
+          className="absolute -z-10 w-[520px] h-[520px] rounded-full blur-[120px] opacity-[0.13] dark:opacity-[0.22]"
+          style={{ background: bg[0], top: '-22%', left: '-12%', transition: 'background 1.2s ease' }}
           animate={still ? undefined : { x: [0, 80, 0], y: [0, 40, 0], scale: timer.running ? [1, 1.15, 1] : 1 }}
           transition={{ duration: 16, repeat: Infinity, ease: 'easeInOut' }}
         />
         <motion.div
           aria-hidden
-          className="absolute -z-10 w-[460px] h-[460px] rounded-full blur-[120px] opacity-35"
-          style={{ background: bg[3], bottom: '-20%', right: '-8%' }}
+          className="absolute -z-10 w-[460px] h-[460px] rounded-full blur-[120px] opacity-[0.12] dark:opacity-[0.2]"
+          style={{ background: bg[1], bottom: '-22%', right: '-10%', transition: 'background 1.2s ease' }}
           animate={still ? undefined : { x: [0, -70, 0], y: [0, -30, 0] }}
           transition={{ duration: 19, repeat: Infinity, ease: 'easeInOut' }}
         />
-        <div aria-hidden className="absolute inset-0 -z-10 opacity-[0.06]"
-          style={{ backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)', backgroundSize: '44px 44px', maskImage: 'radial-gradient(circle at 50% 45%, #000 0%, transparent 70%)' }} />
+        <div aria-hidden className="absolute inset-0 -z-10 opacity-[0.5]"
+          style={{ backgroundImage: 'radial-gradient(var(--color-border) 1px, transparent 1px)', backgroundSize: '22px 22px', maskImage: 'radial-gradient(circle at 50% 45%, #000 0%, transparent 65%)' }} />
 
         {/* верхняя панель */}
         <div className="relative flex flex-wrap items-center justify-between gap-3 p-4 sm:p-6">
-          <div className="flex p-1 rounded-full bg-white/[0.07] border border-white/10 backdrop-blur-md">
+          <div className="flex p-1 rounded-full bg-[var(--color-bg-soft)] border border-[var(--color-border)]">
             {PHASES.map(p => {
               const active = p.key === timer.phase
               return (
@@ -306,7 +306,7 @@ export default function FocusPage() {
                   key={p.key}
                   onClick={() => choosePhase(p.key)}
                   disabled={timer.running && !active}
-                  className={`relative px-3 sm:px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-semibold transition-colors disabled:opacity-40 ${active ? 'text-[#0b1030]' : 'text-white/70 hover:text-white'}`}
+                  className={`relative px-3 sm:px-4 py-1.5 rounded-full text-[12px] sm:text-[13px] font-semibold transition-colors disabled:opacity-40 ${active ? 'text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                 >
                   {active && <motion.span layoutId="phase-pill" className="absolute inset-0 rounded-full" style={{ background: c.a }} transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
                   <span className="relative">{t(p.label)}</span>
@@ -315,7 +315,7 @@ export default function FocusPage() {
             })}
           </div>
           <div className="flex items-center gap-1.5">
-            <div className="flex p-1 rounded-full bg-white/[0.07] border border-white/10 backdrop-blur-md">
+            <div className="flex p-1 rounded-full bg-[var(--color-bg-soft)] border border-[var(--color-border)]">
               {DESIGNS.map(d => {
                 const Icon = d.icon
                 const active = settings.design === d.key
@@ -325,9 +325,9 @@ export default function FocusPage() {
                     onClick={() => updateSettings({ design: d.key })}
                     title={t(d.label)}
                     aria-label={t(d.label)}
-                    className={`relative h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-[12px] font-semibold transition-colors ${active ? 'text-[#0b1030]' : 'text-white/70 hover:text-white'}`}
+                    className={`relative h-8 px-2.5 rounded-full inline-flex items-center gap-1.5 text-[12px] font-semibold transition-colors ${active ? 'text-[var(--color-text-primary)]' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}
                   >
-                    {active && <motion.span layoutId="design-pill" className="absolute inset-0 rounded-full bg-white" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
+                    {active && <motion.span layoutId="design-pill" className="absolute inset-0 rounded-full bg-[var(--color-bg-card)] shadow-[0_1px_3px_rgba(0,0,0,0.1)]" transition={{ type: 'spring', stiffness: 420, damping: 34 }} />}
                     <Icon size={15} className="relative" />
                     <span className="relative hidden sm:inline">{t(d.label)}</span>
                   </button>
@@ -361,19 +361,19 @@ export default function FocusPage() {
           {/* на чём концентрируемся */}
           <button
             onClick={() => pickerRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
-            className="mt-7 max-w-full inline-flex items-center gap-3 pl-1.5 pr-4 py-1.5 rounded-full bg-white/[0.08] border border-white/10 backdrop-blur-md hover:bg-white/[0.12] transition-colors"
+            className="mt-7 max-w-full inline-flex items-center gap-3 pl-1.5 pr-4 py-1.5 rounded-full bg-[var(--color-bg-soft)] border border-[var(--color-border)] hover:border-[var(--color-border-strong)] transition-colors"
           >
             {timer.phase !== 'focus' ? (
-              <><span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><Coffee size={15} /></span>
-                <span className="text-[14px] text-white/80">{t('Отдохни: встань, попей воды, посмотри вдаль')}</span></>
+              <><span className="w-8 h-8 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center"><Coffee size={15} /></span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">{t('Отдохни: встань, попей воды, посмотри вдаль')}</span></>
             ) : target ? (
               <>
                 <BookThumb cover={target.cover} title={target.title} size={32} />
-                <span className="text-[14px] truncate"><span className="text-white/55">{t('Читаю')}: </span>{target.title}</span>
+                <span className="text-[14px] truncate"><span className="text-[var(--color-text-tertiary)]">{t('Читаю')}: </span>{target.title}</span>
               </>
             ) : (
-              <><span className="w-8 h-8 rounded-full bg-white/10 flex items-center justify-center"><BookOpen size={15} /></span>
-                <span className="text-[14px] text-white/80">{t('Выбери книгу, чтобы начать')}</span></>
+              <><span className="w-8 h-8 rounded-full bg-[var(--color-bg-card)] flex items-center justify-center"><BookOpen size={15} /></span>
+                <span className="text-[14px] text-[var(--color-text-secondary)]">{t('Выбери книгу, чтобы начать')}</span></>
             )}
           </button>
 
@@ -384,7 +384,7 @@ export default function FocusPage() {
               whileTap={{ scale: 0.94 }}
               onClick={toggle}
               aria-label={timer.running ? t('Пауза') : t('Концентрироваться')}
-              className="relative h-[84px] px-8 sm:px-10 rounded-full font-semibold text-[17px] text-[#0b1030] inline-flex items-center gap-2.5"
+              className="relative h-[84px] px-8 sm:px-10 rounded-full font-semibold text-[17px] text-white inline-flex items-center gap-2.5"
               style={{ background: `linear-gradient(135deg, ${c.a}, ${c.b})`, boxShadow: `0 18px 50px -10px ${c.soft}` }}
             >
               {timer.running && !still && (
@@ -403,14 +403,14 @@ export default function FocusPage() {
           </div>
 
           {/* раунды */}
-          <div className="mt-7 flex items-center gap-3 text-[12px] text-white/55">
+          <div className="mt-7 flex items-center gap-3 text-[12px] text-[var(--color-text-tertiary)]">
             <div className="flex gap-1.5">
               {Array.from({ length: settings.rounds }, (_, i) => {
                 const doneRound = i + 1 < timer.round || (i + 1 === timer.round && timer.phase !== 'focus')
                 const current = i + 1 === timer.round && timer.phase === 'focus'
                 return (
                   <span key={i} className="h-2 rounded-full transition-all duration-500"
-                    style={{ width: current ? 22 : 8, background: doneRound ? c.a : current ? 'rgba(255,255,255,0.75)' : 'rgba(255,255,255,0.18)' }} />
+                    style={{ width: current ? 22 : 8, background: doneRound ? c.a : current ? 'var(--color-text-secondary)' : 'var(--color-border-strong)' }} />
                 )
               })}
             </div>
@@ -467,7 +467,7 @@ function GlassBtn({ children, onClick, label, big }) {
       onClick={onClick}
       title={label}
       aria-label={label}
-      className={`${big ? 'w-14 h-14' : 'w-10 h-10'} rounded-full inline-flex items-center justify-center bg-white/[0.08] border border-white/10 backdrop-blur-md text-white/85 hover:text-white hover:bg-white/[0.14] active:scale-95 transition-all`}
+      className={`${big ? 'w-14 h-14' : 'w-10 h-10'} rounded-full inline-flex items-center justify-center bg-[var(--color-bg-soft)] border border-[var(--color-border)] text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] hover:border-[var(--color-border-strong)] active:scale-95 transition-all`}
     >
       {children}
     </button>
@@ -489,7 +489,7 @@ function SectionTitle({ icon: Icon, title, hint }) {
 function BookThumb({ cover, title, size = 40 }) {
   if (cover) {
     // eslint-disable-next-line @next/next/no-img-element
-    return <img src={cover} alt="" className="rounded-md object-cover shrink-0 bg-white/10" style={{ width: size * 0.72, height: size }} />
+    return <img src={cover} alt="" className="rounded-md object-cover shrink-0 bg-[var(--color-bg-soft)]" style={{ width: size * 0.72, height: size }} />
   }
   return (
     <span className="rounded-md shrink-0 flex items-center justify-center font-bold text-[#1f2a5c]"

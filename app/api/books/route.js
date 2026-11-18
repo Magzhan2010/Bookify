@@ -139,7 +139,7 @@ export async function POST(req) {
     cover_url, file_url, total_copies, isbn, pages, tags,
     language, difficulty, page_coef, words_per_page
   } = await req.json()
-  const coef = cleanCoef(page_coef) ?? coefForWords(words_per_page)
+  const coef = coefForWords(words_per_page) ?? cleanCoef(page_coef)
   const words = parseInt(words_per_page) || null
 
   if (!title || !author) {

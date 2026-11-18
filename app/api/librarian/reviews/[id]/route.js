@@ -78,13 +78,10 @@ export async function PATCH(req, { params }) {
     }
 
     // === APPROVE ===
-    // Без числа страниц баллы за объём не посчитать — раньше ученик тогда получал только +5
+    // Страницы не обязательны: без них ученик сейчас получает +5 за отзыв,
+    // а монеты за объём придут сами, как только у книги появится число страниц (lib/autoTopup.js)
     const pagesGiven = parseInt(pagesRead) || 0
     const bookPages = parseInt(review.book_pages) || 0
-    if (!pagesGiven && !bookPages) {
-      await client.query('ROLLBACK')
-      return NextResponse.json({ error: 'У книги не указано число страниц — впиши его, чтобы начислить баллы за объём', need_pages: true }, { status: 400 })
-    }
     if (pagesGiven && !bookPages) {
       await client.query('UPDATE books SET pages = $1, updated_at = NOW() WHERE id = $2 AND (pages IS NULL OR pages = 0)', [pagesGiven, review.book_id])
     }

@@ -2,6 +2,7 @@ import { NextResponse } from "next/server"
 import pool, { ensureSchema } from '../../../../lib/db'
 import { requireAuth } from '../../../../lib/auth'
 import { cleanCoef, coefForWords } from '../../../../lib/points'
+import { autoTopupVolume } from '../../../../lib/autoTopup'
 
 export async function GET(req, { params }) {
   const { id } = await params
@@ -25,9 +26,9 @@ export async function PATCH(req, { params }) {
   const { id } = await params
   const data = await req.json()
   await ensureSchema()
-  // Коэффициент страницы: явно выбранный, иначе — по числу слов на странице
+  // Коэффициент страницы: по числу слов на странице (правило сайта); выбранный вручную — только если слов нет
   if (data.page_coef !== undefined || data.words_per_page !== undefined) {
-    data.page_coef = cleanCoef(data.page_coef) ?? coefForWords(data.words_per_page)
+    data.page_coef = coefForWords(data.words_per_page) ?? cleanCoef(data.page_coef)
   }
 
   // Разрешённые поля для обновления.
@@ -95,6 +96,10 @@ export async function PATCH(req, { params }) {
     )
     if (!result.rows[0]) {
       return NextResponse.json({ error: 'Книга не найдена' }, { status: 404 })
+    }
+    // Появились страницы — монеты за объём тем, чей отзыв уже одобрен
+    if (data.pages !== undefined || data.page_coef !== undefined) {
+      await autoTopupVolume(pool, { bookIds: [parseInt(id)] }).catch(e => console.error('[books PATCH topup]', e.message))
     }
     return NextResponse.json({ success: true, book: result.rows[0] })
   } catch (err) {

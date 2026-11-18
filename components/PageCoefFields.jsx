@@ -5,12 +5,12 @@ import { PAGE_COEFS, coefForWords, scoredPages, tierForBook } from '../lib/point
 /**
  * Страницы, слова на странице и коэффициент страницы.
  * value: { pages, words_per_page, page_coef } — строки/числа; onChange(patch).
- * Коэффициент подставляется сам по числу слов, но его можно выбрать вручную.
+ * Коэффициент считается сам по числу слов на странице; вручную — только если слов не знаем.
  */
 export default function PageCoefFields({ value, onChange, compact = false }) {
   const pages = parseInt(value.pages) || 0
   const auto = coefForWords(value.words_per_page)
-  const coef = value.page_coef !== '' && value.page_coef != null ? Number(value.page_coef) : auto
+  const coef = auto ?? (value.page_coef !== '' && value.page_coef != null ? Number(value.page_coef) : null)
   const scored = scoredPages(pages, coef)
   const tier = tierForBook(pages, coef)
   const input = 'w-full bg-[var(--color-bg-soft)] border border-transparent px-3.5 py-2.5 rounded-xl text-[14px] text-[var(--color-text-primary)] outline-none focus:border-[var(--color-brand)]/40 transition-colors tabular-nums'
@@ -37,7 +37,7 @@ export default function PageCoefFields({ value, onChange, compact = false }) {
           {PAGE_COEFS.map(c => {
             const on = coef === c.value
             return (
-              <button key={c.value} type="button" title={c.hint}
+              <button key={c.value} type="button" title={c.hint} disabled={!!auto}
                 onClick={() => onChange({ page_coef: on && value.page_coef !== '' ? '' : c.value })}
                 className={`py-2 rounded-lg text-[13px] font-semibold tabular-nums transition-all ${
                   on ? 'bg-[var(--color-bg-card)] text-[var(--color-brand)] shadow-sm' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}>
@@ -48,7 +48,7 @@ export default function PageCoefFields({ value, onChange, compact = false }) {
         </div>
         <p className="mt-1.5 text-[11px] text-[var(--color-text-tertiary)] leading-relaxed">
           {PAGE_COEFS.map(c => `${c.label} — ${c.hint}`).join(' · ')}.
-          {auto && (value.page_coef === '' || value.page_coef == null) ? ' Выбран сам по числу слов.' : ''}
+          {auto ? ' Выбран сам по числу слов на странице.' : ' Впиши число слов — коэффициент выберется сам.'}
         </p>
       </div>
 

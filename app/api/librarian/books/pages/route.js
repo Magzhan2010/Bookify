@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import pool, { ensureSchema } from '../../../../../lib/db'
 import { requireAuth } from '../../../../../lib/auth'
 import { cleanCoef, coefForWords, scoredPages } from '../../../../../lib/points'
+import { autoTopupVolume } from '../../../../../lib/autoTopup'
 
 /**
  * Число страниц у книг списком (через Google Sheets).
@@ -105,7 +106,7 @@ export async function POST(req) {
       if (done.has(book.id)) { result.push({ title: book.title, pages, status: 'duplicate' }); continue }
       done.add(book.id)
       const words = Math.round(parseFloat(String(r?.words ?? '').replace(',', '.'))) || null
-      const coef = cleanCoef(r?.coef) ?? coefForWords(words) ?? (book.page_coef != null ? Number(book.page_coef) : null)
+      const coef = coefForWords(words) ?? coefForWords(book.words_per_page) ?? cleanCoef(r?.coef) ?? (book.page_coef != null ? Number(book.page_coef) : null)
       const oldCoef = book.page_coef != null ? Number(book.page_coef) : null
       const info = { id: book.id, title: book.title, author: book.author, asked: fuzzyHit ? r.title : undefined, pages, coef, scored: scoredPages(pages, coef) }
       if (parseInt(book.pages) === pages && oldCoef === coef) { result.push({ ...info, status: 'same' }); continue }
@@ -116,7 +117,9 @@ export async function POST(req) {
       result.push({ ...info, old: book.pages || null, oldCoef, status: book.pages ? 'changed' : 'added' })
     }
     await client.query(apply ? 'COMMIT' : 'ROLLBACK')
-    return NextResponse.json({ applied: apply, result })
+    // Монеты за объём тем, чей отзыв уже одобрен, — сразу
+    const awarded = apply && done.size ? await autoTopupVolume(pool, { bookIds: [...done] }).catch(() => 0) : 0
+    return NextResponse.json({ applied: apply, result, awarded })
   } catch (err) {
     await client.query('ROLLBACK').catch(() => {})
     console.error('[books/pages POST]', err)

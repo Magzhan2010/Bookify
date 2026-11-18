@@ -3,11 +3,14 @@ import pool from '../../../../../../lib/db'
 import { requireAuth } from '../../../../../../lib/auth'
 import { notify } from '../../../../../../lib/notify'
 import { BONUSES } from '../../../../../../lib/points'
+import { parseVideo } from '../../../../../../lib/videoLinks'
 
 /**
- * POST { kind: 'video' | 'tedx' } — команда или библиотекарь отмечают, что ученик снял видео
- * о книге или выступил с ней на TEDx. Одно видео и одно выступление на книгу. Себе — нельзя.
- * Отменить — «Отменить» в блоке «Монеты» ученика.
+ * POST { kind: 'video' | 'tedx', url?, title? } — команда или библиотекарь отмечают, что ученик снял
+ * видео о книге или выступил с ней на TEDx. Одно видео и одно выступление на книгу. Себе — нельзя.
+ * url — ссылка на видео: появится в профиле ученика в «Моих видео». Если монеты уже начислены,
+ * вызов со ссылкой просто добавляет видео (без повторных монет).
+ * Отменить монеты — «Отменить» в блоке «Монеты» ученика.
  */
 export async function POST(req, { params }) {
   const guard = await requireAuth(req, ['librarian', 'team'])
@@ -17,6 +20,10 @@ export async function POST(req, { params }) {
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Неверный запрос' }, { status: 400 }) }
   const kind = body?.kind === 'tedx' ? 'tedx' : body?.kind === 'video' ? 'video' : null
   if (!kind) return NextResponse.json({ error: 'Видео или TEDx?' }, { status: 400 })
+  const video = body?.url ? parseVideo(body.url) : null
+  if (body?.url && !video) return NextResponse.json({ error: 'Ссылка не похожа на адрес видео' }, { status: 400 })
+  if (kind === 'video' && !video) return NextResponse.json({ error: 'Вставь ссылку на видео' }, { status: 400 })
+  const title = String(body?.title || '').trim().slice(0, 120) || null
 
   const client = await pool.connect()
   try {
@@ -32,14 +39,28 @@ export async function POST(req, { params }) {
     if (b.status !== 'approved') {
       await client.query('ROLLBACK'); return NextResponse.json({ error: 'Сначала нужен одобренный отзыв об этой книге' }, { status: 400 })
     }
+    const addVideo = async () => {
+      if (!video) return
+      await client.query(
+        `INSERT INTO student_videos (user_id, borrow_id, book_id, kind, url, title, created_by)
+         VALUES ($1, $2, $3, $4, $5, $6, $7)`,
+        [b.user_id, id, b.book_id, kind, video.url, title, guard.payload.id])
+    }
     const dup = await client.query(`SELECT 1 FROM user_points WHERE borrow_id = $1 AND reason = $2 AND NOT reverted LIMIT 1`, [id, kind])
-    if (dup.rows[0]) { await client.query('ROLLBACK'); return NextResponse.json({ error: 'Уже отмечено' }, { status: 400 }) }
+    if (dup.rows[0]) {
+      if (!video) { await client.query('ROLLBACK'); return NextResponse.json({ error: 'Уже отмечено' }, { status: 400 }) }
+      await addVideo()
+      await notify(client, b.user_id, { kind: 'bonus', title: 'Твоё видео в профиле', body: `«${b.title}»`, link: '/profile#videos' })
+      await client.query('COMMIT')
+      return NextResponse.json({ success: true, points: 0, video_only: true })
+    }
+    await addVideo()
     const bonus = BONUSES[kind]
     await client.query(
       `INSERT INTO user_points (user_id, points, reason, description, borrow_id, book_id, created_by)
        VALUES ($1, $2, $3, $4, $5, $6, $7)`,
       [b.user_id, bonus.points, kind, `${bonus.title}: «${b.title}»`, id, b.book_id, guard.payload.id])
-    await notify(client, b.user_id, { kind: 'bonus', title: `+${bonus.points} монет: ${bonus.short}`, body: `«${b.title}»`, link: '/profile' })
+    await notify(client, b.user_id, { kind: 'bonus', title: `+${bonus.points} монет: ${bonus.short}`, body: video ? `«${b.title}» — видео уже в твоём профиле` : `«${b.title}»`, link: video ? '/profile#videos' : '/profile' })
     await client.query('COMMIT')
     return NextResponse.json({ success: true, points: bonus.points })
   } catch (err) {
