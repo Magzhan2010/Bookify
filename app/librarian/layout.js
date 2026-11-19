@@ -7,11 +7,12 @@ import { useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutDashboard, BookMarked, ArrowDownToLine, Search,
-  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote, Users2, ShoppingBag, GraduationCap
+  Users, History, BarChart3, LogOut, BookOpen, Library, PlusCircle, ArrowUpRight, Gift, Trophy, Quote, Users2, ShoppingBag, GraduationCap, Megaphone
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 import { useTeamMe } from '../../lib/useTeamMe'
 import { useMyAvatar } from '../../lib/useMyAvatar'
+import MeetingBanner from '../../components/MeetingBanner'
 
 // Меню сгруппировано: что делаешь каждый день → фонд → ученики → цифры
 const navGroups = [
@@ -22,7 +23,8 @@ const navGroups = [
       { href: '/librarian/requests', label: 'Заявки учеников', icon: BookMarked, badge: 'requests' },
       { href: '/librarian/issue', label: 'Выдать книгу', icon: BookOpen },
       { href: '/librarian/returns', label: 'Принять возврат', icon: ArrowDownToLine },
-      { href: '/librarian/orders', label: 'Заказы призов', icon: Gift, badge: 'orders' }
+      { href: '/librarian/orders', label: 'Заказы призов', icon: Gift, badge: 'orders' },
+      { href: '/team/meetings', label: 'Созвать собрание', icon: Megaphone }
     ]
   },
   {
@@ -271,6 +273,7 @@ export default function LibrarianLayout({ children }) {
         </div>
 
         <div className="p-4 sm:p-6 lg:p-8">
+          <MeetingBanner className="mb-6" />
           {children}
         </div>
       </main>

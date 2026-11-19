@@ -13,6 +13,7 @@ import { parseJwt } from '../../lib/jwt'
 import { useTeamMe } from '../../lib/useTeamMe'
 import { useMyAvatar } from '../../lib/useMyAvatar'
 import NotificationBell from '../NotificationBell'
+import MeetingBanner from '../MeetingBanner'
 import { useT, LangSwitch } from '../../lib/i18n'
 
 // Меню сгруппировано по смыслу: читать → играть → я
@@ -89,6 +90,7 @@ export default function StudentShell({ children }) {
       <div className="min-h-screen">
         <Sidebar user={user} isStudent={isStudent} />
         <div className="lg:pl-[256px] pb-20 lg:pb-0 min-w-0">
+          <MeetingBanner className="mx-4 sm:mx-6 lg:mx-8 mt-4" />
           {children}
         </div>
         <BottomNav isStudent={isStudent} isTeacher={user?.role === 'teacher'} />

@@ -7,13 +7,14 @@ import { useCallback, useEffect, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
   LayoutGrid, ListChecks, FileText, Users2, Activity, GraduationCap,
-  BarChart3, Trophy, Library, Quote, LogOut, BookOpen, BookMarked, Menu, X, Crown, CalendarClock, MessageSquareText, ArrowDownToLine
+  BarChart3, Trophy, Library, Quote, LogOut, BookOpen, BookMarked, Menu, X, Crown, CalendarClock, MessageSquareText, ArrowDownToLine, Megaphone
 } from 'lucide-react'
 import { ThemeToggle } from '../../components/ThemeContext'
 import { Avatar } from '../../components/team/ui'
 import { TeamCtx } from '../../components/team/TeamContext'
 import { fetchTeamMe, clearTeamMe } from '../../lib/useTeamMe'
 import NotificationBell from '../../components/NotificationBell'
+import MeetingBanner from '../../components/MeetingBanner'
 
 const GROUPS = [
   {
@@ -21,6 +22,7 @@ const GROUPS = [
     items: [
       { href: '/team', label: 'Обзор', icon: LayoutGrid, exact: true },
       { href: '/team/tasks', label: 'Задачи', icon: ListChecks },
+      { href: '/team/meetings', label: 'Собрания', icon: Megaphone },
       { href: '/team/reports', label: 'Отчёты', icon: FileText }
     ]
   },
@@ -214,6 +216,7 @@ export default function TeamLayout({ children }) {
             <span className="text-[14px] font-semibold">Bookify Team</span>
           </div>
           <div className="max-w-[1240px] mx-auto px-4 sm:px-6 lg:px-10 py-6 lg:py-10">
+            <MeetingBanner className="mb-6" />
             {children}
           </div>
         </main>

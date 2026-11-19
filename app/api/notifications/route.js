@@ -3,6 +3,7 @@ import pool from '../../../lib/db'
 import { requireAuth } from '../../../lib/auth'
 import { notify, fmtDate } from '../../../lib/notify'
 import { syncAchievements } from '../../../lib/achievements'
+import { fmtWhen } from '../../../lib/meetings'
 
 /**
  * GET /api/notifications — последние уведомления и число непрочитанных.
@@ -24,6 +25,20 @@ export async function GET(req) {
       await notify(pool, me.id, b.overdue
         ? { kind: 'overdue', title: `Срок прошёл: ${b.title}`, body: 'Верни книгу или попроси библиотекаря продлить срок.', link: `/books/${b.book_id}`, dedupeKey: `overdue-${b.id}-${b.d}` }
         : { kind: 'due_soon', title: `Скоро вернуть: ${b.title}`, body: `Срок — ${fmtDate(b.due_date)}. Не успеваешь? Попроси продлить.`, link: `/books/${b.book_id}`, dedupeKey: `due-${b.id}-${b.d}` })
+    }
+    // Напоминание о собрании за 30 минут (если не отказался и собрание созвали заранее)
+    const soon = await pool.query(
+      `SELECT m.id, m.title, m.place, m.starts_at
+         FROM meeting_invites i JOIN meetings m ON m.id = i.meeting_id
+        WHERE i.user_id = $1 AND m.cancelled_at IS NULL AND i.response IS DISTINCT FROM 'no'
+          AND m.starts_at BETWEEN NOW() AND NOW() + INTERVAL '30 minutes'
+          AND m.created_at < m.starts_at - INTERVAL '30 minutes'`, [me.id])
+    for (const m of soon.rows) {
+      await notify(pool, me.id, {
+        kind: 'meeting', title: `🔔 Скоро собрание: ${m.title}`,
+        body: `${m.place}, ${fmtWhen(m.starts_at)}.`,
+        link: me.platform_role ? '/team/meetings' : null, dedupeKey: `meet-soon-${m.id}`
+      })
     }
     if (me.role === 'student' || me.role === 'teacher') await syncAchievements(pool, me.id).catch(e => console.error('[ach]', e.message))
 
