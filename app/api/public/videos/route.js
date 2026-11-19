@@ -24,11 +24,18 @@ export async function GET() {
               COUNT(*) FILTER (WHERE kind = 'tedx')::int AS talks
          FROM student_videos`
     )
-    return NextResponse.json({ items: r.rows, ...counts.rows[0] }, {
+    // Настоящие обложки популярных книг — для живой ленты, пока видео не выбраны
+    const covers = await pool.query(
+      `SELECT b.id, b.cover_url FROM books b
+         LEFT JOIN (SELECT book_id, COUNT(*) AS n FROM borrows GROUP BY book_id) x ON x.book_id = b.id
+        WHERE b.archived_at IS NULL AND b.cover_url LIKE 'http%'
+        ORDER BY COALESCE(x.n, 0) DESC, b.id DESC LIMIT 20`
+    )
+    return NextResponse.json({ items: r.rows, covers: covers.rows, ...counts.rows[0] }, {
       headers: { 'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600' }
     })
   } catch (e) {
     console.error('[public/videos]', e.message)
-    return NextResponse.json({ items: [], videos: 0, talks: 0 })
+    return NextResponse.json({ items: [], covers: [], videos: 0, talks: 0 })
   }
 }

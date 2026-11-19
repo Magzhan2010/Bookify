@@ -399,3 +399,5 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   z-index: 5;
 }
+
+@keyframes marquee { to { transform: translateX(-50%); } }
