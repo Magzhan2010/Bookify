@@ -54,67 +54,66 @@ function RewardPop({ show, text, className = '' }) {
 
 /* ------------------------------ Сцены ------------------------------ */
 
-/** 1. Книга листается, страницы считаются. */
-function ReadScene({ active }) {
-  const flips = useTick(2200, active)
-  const page = Math.min(240, 96 + (flips % 30) * 6)
+/** 1. Объёмная книга с настоящими обложками из каталога; книги сменяют друг друга, страницы считаются. */
+function ReadScene({ active, covers = [] }) {
+  const tick = useTick(3600, active)
+  const list = covers.length ? covers : [null]
+  const idx = tick % list.length
+  const cover = list[idx]?.cover_url
+  const pages = useTick(450, active)
+  const page = 40 + (pages % 40) * 5
+
   return (
     <div className="relative w-full h-full overflow-hidden rounded-[32px]" style={{ background: `radial-gradient(120% 80% at 50% 0%, #2c3d8f, ${NAVY} 55%, #0e1433)` }}>
-      {/* пылинки в свете лампы */}
-      {[...Array(14)].map((_, i) => (
+      <div className="absolute left-1/2 top-[18%] -translate-x-1/2 w-[60%] h-[50%] rounded-full blur-3xl opacity-30" style={{ background: GOLD }} />
+      {[...Array(12)].map((_, i) => (
         <motion.span key={i} className="absolute w-1 h-1 rounded-full bg-white/40"
-          style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 90}%` }}
-          animate={active ? { y: [0, -20, 0], opacity: [0.1, 0.7, 0.1] } : {}}
+          style={{ left: `${(i * 37) % 100}%`, top: `${(i * 53) % 85}%` }}
+          animate={active ? { y: [0, -18, 0], opacity: [0.1, 0.6, 0.1] } : {}}
           transition={{ duration: 4 + (i % 4), repeat: Infinity, delay: i * 0.3 }} />
       ))}
-      <div className="absolute left-1/2 top-[14%] -translate-x-1/2 w-[70%] h-[45%] rounded-full blur-3xl opacity-40" style={{ background: GOLD }} />
 
-      <motion.div className="absolute top-[14%] right-[8%] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/12 backdrop-blur text-white text-[12px] font-semibold border border-white/15"
-        animate={active ? { y: [0, -6, 0] } : {}} transition={{ duration: 3, repeat: Infinity }}>
+      <motion.div className="absolute top-[7%] right-[7%] flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/10 backdrop-blur text-white text-[12px] font-semibold border border-white/15"
+        animate={active ? { y: [0, -5, 0] } : {}} transition={{ duration: 3, repeat: Infinity }}>
         <Flame size={13} className="text-[#ff7a3d]" /> Серия 5 дней
       </motion.div>
 
-      {/* раскрытая книга */}
-      <div className="absolute left-1/2 top-[52%] -translate-x-1/2 -translate-y-1/2 w-[78%] max-w-[360px] aspect-[2/1.25]" style={{ perspective: 1200 }}>
-        <div className="absolute inset-0 rounded-lg shadow-[0_30px_60px_rgba(0,0,0,0.5)]" style={{ background: '#7a4e2a', transform: 'translateY(6px) scaleX(1.03)' }} />
-        <div className="absolute inset-0 flex">
-          <Page side="left" />
-          <Page side="right" />
-        </div>
-        <motion.div
-          key={flips}
-          className="absolute top-0 right-0 w-1/2 h-full origin-left"
-          style={{ transformStyle: 'preserve-3d' }}
-          initial={{ rotateY: 0 }} animate={active ? { rotateY: -180 } : { rotateY: 0 }}
-          transition={{ duration: 1.1, ease: [0.45, 0, 0.2, 1] }}
-        >
-          <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden' }}><Page side="right" shade /></div>
-          <div className="absolute inset-0" style={{ backfaceVisibility: 'hidden', transform: 'rotateY(180deg)' }}><Page side="left" shade /></div>
+      {/* книга */}
+      <div className="absolute left-1/2 top-[44%] -translate-x-1/2 -translate-y-1/2 h-[56%] aspect-[2/3]" style={{ perspective: 1400 }}>
+        <motion.div className="relative w-full h-full" style={{ transformStyle: 'preserve-3d' }}
+          animate={active ? { rotateY: [-24, -12, -24], rotateX: [4, 1, 4] } : { rotateY: -18 }}
+          transition={{ duration: 6, repeat: Infinity, ease: 'easeInOut' }}>
+          {/* обрез страниц справа */}
+          <div className="absolute top-[2%] bottom-[2%] -right-[5%] w-[8%] rounded-r-[4px]"
+            style={{ background: 'repeating-linear-gradient(180deg,#fbf7ef 0 2px,#e6dfd0 2px 3px)', transform: 'translateZ(-6px)', boxShadow: 'inset 2px 0 4px rgba(0,0,0,0.15)' }} />
+          <AnimatePresence mode="popLayout">
+            <motion.div key={idx} className="absolute inset-0 rounded-[6px] overflow-hidden shadow-[0_40px_70px_-20px_rgba(0,0,0,0.75)]"
+              style={{ transformOrigin: 'left center', background: `linear-gradient(160deg, ${BLUE}, ${NAVY})` }}
+              initial={{ rotateY: 70, opacity: 0 }} animate={{ rotateY: 0, opacity: 1 }} exit={{ rotateY: -70, opacity: 0 }}
+              transition={{ duration: 0.8, ease: EASE }}>
+              {cover
+                // eslint-disable-next-line @next/next/no-img-element
+                ? <img src={cover} alt="" className="w-full h-full object-cover" />
+                : <BookOpen className="absolute inset-0 m-auto text-white/50" size={48} />}
+              {/* корешок и блик */}
+              <div className="absolute inset-y-0 left-0 w-[9%] bg-gradient-to-r from-black/35 via-white/15 to-transparent" />
+              <div className="absolute inset-0 bg-gradient-to-br from-white/25 via-transparent to-black/20" />
+            </motion.div>
+          </AnimatePresence>
         </motion.div>
+        <div className="absolute -bottom-[7%] left-[8%] right-[2%] h-[6%] rounded-[50%] bg-black/50 blur-md" />
       </div>
 
-      <div className="absolute inset-x-[11%] bottom-[9%]">
+      <div className="absolute inset-x-[10%] bottom-[8%]">
         <div className="flex items-baseline justify-between text-white mb-2">
-          <span className="text-[13px] text-white/60">Прочитано</span>
+          <span className="text-[13px] text-white/60">Читаю сейчас</span>
           <span className="text-[22px] font-semibold tabular-nums">стр. {page} <span className="text-white/40 text-[15px]">/ 240</span></span>
         </div>
         <div className="h-2 rounded-full bg-white/10 overflow-hidden">
           <motion.div className="h-full rounded-full" style={{ background: `linear-gradient(90deg, ${BLUE}, ${GOLD})` }}
-            animate={{ width: `${page / 240 * 100}%` }} transition={{ duration: 0.8, ease: EASE }} />
+            animate={{ width: `${page / 240 * 100}%` }} transition={{ duration: 0.4, ease: EASE }} />
         </div>
       </div>
-    </div>
-  )
-}
-
-function Page({ side, shade }) {
-  return (
-    <div className={`relative w-1/2 h-full bg-[#fbf7ef] ${side === 'left' ? 'rounded-l-lg' : 'rounded-r-lg'} overflow-hidden`}
-      style={{ boxShadow: side === 'left' ? 'inset -14px 0 20px -12px rgba(0,0,0,0.25)' : 'inset 14px 0 20px -12px rgba(0,0,0,0.25)' }}>
-      <div className="absolute inset-[12%] flex flex-col gap-[7%]">
-        {[92, 100, 84, 97, 70, 95, 88, 60].map((w, i) => <span key={i} className="h-[3px] rounded bg-[#1f2a5c]/15" style={{ width: `${w}%` }} />)}
-      </div>
-      {shade && <div className="absolute inset-0 bg-gradient-to-r from-black/5 to-transparent" />}
     </div>
   )
 }
@@ -378,6 +377,10 @@ function VerbMarquee() {
 
 function Story() {
   const [active, setActive] = useState(0)
+  const [covers, setCovers] = useState([])
+  useEffect(() => {
+    fetch('/api/public/videos').then(r => r.json()).then(d => setCovers((d.covers || []).slice(0, 8))).catch(() => {})
+  }, [])
   return (
     <div className="max-w-[1200px] mx-auto pb-24 md:pb-32">
       {/* Компьютер: текст слева, сцена справа «прилипает» и меняется */}
@@ -391,7 +394,7 @@ function Story() {
               <motion.div key={active} className="absolute inset-0"
                 initial={{ opacity: 0, scale: 0.96, y: 20 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.98, y: -20 }}
                 transition={{ duration: 0.55, ease: EASE }}>
-                {(() => { const S = STEPS[active].Scene; return <S active /> })()}
+                {(() => { const S = STEPS[active].Scene; return <S active covers={covers} /> })()}
               </motion.div>
             </AnimatePresence>
             <div className="absolute -left-8 top-1/2 -translate-y-1/2 flex flex-col gap-2">
@@ -405,7 +408,7 @@ function Story() {
 
       {/* Телефон: у каждого шага своя сцена */}
       <div className="lg:hidden space-y-14">
-        {STEPS.map((s, i) => <MobileStep key={s.verb} s={s} i={i} />)}
+        {STEPS.map((s, i) => <MobileStep key={s.verb} s={s} i={i} covers={covers} />)}
       </div>
     </div>
   )
@@ -437,14 +440,14 @@ function StepText({ s, i, onActive, active }) {
   )
 }
 
-function MobileStep({ s, i }) {
+function MobileStep({ s, i, covers }) {
   const ref = useRef(null)
   const inView = useInView(ref, { amount: 0.4 })
   const S = s.Scene
   return (
     <motion.div ref={ref} initial={{ opacity: 0, y: 30 }} whileInView={{ opacity: 1, y: 0 }} viewport={{ once: true, margin: '-60px' }} transition={{ duration: 0.7, ease: EASE }}>
       <StepHead s={s} i={i} />
-      <div className="mt-6 h-[380px]"><S active={inView} /></div>
+      <div className="mt-6 h-[380px]"><S active={inView} covers={covers} /></div>
     </motion.div>
   )
 }
@@ -525,17 +528,6 @@ function ShowcaseSoon({ covers }) {
           ))}
         </div>
       )}
-      <div className={`${list.length ? 'absolute inset-0' : 'relative py-10'} flex items-center justify-center px-5`}>
-        <motion.div initial={{ opacity: 0, scale: 0.9 }} whileInView={{ opacity: 1, scale: 1 }} viewport={{ once: true }} transition={{ duration: 0.7, ease: EASE }}
-          className="max-w-[420px] text-center rounded-[28px] bg-[#0e1433]/80 backdrop-blur-xl border border-white/15 px-7 py-8 text-white shadow-[0_40px_80px_-20px_rgba(0,0,0,0.8)]">
-          <div className="relative w-16 h-16 mx-auto mb-5">
-            <motion.span className="absolute inset-0 rounded-full" style={{ background: GOLD }} animate={{ scale: [1, 1.6], opacity: [0.5, 0] }} transition={{ duration: 1.8, repeat: Infinity }} />
-            <span className="relative w-16 h-16 rounded-full flex items-center justify-center text-[#1f2a5c]" style={{ background: GOLD }}><Play size={24} fill="currentColor" className="ml-1" /></span>
-          </div>
-          <p className="text-[22px] font-semibold tracking-tight leading-snug">Здесь будет твоё видео.</p>
-          <p className="text-[14px] text-white/65 mt-2">Каждая из этих книг ждёт своего рассказчика. Лучшие видео и выступления команда покажет на этой странице — по книге и классу, без имён.</p>
-        </motion.div>
-      </div>
     </div>
   )
 }
