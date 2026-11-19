@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { toast } from 'sonner'
-import { Clapperboard, Play, ExternalLink, Trash2, Plus, Link2, Mic, X } from 'lucide-react'
+import { Clapperboard, Play, ExternalLink, Trash2, Plus, Link2, Mic, X, Sparkles } from 'lucide-react'
 import { Button, Modal } from './ui'
 import { parseVideo, PLATFORMS } from '../lib/videoLinks'
 import { TROPHY_NOTE } from '../lib/trophy'
@@ -45,6 +45,15 @@ export default function VideoGallery({ studentId, manage = false, books = [], st
     try { await authed(`/api/librarian/videos/${v.id}`, { method: 'DELETE' }); toast.success('Видео убрано'); load() } catch (e) { toast.error(e.message) }
   }
 
+  const feature = async v => {
+    const featured = !v.featured_at
+    setVideos(list => list.map(x => x.id === v.id ? { ...x, featured_at: featured ? new Date().toISOString() : null } : x))
+    try {
+      await authed(`/api/librarian/videos/${v.id}`, { method: 'PATCH', body: { featured } })
+      toast.success(featured ? 'Видео появится на главной странице (без имени ученика)' : 'Видео убрано с главной')
+    } catch (e) { toast.error(e.message); load() }
+  }
+
   if (!videos) return <div className="h-48 rounded-[28px] bg-[var(--color-bg-soft)] animate-pulse mb-6" />
   if (!manage && videos.length === 0) return <EmptyStudent />
 
@@ -70,7 +79,7 @@ export default function VideoGallery({ studentId, manage = false, books = [], st
       ) : (
         <div className="grid grid-cols-2 md:grid-cols-3 xl:grid-cols-4 gap-3 sm:gap-4">
           {videos.map((v, i) => (
-            <VideoCard key={v.id} v={v} i={i} onPlay={() => setPlaying(v)} onRemove={manage ? () => remove(v) : null} />
+            <VideoCard key={v.id} v={v} i={i} onPlay={() => setPlaying(v)} onRemove={manage ? () => remove(v) : null} onFeature={manage ? () => feature(v) : null} />
           ))}
         </div>
       )}
@@ -89,7 +98,7 @@ export default function VideoGallery({ studentId, manage = false, books = [], st
   )
 }
 
-function VideoCard({ v, i, onPlay, onRemove }) {
+export function VideoCard({ v, i, onPlay, onRemove, onFeature, sub }) {
   const meta = useMemo(() => parseVideo(v.url) || { platform: 'link' }, [v.url])
   const p = PLATFORMS[meta.platform]
   const [thumbOk, setThumbOk] = useState(true)
@@ -131,10 +140,18 @@ function VideoCard({ v, i, onPlay, onRemove }) {
         <div className="absolute inset-x-0 bottom-0 p-3.5 text-white">
           <div className="text-[14px] font-semibold leading-snug line-clamp-2">{v.title || v.book_title || 'Видео о книге'}</div>
           <div className="mt-1 text-[11px] text-white/70 truncate">
-            {v.title && v.book_title ? `«${v.book_title}» · ` : ''}{fmtDate(v.created_at)}
+            {sub ?? <>{v.title && v.book_title ? `«${v.book_title}» · ` : ''}{fmtDate(v.created_at)}</>}
           </div>
         </div>
       </button>
+      {onFeature && (
+        <button onClick={onFeature} aria-pressed={!!v.featured_at}
+          title={v.featured_at ? 'Убрать с главной страницы' : 'Показать на главной странице (без имени ученика)'}
+          className={`absolute bottom-[62px] right-3 h-8 px-2.5 rounded-full text-[11px] font-bold flex items-center gap-1 backdrop-blur transition-all ${
+            v.featured_at ? 'bg-[#ffc93c] text-[#1f2a5c] opacity-100' : 'bg-black/45 text-white opacity-0 group-hover:opacity-100 focus:opacity-100'}`}>
+          <Sparkles size={12} /> {v.featured_at ? 'На главной' : 'На главную'}
+        </button>
+      )}
       {onRemove && (
         <button onClick={onRemove} aria-label="Убрать видео" title="Убрать видео"
           className="absolute top-3 right-3 w-8 h-8 rounded-full bg-black/45 backdrop-blur text-white flex items-center justify-center opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity">
@@ -145,7 +162,7 @@ function VideoCard({ v, i, onPlay, onRemove }) {
   )
 }
 
-function Player({ v, onClose }) {
+export function Player({ v, onClose }) {
   const meta = v ? parseVideo(v.url) : null
   const p = meta ? PLATFORMS[meta.platform] : null
   return (

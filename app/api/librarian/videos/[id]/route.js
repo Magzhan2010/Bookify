@@ -5,6 +5,7 @@ import { parseVideo } from '../../../../../lib/videoLinks'
 
 /**
  * PATCH { url?, title? } — поправить ссылку или подпись.
+ * PATCH { featured: true|false } — показать видео на главной странице (без имени ученика) или убрать.
  * DELETE — убрать видео из профиля (монеты не трогает: их отменяют в блоке «Монеты»).
  */
 export async function PATCH(req, { params }) {
@@ -13,6 +14,15 @@ export async function PATCH(req, { params }) {
   let body
   try { body = await req.json() } catch { return NextResponse.json({ error: 'Неверный запрос' }, { status: 400 }) }
   const id = parseInt((await params).id)
+  if (typeof body?.featured === 'boolean') {
+    try {
+      await pool.query('UPDATE student_videos SET featured_at = CASE WHEN $2 THEN NOW() END WHERE id = $1', [id, body.featured])
+      return NextResponse.json({ success: true })
+    } catch (err) {
+      console.error('[videos featured]', err)
+      return NextResponse.json({ error: 'Ошибка сервера' }, { status: 500 })
+    }
+  }
   const video = body?.url !== undefined ? parseVideo(body.url) : undefined
   if (video === null) return NextResponse.json({ error: 'Ссылка не похожа на адрес видео' }, { status: 400 })
   try {
