@@ -539,8 +539,8 @@ function DepthTrack() {
             <motion.li
               key={s.verb}
               variants={reveal}
-              className={`relative rounded-[28px] p-6 flex flex-col overflow-hidden ${i === 0 ? 'border border-[var(--color-border)]' : ''}`}
-              style={{ background: bg, color: dark ? '#fff' : undefined, minHeight: 230 + i * 40 }}
+              className={`relative rounded-[28px] p-6 flex flex-col overflow-hidden min-h-[210px] lg:min-h-[var(--h)] ${i === 0 ? 'border border-[var(--color-border)]' : ''}`}
+              style={{ background: bg, color: dark ? '#fff' : undefined, '--h': `${230 + i * 40}px` }}
             >
               {i === 3 && <div aria-hidden className="absolute -right-10 -top-10 w-40 h-40 rounded-full blur-3xl opacity-40" style={{ background: GOLD }} />}
               <div className="relative flex items-center justify-between mb-auto">
