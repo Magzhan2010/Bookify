@@ -25,8 +25,10 @@ const stagger = {
 
 export default function LandingPage() {
   return (
+    <>
+    {/* меню вне <main>: у <main> анимация появления с transform, из-за неё fixed не держится */}
+    <Nav />
     <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-x-hidden">
-      <Nav />
       <Hero />
       <LiveStats />
       <BeyondReading />
@@ -34,6 +36,7 @@ export default function LandingPage() {
       <FinalCta />
       <LandingFooter />
     </main>
+    </>
   )
 }
 
@@ -91,7 +94,7 @@ function Hero() {
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const arcY = useTransform(scrollYProgress, [0, 1], [0, -120])
   const glow = useTransform(scrollYProgress, [0, 0.6], [1, 1.35])
-  const panelY = useTransform(scrollYProgress, [0, 1], [0, -160])
+  const panelY = useTransform(scrollYProgress, [0, 1], [0, -70])
 
   return (
     <section id="hero" ref={ref} className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
@@ -143,7 +146,7 @@ function Hero() {
           <HeroPanel />
         </motion.div>
       </motion.div>
-      <div className="h-24 md:h-32" />
+      <div className="h-16 md:h-20" />
     </section>
   )
 }
