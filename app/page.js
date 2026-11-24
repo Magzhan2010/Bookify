@@ -1,13 +1,13 @@
 'use client'
 
-import { AnimatePresence, motion, useInView, useReducedMotion } from 'framer-motion'
+import { motion, useInView, useReducedMotion, useScroll, useTransform } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
 import { PagesLadder, BonusCards, PointsCalculator, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import { BeyondReading } from '../components/landing/Story'
-import { ArrowRight, ArrowUpRight, BookOpen, Trophy, Flame, Award } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, Trophy } from 'lucide-react'
 
 /* Фирменные цвета */
 const NAVY = '#1f2a5c'
@@ -38,31 +38,42 @@ export default function LandingPage() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Навигация                                                           */
+/* Навигация: прозрачная над тёмным первым экраном, обычная ниже       */
 /* ------------------------------------------------------------------ */
 function Nav() {
+  const [onDark, setOnDark] = useState(true)
+  useEffect(() => {
+    const check = () => {
+      const hero = document.getElementById('hero')
+      setOnDark(!!hero && hero.getBoundingClientRect().bottom > 64)
+    }
+    check()
+    window.addEventListener('scroll', check, { passive: true })
+    window.addEventListener('resize', check)
+    return () => { window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
+  }, [])
+
   return (
-    <nav className="fixed top-0 inset-x-0 z-50 bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]">
+    <nav className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
+      onDark ? 'bg-[#04061a]/40 backdrop-blur-xl border-b border-white/5 text-white' : 'bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]'}`}>
       <div className="max-w-[1200px] mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Image src="/lb_logo.png" width={40} height={40} alt="" className="w-10 h-10 object-contain" priority />
           <span className="font-semibold text-[17px] tracking-tight">Bookify</span>
         </Link>
 
-        <div className="hidden md:flex items-center gap-1 text-[14px] font-medium text-[var(--color-text-secondary)]">
-          <a href="#beyond" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Как это работает</a>
-          <a href="#program" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Монеты и призы</a>
+        <div className={`hidden md:flex items-center gap-1 text-[14px] font-medium ${onDark ? 'text-white/70' : 'text-[var(--color-text-secondary)]'}`}>
+          <a href="#beyond" className={`px-3 py-2 rounded-full transition-colors ${onDark ? 'hover:text-white hover:bg-white/5' : 'hover:text-[var(--color-text-primary)]'}`}>Как это работает</a>
+          <a href="#program" className={`px-3 py-2 rounded-full transition-colors ${onDark ? 'hover:text-white hover:bg-white/5' : 'hover:text-[var(--color-text-primary)]'}`}>Монеты и призы</a>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <ThemeToggle size="md" />
-          <Link href="/login" className="hidden sm:block px-3.5 py-2 text-[14px] font-medium text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)] transition-colors">
+          {!onDark && <ThemeToggle size="md" />}
+          <Link href="/login" className={`hidden sm:block px-3.5 py-2 text-[14px] font-medium transition-colors ${onDark ? 'text-white/75 hover:text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}>
             Войти
           </Link>
-          <Link
-            href="/register"
-            className="px-4 py-2.5 text-[14px] font-semibold rounded-full bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] transition-colors"
-          >
+          <Link href="/register"
+            className="px-4 py-2.5 text-[14px] font-semibold rounded-full bg-[#1a56db] hover:bg-[#1e4fc4] text-white transition-colors shadow-[inset_0_0_0_1px_rgba(255,255,255,0.15),0_8px_24px_rgba(26,86,219,0.45)]">
             Регистрация
           </Link>
         </div>
@@ -72,246 +83,116 @@ function Nav() {
 }
 
 /* ------------------------------------------------------------------ */
-/* Первый экран                                                        */
+/* Первый экран: «синий свет» — светящийся горизонт и панель Bookify   */
 /* ------------------------------------------------------------------ */
 function Hero() {
+  const ref = useRef(null)
+  const still = useReducedMotion()
+  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
+  const arcY = useTransform(scrollYProgress, [0, 1], [0, -120])
+  const glow = useTransform(scrollYProgress, [0, 0.6], [1, 1.35])
+  const panelY = useTransform(scrollYProgress, [0, 1], [0, -160])
+
   return (
-    <section className="relative pt-28 md:pt-36 pb-16 md:pb-24 px-5 sm:px-6">
-      {/* мягкое синее свечение сверху — статичное, без анимации */}
-      <div
-        aria-hidden
-        className="absolute inset-x-0 top-0 h-[620px] -z-10 pointer-events-none"
-        style={{ background: 'radial-gradient(700px 380px at 50% 0%, color-mix(in srgb, var(--color-brand) 12%, transparent), transparent 70%)' }}
-      />
+    <section id="hero" ref={ref} className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
+      {/* ореол */}
+      <motion.div aria-hidden className="absolute left-1/2 top-[300px] md:top-[380px] w-[1500px] h-[700px] -ml-[750px] rounded-[50%] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(26,86,219,0.55), rgba(26,86,219,0.12) 45%, transparent 70%)', filter: 'blur(30px)', scale: still ? 1 : glow }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, delay: 0.3 }} />
+      {/* горизонт */}
+      <motion.div aria-hidden className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full pointer-events-none"
+        style={{
+          y: still ? 0 : arcY,
+          background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
+          boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
+        }}
+        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, ease: EASE }} />
+      {/* блик на вершине дуги */}
+      <motion.div aria-hidden className="absolute left-1/2 top-[520px] md:top-[600px] w-[520px] h-[90px] -ml-[260px] rounded-[50%] pointer-events-none"
+        style={{ background: 'radial-gradient(ellipse, rgba(230,240,255,0.9), rgba(120,165,255,0.4) 40%, transparent 70%)', filter: 'blur(14px)' }}
+        animate={still ? {} : { opacity: [0.75, 1, 0.75], scaleX: [0.95, 1.05, 0.95] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
 
-      <div className="max-w-[1200px] mx-auto grid lg:grid-cols-[1.05fr_1fr] gap-12 lg:gap-10 items-center">
-        <motion.div initial="hidden" animate="visible" variants={stagger} className="text-center lg:text-left">
-          <motion.div
-            variants={reveal}
-            className="inline-flex items-center gap-2 mb-6 px-3.5 py-1.5 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-soft)] text-[13px] font-medium text-[var(--color-text-secondary)]"
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-[var(--color-success)]" />
-            Библиотека Divergents Leadership School
-          </motion.div>
-
-          <motion.h1
-            variants={reveal}
-            className="text-[44px] sm:text-[64px] lg:text-[76px] font-semibold tracking-[-0.04em] leading-[0.98] mb-6"
-          >
-            Читай книги.
-            <br />
-            Копи{' '}
-            <span className="relative inline-block">
-              <span className="relative z-10">монеты.</span>
-              <motion.span
-                aria-hidden
-                initial={{ scaleX: 0 }}
-                animate={{ scaleX: 1 }}
-                transition={{ delay: 0.7, duration: 0.6, ease: EASE }}
-                className="absolute left-0 right-0 bottom-[0.08em] h-[0.32em] origin-left rounded-sm -z-0"
-                style={{ background: GOLD, opacity: 0.85 }}
-              />
-            </span>
-            <br />
-            <span className="text-[var(--color-brand)]">Забирай призы.</span>
-          </motion.h1>
-
-          <motion.p
-            variants={reveal}
-            className="text-[18px] md:text-[20px] text-[var(--color-text-secondary)] leading-[1.5] max-w-[540px] mx-auto lg:mx-0 mb-9"
-          >
-            Bookify — школьная библиотека в телефоне: каталог, твои книги, отзывы и
-            программа <span className="text-[var(--color-text-primary)] font-medium">Read. Think. Speak. Create. Lead.</span>
-          </motion.p>
-
-          <motion.div variants={reveal} className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
-            <Link
-              href="/register"
-              className="group px-7 py-3.5 rounded-full bg-[var(--color-brand)] hover:bg-[var(--color-brand-hover)] text-[var(--color-text-on-brand)] text-[16px] font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-[0_10px_30px_rgba(26,86,219,0.28)] hover:-translate-y-0.5"
-            >
-              Создать аккаунт
-              <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
-            </Link>
-            <Link
-              href="/login"
-              className="px-7 py-3.5 rounded-full border border-[var(--color-border-strong)] text-[16px] font-semibold hover:bg-[var(--color-bg-soft)] transition-colors inline-flex items-center justify-center"
-            >
-              У меня есть логин
-            </Link>
-          </motion.div>
+      <motion.div initial="hidden" animate="visible" variants={stagger} className="relative max-w-[980px] mx-auto text-center">
+        <motion.div variants={reveal}
+          className="inline-flex items-center gap-2.5 pl-1.5 pr-4 py-1.5 rounded-full bg-white/[0.05] border border-white/10 backdrop-blur-xl text-[13px] text-white/80">
+          <span className="px-2.5 py-1 rounded-full bg-[#1a56db] text-white font-semibold">DLS</span>
+          Библиотека Divergents Leadership School
         </motion.div>
+        <motion.h1 variants={reveal} className="mt-7 text-[42px] sm:text-[60px] lg:text-[76px] font-semibold tracking-[-0.045em] leading-[1.02]">
+          Библиотека, которая<br className="hidden sm:block" />{' '}
+          <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(180deg, #ffffff 30%, #9ec1ff)' }}>превращает чтение в навык</span>
+        </motion.h1>
+        <motion.p variants={reveal} className="mt-6 mx-auto max-w-[560px] text-[17px] md:text-[19px] leading-[1.55] text-white/65">
+          Бери книги, пиши отзывы, снимай видео и выступай на TEDx. За каждый шаг — монеты и настоящие призы.
+        </motion.p>
+        <motion.div variants={reveal} className="mt-9 flex flex-col sm:flex-row gap-3 justify-center">
+          <Link href="/register"
+            className="group px-7 py-3.5 rounded-full bg-[#1a56db] hover:bg-[#1e4fc4] text-white text-[16px] font-semibold inline-flex items-center justify-center gap-2 transition-all shadow-[inset_0_0_0_1px_rgba(255,255,255,0.18),0_10px_40px_rgba(26,86,219,0.7)] hover:-translate-y-0.5">
+            Создать аккаунт <ArrowRight size={17} className="group-hover:translate-x-0.5 transition-transform" />
+          </Link>
+          <Link href="/login"
+            className="px-7 py-3.5 rounded-full bg-white/[0.05] border border-white/12 backdrop-blur-xl text-[16px] font-semibold hover:bg-white/10 transition-colors inline-flex items-center justify-center">
+            У меня есть логин
+          </Link>
+        </motion.div>
+      </motion.div>
 
-        <HeroVisual />
-      </div>
+      <motion.div style={{ y: still ? 0 : panelY }} className="relative max-w-[1180px] mx-auto mt-40 md:mt-56">
+        <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, delay: 0.5, ease: EASE }}
+          className="rounded-[28px] p-4 sm:p-[18px] bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-[0_-20px_80px_rgba(26,86,219,0.25)]">
+          <HeroPanel />
+        </motion.div>
+      </motion.div>
+      <div className="h-24 md:h-32" />
     </section>
   )
 }
 
-/** Тёмно-синяя панель: книжная полка, значки достижений и книга, проходящая путь до «Прочитано». */
-function HeroVisual() {
-  const still = useReducedMotion()
-  const float = (d, delay) =>
-    still ? {} : { animate: { y: [0, -d, 0] }, transition: { duration: 5, repeat: Infinity, ease: 'easeInOut', delay } }
-
+/** Стеклянная панель Bookify под горизонтом: как выглядит кабинет ученика. */
+function HeroPanel() {
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 30, scale: 0.98 }}
-      animate={{ opacity: 1, y: 0, scale: 1 }}
-      transition={{ duration: 0.9, delay: 0.25, ease: EASE }}
-      className="relative mx-auto w-full max-w-[520px]"
-    >
-      <div
-        className="relative rounded-[36px] overflow-hidden px-6 pt-8 pb-6 sm:px-8 sm:pt-10 shadow-[0_30px_80px_rgba(31,42,92,0.35)]"
-        style={{ background: `linear-gradient(160deg, ${NAVY} 0%, #17204a 100%)` }}
-      >
-        {/* тонкая сетка */}
-        <div
-          aria-hidden
-          className="absolute inset-0 opacity-[0.07]"
-          style={{
-            backgroundImage: 'linear-gradient(#fff 1px, transparent 1px), linear-gradient(90deg, #fff 1px, transparent 1px)',
-            backgroundSize: '32px 32px'
-          }}
-        />
-        <div aria-hidden className="absolute -top-24 -right-16 w-72 h-72 rounded-full blur-3xl opacity-30" style={{ background: GOLD }} />
-
-        <div className="relative h-[200px] sm:h-[230px]">
-          <Bookshelf />
-          <motion.div
-            className="absolute right-0 top-1 flex items-center gap-2 px-3 py-2 rounded-full bg-white text-[#1f2a5c] text-[12px] font-semibold shadow-lg"
-            {...float(6, 0)}
-          >
-            <Flame size={14} className="text-[#ff6b2c]" /> Серия 3 недели
-          </motion.div>
-          <motion.div
-            className="absolute left-0 top-12 flex items-center gap-2 px-3 py-2 rounded-full bg-white/10 border border-white/15 text-white text-[12px] font-semibold backdrop-blur-md"
-            {...float(7, 1.2)}
-          >
-            <Award size={14} style={{ color: GOLD }} /> Уровень «Книголюб»
-          </motion.div>
+    <div aria-label="Пример кабинета ученика">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-2 pt-1 pb-4 border-b border-white/[0.08]">
+        <div className="text-[17px] font-extrabold tracking-[-0.03em]">Bookify<span style={{ color: GOLD }}>.</span></div>
+        <div className="hidden sm:flex flex-wrap gap-6 text-[13px] text-white/60">
+          <span className="text-white font-semibold">Каталог</span><span>Мои книги</span><span>Магазин</span><span>Лидеры</span><span>Фокус</span>
         </div>
-
-        <BookJourney />
+        <span className="inline-flex items-center gap-1.5 text-[13px] font-bold">
+          <span className="w-[18px] h-[18px] rounded-full text-[9px] font-black flex items-center justify-center text-[#7a5200]" style={{ background: GOLD }}>B</span>72
+        </span>
       </div>
-    </motion.div>
-  )
-}
-
-/** Полка из корешков разной высоты и цвета; одна книга время от времени выдвигается. */
-const SPINES = [
-  { h: 78, w: 22, c: '#5b8def' }, { h: 92, w: 28, c: '#ffc93c' }, { h: 70, w: 18, c: '#f4f1ea' },
-  { h: 86, w: 26, c: '#ff8a65' }, { h: 96, w: 30, c: '#3a4a8f' }, { h: 74, w: 20, c: '#7dc9a9' },
-  { h: 88, w: 24, c: '#d9bfdc' }, { h: 80, w: 22, c: '#1a56db' }, { h: 94, w: 28, c: '#f4f1ea' }
-]
-
-function Bookshelf() {
-  const still = useReducedMotion()
-  return (
-    <div className="absolute inset-x-0 bottom-0" aria-hidden>
-      <div className="flex items-end justify-center gap-[5px] px-2">
-        {SPINES.map((b, i) => (
-          <motion.div
-            key={i}
-            className="relative rounded-t-[4px] rounded-b-[2px] shrink-0"
-            style={{ height: b.h, width: b.w, background: b.c, transformOrigin: 'bottom center' }}
-            initial={{ y: 40, opacity: 0 }}
-            animate={
-              !still && i === 4
-                ? { y: [0, 0, -26, -26, 0], opacity: 1 }
-                : { y: 0, opacity: 1 }
-            }
-            transition={
-              !still && i === 4
-                ? { y: { duration: 8.8, repeat: Infinity, times: [0, 0.05, 0.12, 0.9, 1], ease: EASE, delay: 1 }, opacity: { delay: 0.3 + i * 0.05 } }
-                : { delay: 0.3 + i * 0.05, duration: 0.6, ease: EASE }
-            }
-          >
-            <span className="absolute left-1/2 -translate-x-1/2 top-3 w-[55%] h-[2px] rounded-full bg-black/15" />
-            <span className="absolute left-1/2 -translate-x-1/2 bottom-3 w-[55%] h-[2px] rounded-full bg-black/15" />
-          </motion.div>
-        ))}
+      <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-[18px]">
+        <PanelCard kicker="ЧИТАЮ СЕЙЧАС" title="Маленький принц" sub="Вернуть через 8 дней" accent>
+          <Bar w="62%" c="#4f7df0" />
+        </PanelCard>
+        <PanelCard kicker="МОЯ ЦЕЛЬ" title="72 из 100 монет" sub="До приза — одна книга">
+          <Bar w="72%" c={GOLD} />
+        </PanelCard>
+        <PanelCard kicker="ОТЗЫВ" title="«Атомные привычки»" sub="Одобрен · +5 монет" subBlue>
+          <div className="flex gap-1 mt-[18px]">{[1, 1, 1, 0].map((on, i) => <span key={i} className="flex-1 h-1.5 rounded-full" style={{ background: on ? '#4f7df0' : 'rgba(255,255,255,0.12)' }} />)}</div>
+        </PanelCard>
       </div>
-      <div className="h-[6px] rounded-full bg-white/20 mx-0" />
     </div>
   )
 }
 
-const JOURNEY = [
-  { label: 'Выдана', hint: 'Книга у тебя', color: '#5b8def' },
-  { label: 'Ждёт отзыва', hint: 'Вернул в библиотеку', color: '#ff9f0a' },
-  { label: 'Отзыв на проверке', hint: '186 слов · 5 критериев', color: '#bf8cff' },
-  { label: 'Прочитано', hint: '+5 за отзыв · +20 за объём', color: '#32d74b', coins: 25 }
-]
-
-function BookJourney() {
-  const still = useReducedMotion()
-  const [step, setStep] = useState(0)
-  useEffect(() => {
-    if (still) { setStep(JOURNEY.length - 1); return }
-    const t = setInterval(() => setStep(s => (s + 1) % JOURNEY.length), 2200)
-    return () => clearInterval(t)
-  }, [still])
-  const cur = JOURNEY[step]
-
+function PanelCard({ kicker, title, sub, accent, subBlue, children }) {
   return (
-    <div className="relative mt-6 rounded-[22px] bg-white/[0.08] border border-white/10 backdrop-blur-md p-4 sm:p-5 text-white">
-      <div className="flex items-center gap-3.5">
-        <div className="w-11 h-14 rounded-md shrink-0 flex items-center justify-center" style={{ background: GOLD, color: NAVY }}>
-          <BookOpen size={20} strokeWidth={2.2} />
-        </div>
-        <div className="flex-1 min-w-0">
-          <div className="text-[15px] font-semibold truncate">Мастер и Маргарита</div>
-          <div className="text-[12px] text-white/55">480 страниц</div>
-        </div>
-        <AnimatePresence mode="wait">
-          {cur.coins ? (
-            <motion.div
-              key="coins"
-              initial={{ opacity: 0, scale: 0.6 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0, scale: 0.8 }}
-              transition={{ type: 'spring', stiffness: 400, damping: 18 }}
-              className="px-2.5 py-1 rounded-full text-[13px] font-bold tabular-nums"
-              style={{ background: GOLD, color: NAVY }}
-            >
-              +{cur.coins}
-            </motion.div>
-          ) : null}
-        </AnimatePresence>
-      </div>
-
-      <div className="mt-4 flex gap-1.5" aria-hidden>
-        {JOURNEY.map((s, i) => (
-          <div key={s.label} className="h-1 flex-1 rounded-full bg-white/15 overflow-hidden">
-            <motion.div
-              className="h-full rounded-full"
-              style={{ background: s.color }}
-              initial={false}
-              animate={{ width: i <= step ? '100%' : '0%' }}
-              transition={{ duration: 0.5, ease: EASE }}
-            />
-          </div>
-        ))}
-      </div>
-
-      <div className="mt-3 h-[22px] relative overflow-hidden">
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={cur.label}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            exit={{ opacity: 0, y: -10 }}
-            transition={{ duration: 0.3 }}
-            className="flex items-center justify-between gap-2 text-[13px]"
-          >
-            <span className="font-semibold" style={{ color: cur.color }}>{cur.label}</span>
-            <span className="text-white/55 truncate">{cur.hint}</span>
-          </motion.div>
-        </AnimatePresence>
-      </div>
+    <div className="rounded-[20px] p-5 text-left border"
+      style={accent
+        ? { background: 'linear-gradient(160deg, rgba(26,86,219,0.35), rgba(26,86,219,0.08))', borderColor: 'rgba(120,165,255,0.25)' }
+        : { background: 'rgba(255,255,255,0.04)', borderColor: 'rgba(255,255,255,0.08)' }}>
+      <div className={`text-[12px] font-bold tracking-[0.12em] ${accent ? 'text-[#9ec1ff]' : 'text-white/60'}`}>{kicker}</div>
+      <div className="text-[20px] font-bold mt-2">{title}</div>
+      <div className={`text-[13px] mt-0.5 ${subBlue ? 'text-[#9ec1ff]' : 'text-white/65'}`}>{sub}</div>
+      {children}
     </div>
   )
 }
+
+const Bar = ({ w, c }) => (
+  <div className="h-1.5 rounded-full bg-white/10 mt-4"><div className="h-1.5 rounded-full" style={{ width: w, background: c }} /></div>
+)
 
 /* ------------------------------------------------------------------ */
 /* Живые цифры                                                         */
