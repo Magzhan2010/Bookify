@@ -5,13 +5,9 @@ import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
 import { ThemeToggle } from '../components/ThemeContext'
-import QuoteFeature from '../components/quotes/QuoteFeature'
 import { PagesLadder, BonusCards, PointsCalculator, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
-import { BeyondReading, StudentShowcase } from '../components/landing/Story'
-import {
-  ArrowRight, ArrowUpRight, BookOpen, PenLine, Coins, Undo2,
-  GraduationCap, Presentation, Library, Trophy, Video, Mic, Flame, Award
-} from 'lucide-react'
+import { BeyondReading } from '../components/landing/Story'
+import { ArrowRight, ArrowUpRight, BookOpen, Trophy, Flame, Award } from 'lucide-react'
 
 /* Фирменные цвета */
 const NAVY = '#1f2a5c'
@@ -34,11 +30,7 @@ export default function LandingPage() {
       <Hero />
       <LiveStats />
       <BeyondReading />
-      <HowItWorks />
-      <StudentShowcase />
       <ProgramSection />
-      <QuotesSection />
-      <AudienceSection />
       <FinalCta />
       <LandingFooter />
     </main>
@@ -58,10 +50,8 @@ function Nav() {
         </Link>
 
         <div className="hidden md:flex items-center gap-1 text-[14px] font-medium text-[var(--color-text-secondary)]">
-          <a href="#how" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Как это работает</a>
-          <a href="#showcase" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Видео учеников</a>
+          <a href="#beyond" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Как это работает</a>
           <a href="#program" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Монеты и призы</a>
-          <a href="#for-whom" className="px-3 py-2 rounded-lg hover:text-[var(--color-text-primary)] transition-colors">Для кого</a>
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
@@ -392,77 +382,6 @@ function CountUp({ value }) {
 }
 
 /* ------------------------------------------------------------------ */
-/* Как это работает                                                    */
-/* ------------------------------------------------------------------ */
-const STEPS = [
-  { icon: BookOpen, title: 'Возьми книгу', text: 'В школьной библиотеке или забронируй в каталоге Bookify.' },
-  { icon: Undo2, title: 'Прочитай и верни', text: 'Библиотекарь отмечает возврат — книга ждёт твоего отзыва.' },
-  { icon: PenLine, title: 'Напиши отзыв', text: '150–300 слов: о чём книга, главная идея, твоё мнение с примерами и выводы.' },
-  { icon: Coins, title: 'Получи монеты', text: '+5 за отзыв и от 5 до 25 за объём книги — после проверки.' }
-]
-
-function HowItWorks() {
-  return (
-    <section id="how" className="py-24 md:py-32 px-5 sm:px-6 scroll-mt-16">
-      <div className="max-w-[1200px] mx-auto">
-        <SectionHead
-          kicker="Как это работает"
-          title={<>Путь одной книги —<br className="hidden sm:block" /> четыре шага.</>}
-        />
-
-        <motion.ol
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={stagger}
-          className="relative grid sm:grid-cols-2 lg:grid-cols-4 gap-4"
-        >
-          {/* линия, которая прорисовывается между шагами */}
-          <motion.div
-            aria-hidden
-            variants={{ hidden: { scaleX: 0 }, visible: { scaleX: 1, transition: { duration: 1.2, ease: EASE } } }}
-            className="hidden lg:block absolute top-[46px] left-[12%] right-[12%] h-px origin-left bg-[var(--color-border-strong)]"
-          />
-          {STEPS.map((s, i) => {
-            const Icon = s.icon
-            return (
-              <motion.li
-                key={s.title}
-                variants={reveal}
-                className="relative apple-card card-lift p-6 pt-7"
-              >
-                <div className="flex items-center gap-3 mb-5">
-                  <div className="relative z-10 w-12 h-12 rounded-2xl flex items-center justify-center" style={{ background: NAVY, color: GOLD }}>
-                    <Icon size={21} strokeWidth={2.2} />
-                  </div>
-                  <span className="text-[13px] font-semibold text-[var(--color-text-tertiary)] tabular-nums">0{i + 1}</span>
-                </div>
-                <h3 className="text-[20px] font-semibold tracking-tight mb-2">{s.title}</h3>
-                <p className="text-[15px] text-[var(--color-text-secondary)] leading-[1.55]">{s.text}</p>
-              </motion.li>
-            )
-          })}
-        </motion.ol>
-
-        <motion.div
-          initial={{ opacity: 0, y: 16 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true }}
-          transition={{ duration: 0.6, ease: EASE }}
-          className="mt-4 rounded-[22px] border border-dashed border-[var(--color-border-strong)] p-5 md:p-6 flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-8"
-        >
-          <div className="text-[15px] font-semibold">Хочешь больше?</div>
-          <div className="flex flex-wrap gap-x-8 gap-y-3 text-[15px] text-[var(--color-text-secondary)]">
-            <span className="inline-flex items-center gap-2"><Video size={17} className="text-[var(--color-brand)]" /> Видео о книге <b className="text-[var(--color-text-primary)]">+10</b></span>
-            <span className="inline-flex items-center gap-2"><Mic size={17} className="text-[var(--color-brand)]" /> Выступление на TEDx <b className="text-[var(--color-text-primary)]">+15</b></span>
-          </div>
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-/* ------------------------------------------------------------------ */
 /* Программа, баллы, призы                                             */
 /* ------------------------------------------------------------------ */
 function ProgramSection() {
@@ -513,93 +432,6 @@ function ProgramSection() {
 }
 
 const Dot = () => <span className="text-[var(--color-brand)]">.</span>
-
-/* ------------------------------------------------------------------ */
-/* Цитаты — только если библиотекарь их добавил                        */
-/* ------------------------------------------------------------------ */
-function QuotesSection() {
-  const [quotes, setQuotes] = useState([])
-  useEffect(() => {
-    fetch('/api/quotes?limit=12')
-      .then(r => (r.ok ? r.json() : []))
-      .then(d => setQuotes(Array.isArray(d) ? d : []))
-      .catch(() => {})
-  }, [])
-  if (!quotes.length) return null
-  return (
-    <section className="py-24 md:py-32 px-5 sm:px-6">
-      <div className="max-w-[1200px] mx-auto">
-        <SectionHead kicker="Цитаты из книг" title={<>Мысли, которые<br />стоит запомнить.</>} />
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          whileInView={{ opacity: 1, y: 0 }}
-          viewport={{ once: true, margin: '-80px' }}
-          transition={{ duration: 0.8, ease: EASE }}
-        >
-          <QuoteFeature quotes={quotes} />
-        </motion.div>
-      </div>
-    </section>
-  )
-}
-
-/* ------------------------------------------------------------------ */
-/* Для кого                                                            */
-/* ------------------------------------------------------------------ */
-const AUDIENCE = [
-  {
-    icon: GraduationCap,
-    title: 'Ученикам',
-    points: ['Каталог и бронь книг', 'Монеты, уровни и достижения', 'Рейтинг месяца и лучший класс', 'Своя полка прочитанного']
-  },
-  {
-    icon: Presentation,
-    title: 'Учителям',
-    points: ['Читают и получают монеты наравне со всеми', 'Видят чтение своего класса', 'Советуют книги ученикам']
-  },
-  {
-    icon: Library,
-    title: 'Библиотеке и команде',
-    points: ['Выдача и возврат в пару касаний', 'Проверка отзывов по критериям школы', 'Аналитика, призы, экран в холле']
-  }
-]
-
-function AudienceSection() {
-  return (
-    <section id="for-whom" className="py-24 md:py-32 px-5 sm:px-6 scroll-mt-16">
-      <div className="max-w-[1200px] mx-auto">
-        <SectionHead kicker="Для кого" title={<>Одна платформа<br className="hidden sm:block" /> для всей школы.</>} />
-        <motion.div
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true, margin: '-80px' }}
-          variants={stagger}
-          className="grid md:grid-cols-3 gap-4"
-        >
-          {AUDIENCE.map(a => {
-            const Icon = a.icon
-            return (
-              <motion.div key={a.title} variants={reveal} className="apple-card card-lift p-7">
-                <div className="w-12 h-12 rounded-2xl bg-[var(--color-brand-soft)] text-[var(--color-brand)] flex items-center justify-center mb-6">
-                  <Icon size={22} />
-                </div>
-                <h3 className="text-[22px] font-semibold tracking-tight mb-4">{a.title}</h3>
-                <ul className="space-y-2.5">
-                  {a.points.map(p => (
-                    <li key={p} className="flex gap-2.5 text-[15px] text-[var(--color-text-secondary)] leading-[1.45]">
-                      <span className="mt-[7px] w-1.5 h-1.5 rounded-full bg-[var(--color-brand)] shrink-0" />
-                      {p}
-                    </li>
-                  ))}
-                </ul>
-              </motion.div>
-            )
-          })}
-        </motion.div>
-      </div>
-    </section>
-  )
-}
 
 /* ------------------------------------------------------------------ */
 /* Финальный призыв                                                    */
