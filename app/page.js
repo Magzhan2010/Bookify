@@ -332,9 +332,9 @@ function FinalCta() {
         style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a56db 140%)` }}
       >
         {/* тот же горизонт, что на первом экране — страница начинается и заканчивается одним мотивом */}
-        <div aria-hidden className="absolute left-1/2 -bottom-[880px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none"
+        <div aria-hidden className="hidden md:block absolute left-1/2 -bottom-[920px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none"
           style={{ boxShadow: 'inset 0 2px 0 rgba(200,222,255,0.8), inset 0 14px 30px rgba(79,125,240,0.45), 0 -4px 24px rgba(120,165,255,0.7), 0 -30px 100px rgba(26,86,219,0.6)' }} />
-        <div aria-hidden className="absolute left-1/2 -bottom-[380px] w-0 h-0 pointer-events-none">
+        <div aria-hidden className="hidden md:block absolute left-1/2 -bottom-[420px] w-0 h-0 pointer-events-none">
           <div className="comet-orbit absolute left-0 top-0 w-0 h-0">
             <span className="absolute -left-[70px] -top-[501px] w-[140px] h-[3px] rounded-full"
               style={{ background: 'linear-gradient(90deg, transparent, #fff 50%, transparent)', boxShadow: '0 0 14px 3px rgba(140,180,255,0.7)' }} />
