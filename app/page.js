@@ -4,7 +4,6 @@ import { motion, useInView, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
-import { ThemeToggle } from '../components/ThemeContext'
 import { PagesLadder, BonusCards, PointsCalculator, PrizesPreview, AiWarning } from '../components/game/RulesBlocks'
 import { BeyondReading } from '../components/landing/Story'
 import { ArrowRight, ArrowUpRight, Trophy } from 'lucide-react'
@@ -28,10 +27,13 @@ export default function LandingPage() {
     <>
     {/* меню вне <main>: у <main> анимация появления с transform, из-за неё fixed не держится */}
     <Nav />
-    <main className="min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-x-hidden">
+    <main className="dark landing-night min-h-screen bg-[var(--color-bg)] text-[var(--color-text-primary)] overflow-x-hidden">
       <Hero />
+      <Beam />
       <LiveStats />
+      <Beam />
       <BeyondReading />
+      <Beam />
       <ProgramSection />
       <FinalCta />
       <LandingFooter />
@@ -44,18 +46,7 @@ export default function LandingPage() {
 /* Навигация: прозрачная над тёмным первым экраном, обычная ниже       */
 /* ------------------------------------------------------------------ */
 function Nav() {
-  const [onDark, setOnDark] = useState(true)
-  useEffect(() => {
-    const check = () => {
-      const hero = document.getElementById('hero')
-      setOnDark(!!hero && hero.getBoundingClientRect().bottom > 64)
-    }
-    check()
-    window.addEventListener('scroll', check, { passive: true })
-    window.addEventListener('resize', check)
-    return () => { window.removeEventListener('scroll', check); window.removeEventListener('resize', check) }
-  }, [])
-
+  const onDark = true
   return (
     <nav className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
       onDark ? 'bg-[#04061a]/85 border-b border-white/5 text-white' : 'bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]'}`}>
@@ -71,7 +62,6 @@ function Nav() {
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2">
-          {!onDark && <ThemeToggle size="md" />}
           <Link href="/login" className={`hidden sm:block px-3.5 py-2 text-[14px] font-medium transition-colors ${onDark ? 'text-white/75 hover:text-white' : 'text-[var(--color-text-secondary)] hover:text-[var(--color-text-primary)]'}`}>
             Войти
           </Link>
@@ -206,6 +196,9 @@ const Bar = ({ w, c, delay = 1.2 }) => (
 /* ------------------------------------------------------------------ */
 /* Живые цифры                                                         */
 /* ------------------------------------------------------------------ */
+/** Светящаяся линия между блоками — как кромка горизонта с первого экрана. */
+const Beam = () => <div aria-hidden className="max-w-[1200px] mx-auto px-5 sm:px-6"><div className="beam" /></div>
+
 function LiveStats() {
   const [stats, setStats] = useState(null)
   useEffect(() => {
@@ -226,17 +219,17 @@ function LiveStats() {
 
   return (
     <section className="px-5 sm:px-6">
-      <div className="max-w-[1200px] mx-auto border-y border-[var(--color-border)] py-10 md:py-12 min-h-[140px]">
+      <div className="max-w-[1200px] mx-auto py-12 md:py-16 min-h-[140px]">
         {items && (
           <motion.div
             initial="hidden"
             whileInView="visible"
             viewport={{ once: true }}
             variants={stagger}
-            className="grid grid-cols-2 md:grid-cols-4 gap-y-8 gap-x-6"
+            className="grid grid-cols-2 md:grid-cols-4 gap-y-8 md:divide-x md:divide-[var(--color-border)]"
           >
             {items.map(s => (
-              <motion.div key={s.label} variants={reveal} className="text-center md:text-left">
+              <motion.div key={s.label} variants={reveal} className="text-center md:px-8 first:md:pl-0">
                 <div className="text-[40px] md:text-[52px] font-semibold tracking-[-0.03em] leading-none tabular-nums">
                   <CountUp value={s.value} />
                 </div>
@@ -276,8 +269,9 @@ function CountUp({ value }) {
 /* ------------------------------------------------------------------ */
 function ProgramSection() {
   return (
-    <section id="program" className="py-24 md:py-32 px-5 sm:px-6 bg-[var(--color-bg-soft)] border-y border-[var(--color-border)] scroll-mt-16">
-      <div className="max-w-[1200px] mx-auto">
+    <section id="program" className="relative overflow-hidden py-24 md:py-32 px-5 sm:px-6 scroll-mt-16">
+      <div aria-hidden className="absolute left-1/2 top-0 w-[1400px] h-[700px] -ml-[700px] pointer-events-none" style={{ background: 'radial-gradient(closest-side at 50% 30%, rgba(26,86,219,0.22), transparent)' }} />
+      <div className="relative max-w-[1200px] mx-auto">
         <motion.div
           initial={{ opacity: 0, y: 24 }}
           whileInView={{ opacity: 1, y: 0 }}

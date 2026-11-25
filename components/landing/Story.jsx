@@ -84,8 +84,8 @@ function ReadTile() {
   ]
   return (
     <motion.div ref={ref} variants={tile}
-      className="sm:col-span-2 lg:row-span-2 relative overflow-hidden rounded-[32px] p-7 sm:p-9 min-h-[520px] lg:min-h-[560px] flex flex-col text-white"
-      style={{ background: NAVY }}>
+      className="glow-card sm:col-span-2 lg:row-span-2 relative overflow-hidden rounded-[32px] p-7 sm:p-9 min-h-[520px] lg:min-h-[560px] flex flex-col text-white border border-[rgba(120,165,255,0.18)]"
+      style={{ background: 'linear-gradient(160deg, #101c52, #0b1233 60%)' }}>
       <div className="flex justify-between items-center">
         <Kicker color={GOLD}>01 · ПРОЧИТАТЬ</Kicker>
         <Pill dark>до +25 монет</Pill>
@@ -141,7 +141,7 @@ function WriteTile() {
 
   return (
     <motion.div ref={ref} variants={tile}
-      className="sm:col-span-2 relative overflow-hidden rounded-[32px] p-7 sm:p-9 min-h-[272px] flex flex-wrap gap-7 bg-[var(--color-brand-soft)]">
+      className="glow-card sm:col-span-2 relative overflow-hidden rounded-[32px] p-7 sm:p-9 min-h-[272px] flex flex-wrap gap-7 bg-[var(--color-brand-soft)] border border-[var(--color-border)]">
       <div className="flex-[1_1_220px] flex flex-col justify-between gap-4">
         <Kicker color={BLUE}>02 · НАПИСАТЬ</Kicker>
         <div>
@@ -187,7 +187,7 @@ function FilmTile() {
   }, [inView])
   return (
     <motion.div ref={ref} variants={tile}
-      className="relative overflow-hidden rounded-[32px] p-7 min-h-[272px] flex flex-col justify-between text-white" style={{ background: BLUE }}>
+      className="glow-card relative overflow-hidden rounded-[32px] p-7 min-h-[272px] flex flex-col justify-between text-white border border-white/10" style={{ background: BLUE }}>
       <div className="flex justify-between items-center"><Kicker color="#fff">03 · СНЯТЬ</Kicker><Pill gold>+10</Pill></div>
       <motion.div className="self-center w-[96px] h-[170px] rounded-[22px] bg-[#0e1433] p-[5px] box-border shadow-[0_24px_40px_-16px_rgba(0,0,0,0.6)] my-3"
         animate={{ rotate: [-3, 3, -3] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }}>
@@ -219,7 +219,7 @@ function FilmTile() {
 function SpeakTile() {
   return (
     <motion.div variants={tile}
-      className="relative overflow-hidden rounded-[32px] p-7 min-h-[272px] flex flex-col justify-between text-white bg-[#07091a]">
+      className="glow-card relative overflow-hidden rounded-[32px] p-7 min-h-[272px] flex flex-col justify-between text-white bg-[#05071a] border border-[rgba(120,165,255,0.18)]">
       <div className="flex justify-between items-center"><Kicker color={GOLD}>04 · ВЫСТУПИТЬ</Kicker><Pill gold>+15</Pill></div>
       <div className="relative h-[120px] my-3">
         <motion.div className="absolute left-1/2 -top-10 w-[180px] h-[170px] -ml-[90px] origin-top"
@@ -240,7 +240,7 @@ function SumTile() {
   const steps = ['Прочитал', 'Написал', 'Снял', 'Выступил']
   return (
     <motion.div variants={tile}
-      className="sm:col-span-2 lg:col-span-4 rounded-[32px] border border-[var(--color-border)] px-7 sm:px-9 py-7 flex flex-wrap items-center justify-between gap-5">
+      className="glow-card sm:col-span-2 lg:col-span-4 rounded-[32px] border border-[var(--color-border)] bg-[var(--color-bg-card)] px-7 sm:px-9 py-7 flex flex-wrap items-center justify-between gap-5">
       <div className="flex flex-wrap items-center gap-3 text-[16px] font-semibold text-[var(--color-text-secondary)]">
         {steps.map((s, i) => (
           <span key={s} className="flex items-center gap-3">
