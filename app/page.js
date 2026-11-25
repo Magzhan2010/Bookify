@@ -1,6 +1,6 @@
 'use client'
 
-import { motion, useInView, useReducedMotion, useScroll, useTransform } from 'framer-motion'
+import { motion, useInView, useReducedMotion } from 'framer-motion'
 import Link from 'next/link'
 import Image from 'next/image'
 import { useEffect, useRef, useState } from 'react'
@@ -58,7 +58,7 @@ function Nav() {
 
   return (
     <nav className={`fixed top-0 inset-x-0 z-50 transition-colors duration-300 ${
-      onDark ? 'bg-[#04061a]/40 backdrop-blur-xl border-b border-white/5 text-white' : 'bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]'}`}>
+      onDark ? 'bg-[#04061a]/85 border-b border-white/5 text-white' : 'bg-[var(--color-bg-overlay)] backdrop-blur-2xl border-b border-[var(--color-border)]'}`}>
       <div className="max-w-[1200px] mx-auto px-5 sm:px-6 h-16 flex items-center justify-between gap-3">
         <Link href="/" className="flex items-center gap-2.5 shrink-0">
           <Image src="/lb_logo.png" width={40} height={40} alt="" className="w-10 h-10 object-contain" priority />
@@ -89,14 +89,10 @@ function Nav() {
 /* Первый экран: «синий свет» — светящийся горизонт и панель Bookify   */
 /* ------------------------------------------------------------------ */
 function Hero() {
-  const ref = useRef(null)
   const still = useReducedMotion()
-  const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
-  const arcY = useTransform(scrollYProgress, [0, 1], [0, -120])
-  const panelY = useTransform(scrollYProgress, [0, 1], [0, -70])
 
   return (
-    <section id="hero" ref={ref} className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
+    <section id="hero" className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
       {/* ореол */}
       <motion.div aria-hidden className="absolute left-1/2 top-[260px] md:top-[340px] w-[1700px] h-[800px] -ml-[850px] pointer-events-none"
         style={{ background: 'radial-gradient(closest-side at 50% 60%, rgba(26,86,219,0.5), rgba(26,86,219,0.14) 50%, transparent)' }}
@@ -104,15 +100,13 @@ function Hero() {
       {/* горизонт */}
       <motion.div aria-hidden className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full pointer-events-none"
         style={{
-          y: still ? 0 : arcY,
-          willChange: 'transform',
           background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
           boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
         }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, ease: EASE }} />
       {/* блик на вершине дуги */}
       <motion.div aria-hidden className="absolute left-1/2 top-[505px] md:top-[585px] w-[640px] h-[120px] -ml-[320px] pointer-events-none"
-        style={{ y: still ? 0 : arcY, willChange: 'transform, opacity', background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }}
+        style={{ willChange: 'opacity', background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }}
         animate={still ? {} : { opacity: [0.7, 1, 0.7] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
 
       <motion.div initial="hidden" animate="visible" variants={stagger} className="relative max-w-[980px] mx-auto text-center">
@@ -139,12 +133,12 @@ function Hero() {
         </motion.div>
       </motion.div>
 
-      <motion.div style={{ y: still ? 0 : panelY, willChange: 'transform' }} className="relative max-w-[1180px] mx-auto mt-40 md:mt-56">
+      <div className="relative max-w-[1180px] mx-auto mt-40 md:mt-56">
         <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, delay: 0.5, ease: EASE }}
           className="rounded-[28px] p-4 sm:p-[18px] bg-[#0b1233]/90 border border-white/10 shadow-[0_-20px_80px_rgba(26,86,219,0.25)]">
           <HeroPanel />
         </motion.div>
-      </motion.div>
+      </div>
       <div className="h-16 md:h-20" />
     </section>
   )
