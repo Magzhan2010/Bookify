@@ -88,26 +88,35 @@ function Nav() {
 /* ------------------------------------------------------------------ */
 /* Первый экран: «синий свет» — светящийся горизонт и панель Bookify   */
 /* ------------------------------------------------------------------ */
-function Hero() {
-  const still = useReducedMotion()
+const STARS = [
+  [6, 150, 2, 0], [11, 310, 3, 1.2], [17, 210, 2, 2.1], [22, 420, 2, .6], [8, 470, 3, 1.8], [27, 120, 2, 2.6],
+  [94, 170, 2, .3], [89, 330, 3, 1.5], [83, 230, 2, 2.4], [78, 440, 2, .9], [92, 480, 3, 2], [73, 140, 2, 1.1],
+  [35, 520, 2, 3], [65, 530, 2, 1.7]
+].map(([x, y, s, d]) => ({ x: `${x}%`, y: `${y}px`, s, d }))
 
+function Hero() {
   return (
     <section id="hero" className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
-      {/* ореол */}
-      <motion.div aria-hidden className="absolute left-1/2 top-[260px] md:top-[340px] w-[1700px] h-[800px] -ml-[850px] pointer-events-none"
-        style={{ background: 'radial-gradient(closest-side at 50% 60%, rgba(26,86,219,0.5), rgba(26,86,219,0.14) 50%, transparent)' }}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, delay: 0.3 }} />
-      {/* горизонт */}
-      <motion.div aria-hidden className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full pointer-events-none"
-        style={{
-          background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
-          boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
-        }}
-        initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, ease: EASE }} />
-      {/* блик на вершине дуги */}
-      <motion.div aria-hidden className="absolute left-1/2 top-[505px] md:top-[585px] w-[640px] h-[120px] -ml-[320px] pointer-events-none"
-        style={{ willChange: 'opacity', background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }}
-        animate={still ? {} : { opacity: [0.7, 1, 0.7] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
+      {/* Горизонт: один раз «восходит» при загрузке, по кромке бегает свет, вокруг мерцают звёзды */}
+      <div aria-hidden className="horizon-rise absolute inset-0 pointer-events-none">
+        <div className="absolute left-1/2 top-[260px] md:top-[340px] w-[1700px] h-[800px] -ml-[850px]"
+          style={{ background: 'radial-gradient(closest-side at 50% 60%, rgba(26,86,219,0.5), rgba(26,86,219,0.14) 50%, transparent)' }} />
+        {STARS.map((st, i) => (
+          <span key={i} className="twinkle absolute rounded-full bg-white"
+            style={{ left: st.x, top: st.y, width: st.s, height: st.s, animationDelay: `${st.d}s`, boxShadow: '0 0 6px rgba(158,193,255,0.9)' }} />
+        ))}
+        <div className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full"
+          style={{
+            background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
+            boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
+          }} />
+        <div className="comet-orbit absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full">
+          <span className="absolute left-1/2 -top-[3px] w-[320px] h-[6px] -ml-[160px] rounded-full"
+            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 50%, transparent)', boxShadow: '0 0 24px 6px rgba(140,180,255,0.75)' }} />
+        </div>
+        <div className="flare absolute left-1/2 top-[505px] md:top-[585px] w-[640px] h-[120px] -ml-[320px]"
+          style={{ background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }} />
+      </div>
 
       <motion.div initial="hidden" animate="visible" variants={stagger} className="relative max-w-[980px] mx-auto text-center">
         <motion.div variants={reveal}
@@ -154,7 +163,7 @@ function HeroPanel() {
           <span className="text-white font-semibold">Каталог</span><span>Мои книги</span><span>Магазин</span><span>Лидеры</span><span>Фокус</span>
         </div>
         <span className="inline-flex items-center gap-1.5 text-[13px] font-bold">
-          <span className="w-[18px] h-[18px] rounded-full text-[9px] font-black flex items-center justify-center text-[#7a5200]" style={{ background: GOLD }}>B</span>72
+          <span className="w-[18px] h-[18px] rounded-full text-[9px] font-black flex items-center justify-center text-[#7a5200]" style={{ background: GOLD }}>B</span><CountUp value={72} />
         </span>
       </div>
       <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-3.5 pt-[18px]">
@@ -162,10 +171,10 @@ function HeroPanel() {
           <Bar w="62%" c="#4f7df0" />
         </PanelCard>
         <PanelCard kicker="МОЯ ЦЕЛЬ" title="72 из 100 монет" sub="До приза — одна книга">
-          <Bar w="72%" c={GOLD} />
+          <Bar w="72%" c={GOLD} delay={1.4} />
         </PanelCard>
         <PanelCard kicker="ОТЗЫВ" title="«Атомные привычки»" sub="Одобрен · +5 монет" subBlue>
-          <div className="flex gap-1 mt-[18px]">{[1, 1, 1, 0].map((on, i) => <span key={i} className="flex-1 h-1.5 rounded-full" style={{ background: on ? '#4f7df0' : 'rgba(255,255,255,0.12)' }} />)}</div>
+          <div className="flex gap-1 mt-[18px]">{[1, 1, 1, 0].map((on, i) => <span key={i} className="bar-fill flex-1 h-1.5 rounded-full" style={{ background: on ? '#4f7df0' : 'rgba(255,255,255,0.12)', animationDelay: `${1.6 + i * 0.15}s` }} />)}</div>
         </PanelCard>
       </div>
     </div>
@@ -186,8 +195,8 @@ function PanelCard({ kicker, title, sub, accent, subBlue, children }) {
   )
 }
 
-const Bar = ({ w, c }) => (
-  <div className="h-1.5 rounded-full bg-white/10 mt-4"><div className="h-1.5 rounded-full" style={{ width: w, background: c }} /></div>
+const Bar = ({ w, c, delay = 1.2 }) => (
+  <div className="h-1.5 rounded-full bg-white/10 mt-4"><div className="bar-fill h-1.5 rounded-full" style={{ width: w, background: c, animationDelay: `${delay}s` }} /></div>
 )
 
 /* ------------------------------------------------------------------ */
@@ -324,7 +333,13 @@ function FinalCta() {
         className="relative max-w-[1200px] mx-auto rounded-[36px] overflow-hidden px-7 py-14 md:px-16 md:py-20"
         style={{ background: `linear-gradient(135deg, ${NAVY} 0%, #1a56db 140%)` }}
       >
-        <div aria-hidden className="absolute -bottom-32 -right-24 w-96 h-96 rounded-full blur-3xl opacity-25" style={{ background: GOLD }} />
+        {/* тот же горизонт, что на первом экране — страница начинается и заканчивается одним мотивом */}
+        <div aria-hidden className="absolute left-1/2 -bottom-[880px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none"
+          style={{ boxShadow: 'inset 0 2px 0 rgba(200,222,255,0.8), inset 0 14px 30px rgba(79,125,240,0.45), 0 -4px 24px rgba(120,165,255,0.7), 0 -30px 100px rgba(26,86,219,0.6)' }} />
+        <div aria-hidden className="comet-orbit absolute left-1/2 -bottom-[880px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none">
+          <span className="absolute left-1/2 -top-[2px] w-[200px] h-[4px] -ml-[100px] rounded-full"
+            style={{ background: 'linear-gradient(90deg, transparent, #fff 50%, transparent)', boxShadow: '0 0 18px 4px rgba(140,180,255,0.7)' }} />
+        </div>
         <div className="relative grid md:grid-cols-[1.3fr_1fr] gap-10 items-center">
           <div>
             <div className="inline-flex items-center gap-2 mb-5 text-[13px] font-semibold text-white/70">

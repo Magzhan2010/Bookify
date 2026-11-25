@@ -401,3 +401,20 @@ main { animation: pageIn 0.35s cubic-bezier(0.23, 1, 0.32, 1) both; }
 }
 
 @keyframes marquee { to { transform: translateX(-50%); } }
+
+/* ---------- Главная: «синий свет» — только transform/opacity, чтобы не тормозило ---------- */
+@keyframes horizonRise { from { transform: translate3d(0, 220px, 0); opacity: 0 } to { transform: translate3d(0, 0, 0); opacity: 1 } }
+@keyframes cometSweep { from { transform: rotate(-38deg) } to { transform: rotate(38deg) } }
+@keyframes cometFade { 0%, 100% { opacity: 0 } 12%, 88% { opacity: 1 } }
+@keyframes twinkle { 0%, 100% { opacity: .15 } 50% { opacity: .9 } }
+@keyframes flarePulse { 0%, 100% { opacity: .7; transform: scaleX(.94) } 50% { opacity: 1; transform: scaleX(1.06) } }
+@keyframes barFill { from { transform: scaleX(0) } to { transform: scaleX(1) } }
+.horizon-rise { animation: horizonRise 1.8s cubic-bezier(.16, 1, .3, 1) .15s both }
+.comet-orbit { animation: cometSweep 7s cubic-bezier(.45, 0, .55, 1) 1.6s infinite alternate both; will-change: transform }
+.comet-orbit > span { animation: cometFade 7s linear 1.6s infinite both }
+.twinkle { animation: twinkle 3.6s ease-in-out infinite both }
+.flare { animation: flarePulse 5s ease-in-out infinite; will-change: transform, opacity }
+.bar-fill { transform-origin: left; animation: barFill 1.4s cubic-bezier(.16, 1, .3, 1) both }
+@media (prefers-reduced-motion: reduce) {
+  .horizon-rise, .comet-orbit, .comet-orbit > span, .twinkle, .flare, .bar-fill { animation: none }
+}
