@@ -93,27 +93,27 @@ function Hero() {
   const still = useReducedMotion()
   const { scrollYProgress } = useScroll({ target: ref, offset: ['start start', 'end start'] })
   const arcY = useTransform(scrollYProgress, [0, 1], [0, -120])
-  const glow = useTransform(scrollYProgress, [0, 0.6], [1, 1.35])
   const panelY = useTransform(scrollYProgress, [0, 1], [0, -70])
 
   return (
     <section id="hero" ref={ref} className="relative overflow-hidden bg-[#04061a] text-white pt-32 md:pt-40 px-5 sm:px-6">
       {/* ореол */}
-      <motion.div aria-hidden className="absolute left-1/2 top-[300px] md:top-[380px] w-[1500px] h-[700px] -ml-[750px] rounded-[50%] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse at 50% 60%, rgba(26,86,219,0.55), rgba(26,86,219,0.12) 45%, transparent 70%)', filter: 'blur(30px)', scale: still ? 1 : glow }}
+      <motion.div aria-hidden className="absolute left-1/2 top-[260px] md:top-[340px] w-[1700px] h-[800px] -ml-[850px] pointer-events-none"
+        style={{ background: 'radial-gradient(closest-side at 50% 60%, rgba(26,86,219,0.5), rgba(26,86,219,0.14) 50%, transparent)' }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.6, delay: 0.3 }} />
       {/* горизонт */}
       <motion.div aria-hidden className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full pointer-events-none"
         style={{
           y: still ? 0 : arcY,
+          willChange: 'transform',
           background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
           boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
         }}
         initial={{ opacity: 0 }} animate={{ opacity: 1 }} transition={{ duration: 1.4, ease: EASE }} />
       {/* блик на вершине дуги */}
-      <motion.div aria-hidden className="absolute left-1/2 top-[520px] md:top-[600px] w-[520px] h-[90px] -ml-[260px] rounded-[50%] pointer-events-none"
-        style={{ background: 'radial-gradient(ellipse, rgba(230,240,255,0.9), rgba(120,165,255,0.4) 40%, transparent 70%)', filter: 'blur(14px)' }}
-        animate={still ? {} : { opacity: [0.75, 1, 0.75], scaleX: [0.95, 1.05, 0.95] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
+      <motion.div aria-hidden className="absolute left-1/2 top-[505px] md:top-[585px] w-[640px] h-[120px] -ml-[320px] pointer-events-none"
+        style={{ y: still ? 0 : arcY, willChange: 'transform, opacity', background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }}
+        animate={still ? {} : { opacity: [0.7, 1, 0.7] }} transition={{ duration: 5, repeat: Infinity, ease: 'easeInOut' }} />
 
       <motion.div initial="hidden" animate="visible" variants={stagger} className="relative max-w-[980px] mx-auto text-center">
         <motion.div variants={reveal}
@@ -121,9 +121,8 @@ function Hero() {
           <span className="px-2.5 py-1 rounded-full bg-[#1a56db] text-white font-semibold">DLS</span>
           Библиотека Divergents Leadership School
         </motion.div>
-        <motion.h1 variants={reveal} className="mt-7 text-[42px] sm:text-[60px] lg:text-[76px] font-semibold tracking-[-0.045em] leading-[1.02]">
-          Библиотека, которая<br className="hidden sm:block" />{' '}
-          <span className="bg-clip-text text-transparent" style={{ backgroundImage: 'linear-gradient(180deg, #ffffff 30%, #9ec1ff)' }}>превращает чтение в навык</span>
+        <motion.h1 variants={reveal} className="mt-7 text-[42px] sm:text-[60px] lg:text-[76px] font-semibold tracking-[-0.045em] leading-[1.02] text-white" style={{ color: '#ffffff' }}>
+          Библиотека, которая<br className="hidden sm:block" />{' '}превращает чтение в навык
         </motion.h1>
         <motion.p variants={reveal} className="mt-6 mx-auto max-w-[560px] text-[17px] md:text-[19px] leading-[1.55] text-white/65">
           Бери книги, пиши отзывы, снимай видео и выступай на TEDx. За каждый шаг — монеты и настоящие призы.
@@ -140,9 +139,9 @@ function Hero() {
         </motion.div>
       </motion.div>
 
-      <motion.div style={{ y: still ? 0 : panelY }} className="relative max-w-[1180px] mx-auto mt-40 md:mt-56">
+      <motion.div style={{ y: still ? 0 : panelY, willChange: 'transform' }} className="relative max-w-[1180px] mx-auto mt-40 md:mt-56">
         <motion.div initial={{ opacity: 0, y: 80 }} animate={{ opacity: 1, y: 0 }} transition={{ duration: 1.1, delay: 0.5, ease: EASE }}
-          className="rounded-[28px] p-4 sm:p-[18px] bg-white/[0.045] border border-white/10 backdrop-blur-xl shadow-[0_-20px_80px_rgba(26,86,219,0.25)]">
+          className="rounded-[28px] p-4 sm:p-[18px] bg-[#0b1233]/90 border border-white/10 shadow-[0_-20px_80px_rgba(26,86,219,0.25)]">
           <HeroPanel />
         </motion.div>
       </motion.div>
