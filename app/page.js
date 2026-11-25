@@ -107,12 +107,16 @@ function Hero() {
         ))}
         <div className="absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full"
           style={{
+            willChange: 'transform',
             background: 'radial-gradient(circle at 50% 0%, #0d1a4d 0%, #060a24 30%, #04061a 60%)',
             boxShadow: 'inset 0 3px 0 rgba(200,222,255,0.95), inset 0 18px 40px rgba(79,125,240,0.55), 0 -6px 30px rgba(120,165,255,0.9), 0 -40px 140px rgba(26,86,219,0.75)'
           }} />
-        <div className="comet-orbit absolute left-1/2 top-[560px] md:top-[640px] w-[1760px] h-[1760px] -ml-[880px] rounded-full">
-          <span className="absolute left-1/2 -top-[3px] w-[320px] h-[6px] -ml-[160px] rounded-full"
-            style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 50%, transparent)', boxShadow: '0 0 24px 6px rgba(140,180,255,0.75)' }} />
+        {/* комета: вращается только маленькая полоса вокруг невидимого центра дуги */}
+        <div className="absolute left-1/2 top-[1440px] md:top-[1520px] w-0 h-0">
+          <div className="comet-orbit absolute left-0 top-0 w-0 h-0">
+            <span className="absolute -left-[90px] -top-[882px] w-[180px] h-[4px] rounded-full"
+              style={{ background: 'linear-gradient(90deg, transparent, rgba(255,255,255,0.95) 50%, transparent)', boxShadow: '0 0 18px 4px rgba(140,180,255,0.7)' }} />
+          </div>
         </div>
         <div className="flare absolute left-1/2 top-[505px] md:top-[585px] w-[640px] h-[120px] -ml-[320px]"
           style={{ background: 'radial-gradient(closest-side, rgba(230,240,255,0.85), rgba(120,165,255,0.35) 45%, transparent)' }} />
@@ -336,9 +340,11 @@ function FinalCta() {
         {/* тот же горизонт, что на первом экране — страница начинается и заканчивается одним мотивом */}
         <div aria-hidden className="absolute left-1/2 -bottom-[880px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none"
           style={{ boxShadow: 'inset 0 2px 0 rgba(200,222,255,0.8), inset 0 14px 30px rgba(79,125,240,0.45), 0 -4px 24px rgba(120,165,255,0.7), 0 -30px 100px rgba(26,86,219,0.6)' }} />
-        <div aria-hidden className="comet-orbit absolute left-1/2 -bottom-[880px] w-[1000px] h-[1000px] -ml-[500px] rounded-full pointer-events-none">
-          <span className="absolute left-1/2 -top-[2px] w-[200px] h-[4px] -ml-[100px] rounded-full"
-            style={{ background: 'linear-gradient(90deg, transparent, #fff 50%, transparent)', boxShadow: '0 0 18px 4px rgba(140,180,255,0.7)' }} />
+        <div aria-hidden className="absolute left-1/2 -bottom-[380px] w-0 h-0 pointer-events-none">
+          <div className="comet-orbit absolute left-0 top-0 w-0 h-0">
+            <span className="absolute -left-[70px] -top-[501px] w-[140px] h-[3px] rounded-full"
+              style={{ background: 'linear-gradient(90deg, transparent, #fff 50%, transparent)', boxShadow: '0 0 14px 3px rgba(140,180,255,0.7)' }} />
+          </div>
         </div>
         <div className="relative grid md:grid-cols-[1.3fr_1fr] gap-10 items-center">
           <div>
